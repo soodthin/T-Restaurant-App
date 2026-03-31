@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+db.sqlite3
+.env
+venv/
+*.egg-info/
+
+# Node / React Native
+node_modules/
+.expo/
+dist/
+*.log
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Docs
+docs/
+
+# Server logs
+server.out
+server.err
+
+# OS
+.DS_Store
+Thumbs.db
