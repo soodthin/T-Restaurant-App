@@ -146,8 +146,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Order.objects.all()
-        return Order.objects.filter(customer=user)
+            return Order.objects.select_related('payment').prefetch_related('details__dish')
+        return Order.objects.filter(customer=user).select_related('payment').prefetch_related('details__dish')
 
     @action(detail=True, methods=['post'], url_path='add-detail')
     def add_detail(self, request, pk=None):
