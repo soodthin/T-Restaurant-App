@@ -21,6 +21,9 @@ dist/
 # Docs
 docs/
 
+# Capture
+capture/
+
 # Server logs
 *.out
 *.err
