@@ -22,8 +22,8 @@ dist/
 docs/
 
 # Server logs
-server.out
-server.err
+*.out
+*.err
 
 # OS
 .DS_Store
