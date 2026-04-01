@@ -1,6 +1,4 @@
-// doi IP nay thanh IP may tinh khi test tren dien thoai
-// cmd: ipconfig -> lay IPv4 Address
-const BASE_URL = "http://192.168.64.78:8000";
+const BASE_URL = "http://10.17.37.102:8000";
 
 export const endpoints = {
     'login': '/o/token/',
