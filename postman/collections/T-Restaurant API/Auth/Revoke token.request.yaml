@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/o/revoke_token/"
+method: POST
+headers:
+  Content-Type: application/x-www-form-urlencoded
+body:
+  type: urlencoded
+  content:
+    token: "{{access_token}}"
+    client_id: "{{client_id}}"
+    client_secret: "{{client_secret}}"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: pm.test('Status 200', () => pm.response.to.have.status(200));
+    language: text/javascript
+order: 6000

@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{base_url}}/api/reviews/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "dish": {{dish_id}},
+        "rating": 5,
+        "comment": "Ngon lắm!"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('review_id', pm.response.json().id);
+    language: text/javascript
+order: 2000

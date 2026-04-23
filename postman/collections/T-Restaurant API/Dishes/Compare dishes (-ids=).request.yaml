@@ -1,0 +1,15 @@
+$kind: http-request
+name: Compare dishes (?ids=)
+url: "{{base_url}}/api/dishes/compare/?ids=1,2,3"
+method: GET
+queryParams:
+  ids: 1,2,3
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      pm.test('Là mảng', () => pm.expect(pm.response.json()).to.be.an('array'));
+    language: text/javascript
+order: 11000

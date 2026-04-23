@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/menus/"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const items = body.results || body;
+      if (Array.isArray(items) && items.length > 0) {
+          pm.collectionVariables.set('menu_id', items[0].id);
+      }
+    language: text/javascript
+order: 1000

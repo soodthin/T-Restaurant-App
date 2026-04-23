@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{base_url}}/api/dishes/"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Bún bò Huế {{$timestamp}}
+    - type: text
+      key: description
+      value: Đậm đà vị Huế
+    - type: text
+      key: price
+      value: "65000"
+    - type: text
+      key: ingredients
+      value: Bún, thịt bò, sả, mắm ruốc
+    - type: text
+      key: preparation_time
+      value: "25"
+    - type: text
+      key: menu
+      value: "{{menu_id}}"
+    - type: text
+      key: category
+      value: "{{category_id}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Chef được set tự động', () => pm.expect(body.chef).to.not.be.null);
+      pm.collectionVariables.set('dish_id', body.id);
+    language: text/javascript
+order: 7000

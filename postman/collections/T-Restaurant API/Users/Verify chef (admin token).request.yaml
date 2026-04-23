@@ -1,0 +1,13 @@
+$kind: http-request
+description: Cần đăng nhập bằng admin trước (folder Auth → Login Admin).
+url: "{{base_url}}/api/users/{{user_id}}/verify-chef/"
+method: PATCH
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200 hoặc 400/403 tuỳ user', () => pm.expect([200,400,403]).to.include(pm.response.code));
+      if (pm.response.code === 200) {
+          pm.test('is_verified = true', () => pm.expect(pm.response.json().is_verified).to.eql(true));
+      }
+    language: text/javascript
+order: 9000

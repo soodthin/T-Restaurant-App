@@ -1,0 +1,17 @@
+$kind: http-request
+description: "`status` và `transaction_id` là read_only từ client, chỉ admin (qua shell / signal) update. Ở đây test method hoạt động."
+url: "{{base_url}}/api/payments/{{payment_id}}/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "amount": 150000
+    }
+scripts:
+  - type: afterResponse
+    code: pm.test('Status 200 hoặc 400', () => pm.expect([200,400]).to.include(pm.response.code));
+    language: text/javascript
+order: 4000

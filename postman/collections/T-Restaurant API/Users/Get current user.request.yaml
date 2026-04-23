@@ -1,0 +1,13 @@
+$kind: http-request
+url: "{{base_url}}/api/users/current-user/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Có id', () => pm.expect(body).to.have.property('id'));
+      pm.test('Có role', () => pm.expect(['customer','chef','admin']).to.include(body.role));
+      pm.collectionVariables.set('user_id', body.id);
+    language: text/javascript
+order: 6000

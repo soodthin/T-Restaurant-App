@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/bookings/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "booking_date": "2026-12-24T19:00:00Z",
+        "guests": 4,
+        "note": "Bàn gần cửa sổ"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Status mặc định pending', () => pm.expect(body.status).to.eql('pending'));
+      pm.collectionVariables.set('booking_id', body.id);
+    language: text/javascript
+order: 2000

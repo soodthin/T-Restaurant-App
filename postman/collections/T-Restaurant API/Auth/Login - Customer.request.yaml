@@ -1,0 +1,26 @@
+$kind: http-request
+url: "{{base_url}}/o/token/"
+method: POST
+headers:
+  Content-Type: application/x-www-form-urlencoded
+body:
+  type: urlencoded
+  content:
+    grant_type: password
+    username: "{{customer_username}}"
+    password: "{{customer_password}}"
+    client_id: "{{client_id}}"
+    client_secret: "{{client_secret}}"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Có access_token', () => pm.expect(body).to.have.property('access_token'));
+      pm.test('Token type = Bearer', () => pm.expect(body.token_type).to.eql('Bearer'));
+      pm.collectionVariables.set('access_token', body.access_token);
+      pm.collectionVariables.set('refresh_token', body.refresh_token || '');
+    language: text/javascript
+order: 1000

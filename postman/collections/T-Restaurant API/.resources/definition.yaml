@@ -1,0 +1,59 @@
+$kind: collection
+description: |-
+  Bộ test case Postman đầy đủ cho backend Django của T-Restaurant App.
+
+  **Chuẩn bị trước khi chạy:**
+  1. Import environment `local` kèm theo (file `postman/environments/local.postman_environment.json`).
+  2. Mặc định backend chạy tại `{{base_url}}` — đổi nếu cần.
+  3. Trong Django admin, tạo OAuth2 Application:
+     - Client id: `restaurant_client_id`
+     - Client secret: `restaurant_client_secret`
+     - Grant type: `password`
+     - Client type: `confidential`
+  4. Tạo sẵn 3 user để test: 1 customer, 1 chef (set `is_verified=True` qua admin), 1 admin (`is_staff=True`).
+
+  **Luồng đề nghị:**
+  1. Chạy folder `Auth` → `Login (password grant)` trước để lấy `access_token`.
+  2. Các request khác sẽ tự bearer auth qua collection variable.
+  3. Test scripts sẽ tự lưu `user_id`, `dish_id`, `order_id`... để chain giữa các request.
+variables:
+  base_url: http://127.0.0.1:8000
+  client_id: restaurant_client_id
+  client_secret: restaurant_client_secret
+  customer_username: customer
+  customer_password: customer@123
+  chef_username: chef
+  chef_password: chef@123
+  admin_username: admin
+  admin_password: admin@123
+  access_token: ""
+  refresh_token: ""
+  user_id: ""
+  category_id: ""
+  menu_id: ""
+  dish_id: ""
+  booking_id: ""
+  order_id: ""
+  review_id: ""
+  payment_id: ""
+scripts:
+  - type: http:beforeRequest
+    code: |-
+      // Đảm bảo base_url luôn có giá trị
+      if (!pm.variables.get('base_url')) {
+          pm.variables.set('base_url', 'http://127.0.0.1:8000');
+      }
+    language: text/javascript
+  - type: http:afterResponse
+    code: |-
+      // Test chung: response phải dưới 5s
+      pm.test('Response time < 5000ms', function () {
+          pm.expect(pm.response.responseTime).to.be.below(5000);
+      });
+    language: text/javascript
+auth:
+  - id: 825a3eba-e966-496d-a2a5-ddbcceaadac7
+    type: bearer
+    name: bearer auth
+    credentials:
+      token: "{{access_token}}"

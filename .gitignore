@@ -31,3 +31,5 @@ capture/
 # OS
 .DS_Store
 Thumbs.db
+
+.postman/

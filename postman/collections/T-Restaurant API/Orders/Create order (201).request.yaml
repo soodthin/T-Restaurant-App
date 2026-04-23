@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/orders/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "booking": null,
+        "status": "pending"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Có details rỗng ban đầu', () => pm.expect(body.details).to.be.an('array'));
+      pm.collectionVariables.set('order_id', body.id);
+    language: text/javascript
+order: 2000

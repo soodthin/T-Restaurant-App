@@ -1,0 +1,35 @@
+$kind: http-request
+url: "{{base_url}}/api/users/"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: first_name
+      value: Test
+    - type: text
+      key: last_name
+      value: Chef
+    - type: text
+      key: username
+      value: pm_chef_{{$timestamp}}
+    - type: text
+      key: password
+      value: Password@123
+    - type: text
+      key: email
+      value: chef+{{$timestamp}}@test.local
+    - type: text
+      key: role
+      value: chef
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      const body = pm.response.json();
+      pm.test('Role = chef', () => pm.expect(body.role).to.eql('chef'));
+      pm.test('Chef mặc định chưa verify', () => pm.expect(body.is_verified).to.eql(false));
+    language: text/javascript
+order: 2000

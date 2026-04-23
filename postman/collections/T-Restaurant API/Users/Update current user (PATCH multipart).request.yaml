@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/users/current-user/"
+method: PATCH
+body:
+  type: formdata
+  content:
+    - type: text
+      key: phone
+      value: "0900000099"
+    - type: text
+      key: address
+      value: Địa chỉ cập nhật
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      pm.test('Phone đã đổi', () => pm.expect(pm.response.json().phone).to.eql('0900000099'));
+    language: text/javascript
+order: 7000

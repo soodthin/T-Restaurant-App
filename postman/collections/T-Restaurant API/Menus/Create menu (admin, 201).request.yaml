@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{base_url}}/api/menus/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "name": "Menu trưa {{$timestamp}}",
+        "description": "Thực đơn buổi trưa",
+        "active": true
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 201', () => pm.response.to.have.status(201));
+      pm.collectionVariables.set('menu_id', pm.response.json().id);
+    language: text/javascript
+order: 2000

@@ -1,0 +1,3 @@
+$kind: collection
+description: CRUD user + current user + verify chef (admin).
+order: 2000

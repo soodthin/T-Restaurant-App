@@ -1,0 +1,19 @@
+$kind: http-request
+url: "{{base_url}}/api/reviews/{{review_id}}/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "rating": 4,
+        "comment": "Ngon nhưng hơi mặn"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      pm.test('Rating đã đổi', () => pm.expect(pm.response.json().rating).to.eql(4));
+    language: text/javascript
+order: 5000
