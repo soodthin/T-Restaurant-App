@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FadeInDown, FadeInUp } from '../utils/animations';
@@ -92,18 +93,20 @@ const Login = ({ navigation }) => {
 
                 <FadeInUp delay={500} duration={500}>
                     <Text style={styles.label}>TÊN ĐĂNG NHẬP</Text>
-                    <View style={styles.inputWrap}>
-                        <MaterialCommunityIcons name="account-outline" size={20} color={Colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Nhập username của bạn"
-                            placeholderTextColor={Colors.placeholder}
-                            value={username}
-                            onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
-                            autoCapitalize="none"
-                            autoCorrect={false}
-                        />
-                    </View>
+                    <TextInput
+                        mode="outlined"
+                        placeholder="Nhập username của bạn"
+                        placeholderTextColor={Colors.placeholder}
+                        value={username}
+                        onChangeText={(text) => setUsername(text.replace(/\s/g, ''))}
+                        autoCapitalize="none"
+                        autoCorrect={false}
+                        left={<TextInput.Icon icon="account-outline" />}
+                        textColor={Colors.text}
+                        activeOutlineColor={Colors.primary}
+                        outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
+                        style={{ backgroundColor: Colors.surfaceContainerLowest, marginBottom: 18 }}
+                    />
                     <Text style={styles.helperText}>Đăng nhập bằng username đã đăng ký, không dùng email.</Text>
 
                     <Text style={styles.label}>MẬT KHẨU</Text>
@@ -112,10 +115,18 @@ const Login = ({ navigation }) => {
 
                 <FadeInUp delay={600} duration={500}>
                     {loading ? <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 20 }} /> :
-                        <TouchableOpacity style={styles.btn} onPress={login} activeOpacity={0.85}>
-                            <Text style={styles.btnText}>Đăng nhập</Text>
-                            <MaterialCommunityIcons name="arrow-right" size={20} color={Colors.onPrimary} />
-                        </TouchableOpacity>
+                        <Button
+                            mode="contained"
+                            icon="arrow-right"
+                            onPress={login}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            contentStyle={{ flexDirection: 'row-reverse', paddingVertical: 8 }}
+                            style={{ borderRadius: 24, marginTop: 12, ...editorialShadow }}
+                            labelStyle={{ fontSize: 17, fontWeight: '800' }}
+                        >
+                            Đăng nhập
+                        </Button>
                     }
                 </FadeInUp>
 
@@ -127,12 +138,16 @@ const Login = ({ navigation }) => {
 
                 <FadeInUp delay={800} duration={500} style={styles.footer}>
                     <Text style={styles.footerText}>Bạn chưa có tài khoản?</Text>
-                    <TouchableOpacity
-                        style={styles.footerBtn}
-                        activeOpacity={0.8}
-                        onPress={() => navigation.navigate('Register', { role: 'customer' })}>
-                        <Text style={styles.footerLink}>Đăng ký ngay</Text>
-                    </TouchableOpacity>
+                    <Button
+                        mode="outlined"
+                        onPress={() => navigation.navigate('Register', { role: 'customer' })}
+                        textColor={Colors.text}
+                        style={{ borderRadius: 24, marginTop: 10, ...editorialShadow, backgroundColor: Colors.surfaceContainerLowest }}
+                        contentStyle={{ paddingVertical: 4, paddingHorizontal: 20 }}
+                        labelStyle={{ fontSize: 15, fontWeight: '800' }}
+                    >
+                        Đăng ký ngay
+                    </Button>
                 </FadeInUp>
 
                 <FadeInUp delay={900} duration={500}>
@@ -206,43 +221,12 @@ const styles = StyleSheet.create({
     title: { fontSize: 32, fontWeight: '800', color: Colors.text, textAlign: 'center', lineHeight: 40 },
     subtitle: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, marginBottom: 40, lineHeight: 23 },
     label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    inputWrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 16,
-        marginBottom: 18,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    inputIcon: { marginLeft: 16 },
-    input: { flex: 1, paddingVertical: 16, paddingHorizontal: 12, fontSize: 16, color: Colors.text },
     helperText: { fontSize: 12, color: Colors.textSecondary, marginTop: -10, marginBottom: 18 },
-    btn: {
-        flexDirection: 'row',
-        backgroundColor: Colors.primary,
-        padding: 18,
-        borderRadius: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 12,
-        ...editorialShadow,
-    },
-    btnText: { color: Colors.onPrimary, fontSize: 17, fontWeight: '800', marginRight: 8 },
     dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 32, marginBottom: 24 },
     dividerLine: { flex: 1, height: 1, backgroundColor: Colors.outlineVariant + '40' },
     dividerText: { marginHorizontal: 16, color: Colors.textSecondary, fontSize: 13 },
     footer: { alignItems: 'center' },
     footerText: { color: Colors.textSecondary, fontSize: 14 },
-    footerBtn: {
-        marginTop: 10,
-        paddingVertical: 14,
-        paddingHorizontal: 40,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        ...editorialShadow,
-    },
-    footerLink: { color: Colors.text, fontSize: 15, fontWeight: '800' },
     chefLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28, marginBottom: 40 },
     chefLinkText: { color: Colors.primary, fontSize: 14, fontWeight: '700', marginLeft: 8 },
 });

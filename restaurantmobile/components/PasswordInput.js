@@ -1,46 +1,32 @@
 import { useState } from 'react';
-import { View, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { TextInput } from 'react-native-paper';
 import Colors from '../styles/colors';
 
 const PasswordInput = ({ value, onChangeText, placeholder }) => {
     const [show, setShow] = useState(false);
 
     return (
-        <View style={styles.wrap}>
-            <MaterialCommunityIcons name="lock-outline" size={20} color={Colors.textSecondary} style={styles.leadingIcon} />
-            <TextInput
-                style={styles.input}
-                placeholder={placeholder || '••••••••'}
-                placeholderTextColor={Colors.placeholder}
-                value={value}
-                onChangeText={onChangeText}
-                secureTextEntry={!show}
-            />
-            <TouchableOpacity style={styles.toggle} onPress={() => setShow(!show)}>
-                <MaterialCommunityIcons
-                    name={show ? 'eye-off-outline' : 'eye-outline'}
-                    size={22}
+        <TextInput
+            mode="outlined"
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder || '••••••••'}
+            placeholderTextColor={Colors.placeholder}
+            secureTextEntry={!show}
+            left={<TextInput.Icon icon="lock-outline" color={Colors.textSecondary} />}
+            right={
+                <TextInput.Icon
+                    icon={show ? 'eye-off-outline' : 'eye-outline'}
                     color={Colors.textSecondary}
+                    onPress={() => setShow(!show)}
                 />
-            </TouchableOpacity>
-        </View>
+            }
+            outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
+            style={{ backgroundColor: Colors.surfaceContainerLowest, marginBottom: 16, fontSize: 16 }}
+            textColor={Colors.text}
+            activeOutlineColor={Colors.primary}
+        />
     );
 };
-
-const styles = StyleSheet.create({
-    wrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 16,
-        marginBottom: 16,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    leadingIcon: { marginLeft: 16 },
-    input: { flex: 1, paddingVertical: 16, paddingHorizontal: 12, fontSize: 16, color: Colors.text },
-    toggle: { paddingHorizontal: 14 },
-});
 
 export default PasswordInput;

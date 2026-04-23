@@ -2,15 +2,13 @@ import { useCallback, useMemo, useState } from 'react';
 import {
     View,
     Text,
-    Image,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import { TextInput, Button, ActivityIndicator, Avatar } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
@@ -236,12 +234,13 @@ const Profile = ({ navigation }) => {
                         disabled={!editing}
                         activeOpacity={editing ? 0.8 : 1}>
                         {avatarUri ?
-                            <Image source={{ uri: avatarUri }} style={styles.avatar} /> :
-                            <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                                <Text style={styles.avatarText}>
-                                    {getInitialLetter(getDisplayName(user, user.username))}
-                                </Text>
-                            </View>}
+                            <Avatar.Image size={112} source={{ uri: avatarUri }} /> :
+                            <Avatar.Text
+                                size={112}
+                                label={getInitialLetter(getDisplayName(user, user.username))}
+                                style={{ backgroundColor: Colors.primary }}
+                                labelStyle={{ fontSize: 42, fontWeight: '800' }}
+                            />}
 
                         {editing ?
                             <View style={styles.editAvatarBadge}>
@@ -309,26 +308,38 @@ const Profile = ({ navigation }) => {
                             null}
 
                         <FadeInUp delay={400} duration={400}>
-                            <TouchableOpacity style={styles.primaryBtn} onPress={startEdit} activeOpacity={0.85}>
-                                <MaterialCommunityIcons name="account-edit-outline" size={20} color={Colors.onPrimary} />
-                                <Text style={styles.primaryBtnText}>Chỉnh sửa thông tin</Text>
-                            </TouchableOpacity>
+                            <Button
+                                mode="contained"
+                                icon="account-edit-outline"
+                                onPress={startEdit}
+                                style={styles.btn}
+                                contentStyle={styles.btnContent}
+                            >
+                                Chỉnh sửa thông tin
+                            </Button>
 
                             {user.role === 'chef' ?
-                                <TouchableOpacity
-                                    style={styles.secondaryBtn}
-                                    activeOpacity={0.8}
-                                    onPress={() => navigation.navigate(user.is_verified ? 'CreateDish' : 'MyDishes')}>
-                                    <MaterialCommunityIcons name="silverware-variant" size={20} color={Colors.text} />
-                                    <Text style={styles.secondaryBtnText}>
-                                        {user.is_verified ? 'Tạo món mới' : 'Xem món hiện có'}
-                                    </Text>
-                                </TouchableOpacity> :
+                                <Button
+                                    mode="contained-tonal"
+                                    icon="silverware-variant"
+                                    onPress={() => navigation.navigate(user.is_verified ? 'CreateDish' : 'MyDishes')}
+                                    style={styles.btn}
+                                    contentStyle={styles.btnContent}
+                                >
+                                    {user.is_verified ? 'Tạo món mới' : 'Xem món hiện có'}
+                                </Button> :
                                 null}
 
-                            <TouchableOpacity style={styles.logoutBtn} onPress={() => setLogoutConfirm(true)} activeOpacity={0.85}>
-                                <Text style={styles.logoutText}>Đăng xuất</Text>
-                            </TouchableOpacity>
+                            <Button
+                                mode="contained"
+                                buttonColor={Colors.text}
+                                textColor={Colors.onPrimary}
+                                onPress={() => setLogoutConfirm(true)}
+                                style={styles.btn}
+                                contentStyle={styles.btnContent}
+                            >
+                                Đăng xuất
+                            </Button>
                         </FadeInUp>
                     </>
                 ) : (
@@ -338,66 +349,82 @@ const Profile = ({ navigation }) => {
                             Hoàn thiện thông tin liên hệ để đảm bảo vận hành và hỗ trợ duyệt tài khoản nhanh hơn.
                         </Text>
 
-                        <Text style={styles.label}>HỌ</Text>
-                        <View style={styles.editInputWrap}>
-                            <TextInput
-                                style={styles.editInput}
-                                value={editData.first_name}
-                                onChangeText={(value) => setEditData((prev) => ({ ...prev, first_name: value }))}
-                                placeholder="Họ"
-                                placeholderTextColor={Colors.placeholder}
-                            />
-                        </View>
+                        <TextInput
+                            mode="outlined"
+                            label="HỌ"
+                            value={editData.first_name}
+                            onChangeText={(value) => setEditData((prev) => ({ ...prev, first_name: value }))}
+                            placeholder="Họ"
+                            placeholderTextColor={Colors.placeholder}
+                            outlineStyle={styles.inputOutline}
+                            style={styles.input}
+                            activeOutlineColor={Colors.primary}
+                            textColor={Colors.text}
+                        />
 
-                        <Text style={styles.label}>TÊN</Text>
-                        <View style={styles.editInputWrap}>
-                            <TextInput
-                                style={styles.editInput}
-                                value={editData.last_name}
-                                onChangeText={(value) => setEditData((prev) => ({ ...prev, last_name: value }))}
-                                placeholder="Tên"
-                                placeholderTextColor={Colors.placeholder}
-                            />
-                        </View>
+                        <TextInput
+                            mode="outlined"
+                            label="TÊN"
+                            value={editData.last_name}
+                            onChangeText={(value) => setEditData((prev) => ({ ...prev, last_name: value }))}
+                            placeholder="Tên"
+                            placeholderTextColor={Colors.placeholder}
+                            outlineStyle={styles.inputOutline}
+                            style={styles.input}
+                            activeOutlineColor={Colors.primary}
+                            textColor={Colors.text}
+                        />
 
-                        <Text style={styles.label}>SỐ ĐIỆN THOẠI</Text>
-                        <View style={styles.editInputWrap}>
-                            <MaterialCommunityIcons name="phone-outline" size={18} color={Colors.textSecondary} style={{ marginLeft: 16 }} />
-                            <TextInput
-                                style={styles.editInput}
-                                value={editData.phone}
-                                onChangeText={(value) => setEditData((prev) => ({ ...prev, phone: value }))}
-                                placeholder="+84 900 000 000"
-                                placeholderTextColor={Colors.placeholder}
-                                keyboardType="phone-pad"
-                            />
-                        </View>
+                        <TextInput
+                            mode="outlined"
+                            label="SỐ ĐIỆN THOẠI"
+                            value={editData.phone}
+                            onChangeText={(value) => setEditData((prev) => ({ ...prev, phone: value }))}
+                            placeholder="+84 900 000 000"
+                            placeholderTextColor={Colors.placeholder}
+                            keyboardType="phone-pad"
+                            left={<TextInput.Icon icon="phone-outline" />}
+                            outlineStyle={styles.inputOutline}
+                            style={styles.input}
+                            activeOutlineColor={Colors.primary}
+                            textColor={Colors.text}
+                        />
 
-                        <Text style={styles.label}>ĐỊA CHỈ LIÊN HỆ</Text>
-                        <View style={[styles.editInputWrap, { alignItems: 'flex-start' }]}>
-                            <MaterialCommunityIcons name="map-marker-outline" size={18} color={Colors.textSecondary} style={{ marginLeft: 16, marginTop: 16 }} />
-                            <TextInput
-                                style={[styles.editInput, { minHeight: 80, textAlignVertical: 'top' }]}
-                                value={editData.address}
-                                onChangeText={(value) => setEditData((prev) => ({ ...prev, address: value }))}
-                                placeholder="371 Nguyễn Kiệm, Q. Gò Vấp"
-                                placeholderTextColor={Colors.placeholder}
-                                multiline={true}
-                            />
-                        </View>
+                        <TextInput
+                            mode="outlined"
+                            label="ĐỊA CHỈ LIÊN HỆ"
+                            value={editData.address}
+                            onChangeText={(value) => setEditData((prev) => ({ ...prev, address: value }))}
+                            placeholder="371 Nguyễn Kiệm, Q. Gò Vấp"
+                            placeholderTextColor={Colors.placeholder}
+                            multiline
+                            left={<TextInput.Icon icon="map-marker-outline" />}
+                            outlineStyle={styles.inputOutline}
+                            style={[styles.input, { minHeight: 80 }]}
+                            activeOutlineColor={Colors.primary}
+                            textColor={Colors.text}
+                        />
 
                         <View style={styles.actionRow}>
-                            <TouchableOpacity style={styles.cancelBtn} onPress={cancelEdit} activeOpacity={0.8}>
-                                <Text style={styles.cancelText}>Hủy</Text>
-                            </TouchableOpacity>
+                            <Button
+                                mode="contained-tonal"
+                                onPress={cancelEdit}
+                                style={{ flex: 1, marginRight: 10, borderRadius: 20 }}
+                                contentStyle={styles.btnContent}
+                            >
+                                Hủy
+                            </Button>
 
-                            {saving ?
-                                <View style={styles.saveBtn}>
-                                    <ActivityIndicator color={Colors.onPrimary} />
-                                </View> :
-                                <TouchableOpacity style={styles.saveBtn} onPress={saveProfile} activeOpacity={0.85}>
-                                    <Text style={styles.saveText}>Lưu thay đổi</Text>
-                                </TouchableOpacity>}
+                            <Button
+                                mode="contained"
+                                onPress={saveProfile}
+                                loading={saving}
+                                disabled={saving}
+                                style={{ flex: 2, borderRadius: 20 }}
+                                contentStyle={styles.btnContent}
+                            >
+                                Lưu thay đổi
+                            </Button>
                         </View>
                     </FadeIn>
                 )}
@@ -437,19 +464,6 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         ...editorialShadow,
     },
-    avatar: {
-        width: 112,
-        height: 112,
-        borderRadius: 56,
-        borderWidth: 3,
-        borderColor: Colors.outlineVariant + '40',
-    },
-    avatarPlaceholder: {
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    avatarText: { fontSize: 42, fontWeight: '800', color: Colors.onPrimary },
     editAvatarBadge: {
         position: 'absolute',
         right: -2,
@@ -536,35 +550,8 @@ const styles = StyleSheet.create({
     },
     infoValue: { marginTop: 5, fontSize: 15, lineHeight: 22, color: Colors.text },
     noteItem: { marginTop: 8, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    primaryBtn: {
-        marginTop: 18,
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingVertical: 16,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    primaryBtnText: { marginLeft: 8, fontSize: 15, fontWeight: '700', color: Colors.onPrimary },
-    secondaryBtn: {
-        marginTop: 12,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        paddingVertical: 16,
-        flexDirection: 'row',
-        justifyContent: 'center',
-        alignItems: 'center',
-        ...editorialShadow,
-    },
-    secondaryBtnText: { marginLeft: 8, fontSize: 15, fontWeight: '700', color: Colors.text },
-    logoutBtn: {
-        marginTop: 12,
-        backgroundColor: Colors.text,
-        borderRadius: 20,
-        paddingVertical: 16,
-        alignItems: 'center',
-    },
-    logoutText: { fontSize: 15, fontWeight: '700', color: Colors.onPrimary },
+    btn: { marginTop: 12, borderRadius: 20 },
+    btnContent: { paddingVertical: 8 },
     editCard: {
         marginTop: 18,
         backgroundColor: Colors.surfaceContainerLowest,
@@ -573,47 +560,9 @@ const styles = StyleSheet.create({
         ...editorialShadow,
     },
     editSubtitle: { marginBottom: 16, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    label: {
-        fontSize: 11,
-        fontWeight: '700',
-        letterSpacing: 1,
-        color: Colors.textSecondary,
-        marginBottom: 6,
-    },
-    editInputWrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 16,
-        marginBottom: 14,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    editInput: {
-        flex: 1,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 15,
-        color: Colors.text,
-    },
+    inputOutline: { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 },
+    input: { backgroundColor: Colors.surfaceContainerLow, marginBottom: 14 },
     actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-    cancelBtn: {
-        width: '32%',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 20,
-        paddingVertical: 15,
-        alignItems: 'center',
-    },
-    cancelText: { fontSize: 15, fontWeight: '700', color: Colors.text },
-    saveBtn: {
-        width: '64%',
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingVertical: 15,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    saveText: { fontSize: 15, fontWeight: '700', color: Colors.onPrimary },
 });
 
 export default Profile;

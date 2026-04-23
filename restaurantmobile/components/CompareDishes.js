@@ -6,8 +6,8 @@ import {
     ScrollView,
     TouchableOpacity,
     Image,
-    ActivityIndicator,
 } from 'react-native';
+import { ActivityIndicator, Button, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInRight } from '../utils/animations';
 import Colors from '../styles/colors';
@@ -62,9 +62,14 @@ const CompareDishes = ({ route, navigation }) => {
                 </View>
                 <Text style={styles.stateTitle}>Không mở được bảng so sánh</Text>
                 <Text style={styles.stateText}>{error}</Text>
-                <TouchableOpacity style={styles.backBtn} onPress={() => navigation.goBack()} activeOpacity={0.85}>
-                    <Text style={styles.backBtnText}>Quay lại chọn món</Text>
-                </TouchableOpacity>
+                <Button
+                    mode="contained"
+                    onPress={() => navigation.goBack()}
+                    buttonColor={Colors.primary}
+                    textColor={Colors.onPrimary}
+                    style={styles.actionBtn}>
+                    Quay lại chọn món
+                </Button>
             </View>
         );
     }
@@ -140,32 +145,40 @@ const CompareDishes = ({ route, navigation }) => {
                                         <Text style={styles.metricLabel}>Nguyên liệu</Text>
                                         <View style={styles.ingredientPills}>
                                             {(dish.ingredients || 'Chưa cập nhật').split(',').map((item, idx) => (
-                                                <View key={idx} style={styles.ingredientPill}>
-                                                    <Text style={styles.ingredientPillText}>{item.trim()}</Text>
-                                                </View>
+                                                <Chip
+                                                    key={idx}
+                                                    mode="outlined"
+                                                    compact
+                                                    textStyle={styles.ingredientChipText}
+                                                    style={styles.ingredientChip}>
+                                                    {item.trim()}
+                                                </Chip>
                                             ))}
                                         </View>
                                     </View>
                                 </View>
 
                                 <View style={styles.btnRow}>
-                                    <TouchableOpacity
-                                        style={styles.primaryBtn}
-                                        activeOpacity={0.85}
+                                    <Button
+                                        mode="contained"
+                                        icon="cart-plus"
+                                        buttonColor={Colors.primary}
+                                        textColor={Colors.onPrimary}
+                                        style={styles.cartBtn}
                                         onPress={() => {
                                             addItem(dish);
                                             setToast({ visible: true, message: `Đã thêm ${dish.name} vào giỏ`, type: 'success' });
                                         }}>
-                                        <MaterialCommunityIcons name="cart-plus" size={18} color={Colors.onPrimary} />
-                                        <Text style={styles.primaryBtnText}>Thêm vào giỏ</Text>
-                                    </TouchableOpacity>
+                                        Thêm vào giỏ
+                                    </Button>
 
-                                    <TouchableOpacity
-                                        style={styles.secondaryBtn}
-                                        activeOpacity={0.8}
+                                    <Button
+                                        mode="contained-tonal"
+                                        buttonColor={Colors.surfaceContainerLow}
+                                        textColor={Colors.text}
                                         onPress={() => navigation.navigate('DishDetail', { id: dish.id })}>
-                                        <Text style={styles.secondaryBtnText}>Chi tiết</Text>
-                                    </TouchableOpacity>
+                                        Chi tiết
+                                    </Button>
                                 </View>
                             </View>
                         </View>
@@ -211,35 +224,11 @@ const styles = StyleSheet.create({
     metricLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.7 },
     metricValue: { fontSize: 16, color: Colors.text, fontWeight: '700', marginTop: 2 },
     ingredientPills: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
-    ingredientPill: {
-        backgroundColor: Colors.surfaceContainerLow,
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 9999,
-        marginRight: 6,
-        marginBottom: 4,
-    },
-    ingredientPillText: { fontSize: 12, color: Colors.text, fontWeight: '600' },
+    ingredientChip: { marginRight: 6, marginBottom: 4 },
+    ingredientChipText: { fontSize: 12 },
     btnRow: { flexDirection: 'row', marginTop: 20 },
-    primaryBtn: {
-        flex: 1,
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingVertical: 14,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-        marginRight: 8,
-    },
-    primaryBtnText: { color: Colors.onPrimary, fontWeight: '800', marginLeft: 6 },
-    secondaryBtn: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 20,
-        paddingVertical: 14,
-        paddingHorizontal: 18,
-        alignItems: 'center',
-    },
-    secondaryBtnText: { color: Colors.text, fontWeight: '800' },
+    cartBtn: { flex: 1, marginRight: 8 },
+    actionBtn: { marginTop: 18, borderRadius: 20 },
     centerState: {
         flex: 1,
         backgroundColor: Colors.surface,
@@ -257,8 +246,6 @@ const styles = StyleSheet.create({
     },
     stateTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
     stateText: { fontSize: 15, color: Colors.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22 },
-    backBtn: { backgroundColor: Colors.primary, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 14, marginTop: 18 },
-    backBtnText: { color: Colors.onPrimary, fontWeight: '800' },
 });
 
 export default CompareDishes;

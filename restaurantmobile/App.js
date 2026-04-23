@@ -1,6 +1,7 @@
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 import Login from './components/Login';
@@ -16,7 +17,7 @@ import ChefHome from './components/ChefHome';
 import MyDishes from './components/MyDishes';
 import CreateDish from './components/CreateDish';
 import Colors from './styles/colors';
-import { editorialShadow } from './styles/theme';
+import { editorialShadow, paperTheme } from './styles/theme';
 import { CartProvider, useCart } from './contexts/CartContext';
 
 const Stack = createNativeStackNavigator();
@@ -176,45 +177,47 @@ const stackScreenOptions = {
 };
 
 const App = () => (
-    <CartProvider>
-        <NavigationContainer>
-            <Stack.Navigator initialRouteName="Login">
-                <Stack.Screen
-                    name="Login"
-                    component={Login}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="Register"
-                    component={Register}
-                    options={{
-                        title: 'Đăng ký',
-                        ...stackScreenOptions,
-                    }}
-                />
-                <Stack.Screen
-                    name="Main"
-                    component={MainScreen}
-                    options={{ headerShown: false }}
-                />
-                <Stack.Screen
-                    name="DishDetail"
-                    component={DishDetail}
-                    options={{ title: 'Chi tiết món ăn', ...stackScreenOptions }}
-                />
-                <Stack.Screen
-                    name="CompareDishes"
-                    component={CompareDishes}
-                    options={{ title: 'So sánh món', ...stackScreenOptions }}
-                />
-                <Stack.Screen
-                    name="CreateDish"
-                    component={CreateDish}
-                    options={{ title: 'Tạo món mới', ...stackScreenOptions }}
-                />
-            </Stack.Navigator>
-        </NavigationContainer>
-    </CartProvider>
+    <PaperProvider theme={paperTheme}>
+        <CartProvider>
+            <NavigationContainer>
+                <Stack.Navigator initialRouteName="Login">
+                    <Stack.Screen
+                        name="Login"
+                        component={Login}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="Register"
+                        component={Register}
+                        options={{
+                            title: 'Đăng ký',
+                            ...stackScreenOptions,
+                        }}
+                    />
+                    <Stack.Screen
+                        name="Main"
+                        component={MainScreen}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="DishDetail"
+                        component={DishDetail}
+                        options={{ title: 'Chi tiết món ăn', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="CompareDishes"
+                        component={CompareDishes}
+                        options={{ title: 'So sánh món', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="CreateDish"
+                        component={CreateDish}
+                        options={{ title: 'Tạo món mới', ...stackScreenOptions }}
+                    />
+                </Stack.Navigator>
+            </NavigationContainer>
+        </CartProvider>
+    </PaperProvider>
 );
 
 export default App;

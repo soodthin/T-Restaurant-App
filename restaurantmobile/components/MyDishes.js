@@ -6,10 +6,9 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
     RefreshControl,
-    TextInput,
 } from 'react-native';
+import { ActivityIndicator, Button, Searchbar } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -185,13 +184,14 @@ const MyDishes = ({ navigation }) => {
                                 </Text>
                             </View>
 
-                            <TouchableOpacity
-                                style={styles.primaryBtn}
-                                activeOpacity={0.85}
+                            <Button
+                                mode="contained"
+                                icon="plus"
+                                buttonColor={Colors.primary}
+                                textColor={Colors.onPrimary}
                                 onPress={() => navigation.navigate(user?.is_verified ? 'CreateDish' : 'Profile')}>
-                                <MaterialCommunityIcons name="plus" size={18} color={Colors.onPrimary} />
-                                <Text style={styles.primaryBtnText}>{headerButtonLabel}</Text>
-                            </TouchableOpacity>
+                                {headerButtonLabel}
+                            </Button>
                         </View>
                         <View style={styles.summaryRow}>
                             {summaryCards.map((item) => (
@@ -202,16 +202,15 @@ const MyDishes = ({ navigation }) => {
                             ))}
                         </View>
 
-                        <View style={styles.searchWrap}>
-                            <MaterialCommunityIcons name="magnify" size={20} color={Colors.textSecondary} />
-                            <TextInput
-                                style={styles.searchInput}
-                                placeholder="Tìm theo tên món, menu hoặc loại món..."
-                                placeholderTextColor={Colors.placeholder}
-                                value={search}
-                                onChangeText={setSearch}
-                            />
-                        </View>
+                        <Searchbar
+                            placeholder="Tìm theo tên món, menu hoặc loại món..."
+                            value={search}
+                            onChangeText={setSearch}
+                            style={styles.searchbar}
+                            inputStyle={styles.searchbarInput}
+                            iconColor={Colors.textSecondary}
+                            placeholderTextColor={Colors.placeholder}
+                        />
 
                         {error ?
                             <View style={styles.errorCard}>
@@ -220,9 +219,14 @@ const MyDishes = ({ navigation }) => {
                                     <Text style={styles.errorTitle}>Không tải được danh sách món</Text>
                                     <Text style={styles.errorText}>{error}</Text>
                                 </View>
-                                <TouchableOpacity style={styles.retryBtn} onPress={() => loadData(true)}>
-                                    <Text style={styles.retryText}>Thử lại</Text>
-                                </TouchableOpacity>
+                                <Button
+                                    mode="contained-tonal"
+                                    buttonColor={Colors.surfaceContainerLow}
+                                    textColor={Colors.text}
+                                    compact
+                                    onPress={() => loadData(true)}>
+                                    Thử lại
+                                </Button>
                             </View> :
                             null}
                     </FadeInDown>
@@ -240,12 +244,14 @@ const MyDishes = ({ navigation }) => {
                                     ? 'Bắt đầu bằng việc tạo món đầu tiên với mô tả, giá và thời gian chuẩn bị đầy đủ.'
                                     : 'Quyền tạo món được quản lý trong phần hồ sơ đầu bếp.'}
                         </Text>
-                        <TouchableOpacity
-                            style={styles.emptyBtn}
-                            activeOpacity={0.85}
+                        <Button
+                            mode="contained"
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            style={styles.emptyAction}
                             onPress={() => navigation.navigate(user?.is_verified ? 'CreateDish' : 'Profile')}>
-                            <Text style={styles.emptyBtnText}>{headerButtonLabel}</Text>
-                        </TouchableOpacity>
+                            {headerButtonLabel}
+                        </Button>
                     </View>
                 }
             />
@@ -287,21 +293,6 @@ const styles = StyleSheet.create({
         lineHeight: 22,
         color: Colors.textSecondary,
     },
-    primaryBtn: {
-        alignSelf: 'flex-start',
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-    },
-    primaryBtnText: {
-        marginLeft: 8,
-        color: Colors.onPrimary,
-        fontSize: 14,
-        fontWeight: '700',
-    },
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -325,19 +316,14 @@ const styles = StyleSheet.create({
         lineHeight: 18,
         color: Colors.textSecondary,
     },
-    searchWrap: {
+    searchbar: {
         marginTop: 16,
         marginBottom: 8,
-        flexDirection: 'row',
-        alignItems: 'center',
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 18,
-        paddingHorizontal: 16,
+        elevation: 0,
     },
-    searchInput: {
-        flex: 1,
-        paddingVertical: 14,
-        marginLeft: 10,
+    searchbarInput: {
         color: Colors.text,
         fontSize: 15,
     },
@@ -366,17 +352,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         lineHeight: 20,
         color: Colors.textSecondary,
-    },
-    retryBtn: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 20,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-    },
-    retryText: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: Colors.text,
     },
     card: {
         flexDirection: 'row',
@@ -476,17 +451,8 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: Colors.textSecondary,
     },
-    emptyBtn: {
+    emptyAction: {
         marginTop: 18,
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 14,
-    },
-    emptyBtnText: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: Colors.onPrimary,
     },
 });
 

@@ -6,11 +6,10 @@ import {
     FlatList,
     TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
-    TextInput,
 } from 'react-native';
+import { TextInput, Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeIn, FadeInUp } from '../utils/animations';
 import authFetch, {
@@ -162,9 +161,15 @@ const DishDetail = ({ route, navigation }) => {
                 <MaterialCommunityIcons name="alert-circle-outline" size={52} color={Colors.primary} />
                 <Text style={styles.stateTitle}>Không tải được món ăn</Text>
                 <Text style={styles.stateText}>{error || 'Dữ liệu món ăn hiện không khả dụng.'}</Text>
-                <TouchableOpacity style={styles.retryBtn} onPress={loadData}>
-                    <Text style={styles.retryText}>Thử lại</Text>
-                </TouchableOpacity>
+                <Button
+                    mode="contained"
+                    onPress={loadData}
+                    buttonColor={Colors.primary}
+                    textColor={Colors.onPrimary}
+                    style={{ borderRadius: 20, marginTop: 18 }}
+                    labelStyle={{ fontWeight: '700' }}>
+                    Thử lại
+                </Button>
             </View>
         );
     }
@@ -209,14 +214,22 @@ const DishDetail = ({ route, navigation }) => {
                             <Text style={styles.desc}>{dish.description || 'Nhà hàng chưa cập nhật mô tả cho món này.'}</Text>
 
                             <View style={styles.tagRow}>
-                                <View style={styles.tag}>
-                                    <MaterialCommunityIcons name="clock-outline" size={15} color={Colors.primary} />
-                                    <Text style={styles.tagText}>{dish.preparation_time} phút</Text>
-                                </View>
-                                <View style={styles.tag}>
-                                    <MaterialCommunityIcons name="chef-hat" size={15} color={Colors.primary} />
-                                    <Text style={styles.tagText}>{dish.chef_name || 'Nhà hàng'}</Text>
-                                </View>
+                                <Chip
+                                    icon="clock-outline"
+                                    mode="flat"
+                                    compact
+                                    style={styles.tagChip}
+                                    textStyle={styles.tagChipText}>
+                                    {dish.preparation_time} phút
+                                </Chip>
+                                <Chip
+                                    icon="chef-hat"
+                                    mode="flat"
+                                    compact
+                                    style={styles.tagChip}
+                                    textStyle={styles.tagChipText}>
+                                    {dish.chef_name || 'Nhà hàng'}
+                                </Chip>
                             </View>
                         </FadeInUp>
 
@@ -225,12 +238,15 @@ const DishDetail = ({ route, navigation }) => {
                             {ingredientsList.length > 0 ? (
                                 <View style={styles.ingredientGrid}>
                                     {ingredientsList.map((item, idx) => (
-                                        <View key={idx} style={styles.ingredientChip}>
-                                            <View style={styles.ingredientIcon}>
-                                                <MaterialCommunityIcons name="leaf" size={14} color={Colors.primary} />
-                                            </View>
-                                            <Text style={styles.ingredientText}>{item}</Text>
-                                        </View>
+                                        <Chip
+                                            key={idx}
+                                            icon="leaf"
+                                            mode="outlined"
+                                            compact
+                                            style={styles.ingredientChip}
+                                            textStyle={styles.ingredientText}>
+                                            {item}
+                                        </Chip>
                                     ))}
                                 </View>
                             ) : (
@@ -257,40 +273,39 @@ const DishDetail = ({ route, navigation }) => {
                                 ))}
                             </View>
 
-                            <View style={styles.reviewInputWrap}>
-                                <TextInput
-                                    style={styles.input}
-                                    placeholder="Chia sẻ cảm nhận của bạn về món này..."
-                                    placeholderTextColor={Colors.placeholder}
-                                    value={comment}
-                                    onChangeText={setComment}
-                                    multiline={true}
-                                    textAlignVertical="top"
-                                />
-                            </View>
+                            <TextInput
+                                mode="outlined"
+                                placeholder="Chia sẻ cảm nhận của bạn về món này..."
+                                placeholderTextColor={Colors.placeholder}
+                                value={comment}
+                                onChangeText={setComment}
+                                multiline
+                                style={{ backgroundColor: Colors.surfaceContainerLowest, minHeight: 96 }}
+                                outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
+                                activeOutlineColor={Colors.primary}
+                                textColor={Colors.text}
+                            />
 
                             {currentUser ?
-                                <TouchableOpacity
-                                    style={[styles.submitBtn, submittingReview && { opacity: 0.7 }]}
+                                <Button
+                                    mode="contained"
+                                    icon="send"
                                     onPress={submitReview}
                                     disabled={submittingReview}
-                                    activeOpacity={0.85}>
-                                    {submittingReview ?
-                                        <ActivityIndicator color={Colors.onPrimary} /> :
-                                        <>
-                                            <MaterialCommunityIcons name="send" size={16} color={Colors.onPrimary} />
-                                            <Text style={styles.submitText}>
-                                                {myReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}
-                                            </Text>
-                                        </>
-                                    }
-                                </TouchableOpacity> :
-                                <TouchableOpacity
-                                    style={styles.loginPromptBtn}
+                                    loading={submittingReview}
+                                    buttonColor={Colors.primary}
+                                    textColor={Colors.onPrimary}
+                                    style={{ borderRadius: 20, marginTop: 14 }}
+                                    labelStyle={{ fontWeight: '700', fontSize: 15 }}>
+                                    {myReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}
+                                </Button> :
+                                <Button
+                                    mode="contained-tonal"
                                     onPress={() => navigation.navigate('Login')}
-                                    activeOpacity={0.8}>
-                                    <Text style={styles.loginPromptText}>Đăng nhập để đánh giá món này</Text>
-                                </TouchableOpacity>
+                                    style={{ borderRadius: 20, marginTop: 14 }}
+                                    labelStyle={{ fontWeight: '700', fontSize: 15 }}>
+                                    Đăng nhập để đánh giá món này
+                                </Button>
                             }
                         </FadeInUp>
 
@@ -331,28 +346,36 @@ const DishDetail = ({ route, navigation }) => {
 
             <View style={styles.bottomBar}>
                 <View style={styles.stepper}>
-                    <TouchableOpacity
+                    <IconButton
+                        icon="minus"
+                        size={18}
+                        onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}
                         style={styles.stepBtn}
-                        onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}>
-                        <MaterialCommunityIcons name="minus" size={18} color={Colors.text} />
-                    </TouchableOpacity>
+                        iconColor={Colors.text}
+                    />
                     <Text style={styles.quantityText}>{quantity}</Text>
-                    <TouchableOpacity
+                    <IconButton
+                        icon="plus"
+                        size={18}
+                        onPress={() => setQuantity((prev) => prev + 1)}
                         style={styles.stepBtn}
-                        onPress={() => setQuantity((prev) => prev + 1)}>
-                        <MaterialCommunityIcons name="plus" size={18} color={Colors.text} />
-                    </TouchableOpacity>
+                        iconColor={Colors.text}
+                    />
                 </View>
-                <TouchableOpacity
-                    style={styles.cartBtn}
-                    activeOpacity={0.85}
+                <Button
+                    mode="contained"
+                    icon="cart-plus"
                     onPress={() => {
                         addItem(dish, quantity);
                         showToast(`Đã thêm ${quantity} ${dish.name} vào giỏ`, 'success');
-                    }}>
-                    <MaterialCommunityIcons name="cart-plus" size={18} color={Colors.onPrimary} />
-                    <Text style={styles.cartBtnText}>Thêm vào giỏ</Text>
-                </TouchableOpacity>
+                    }}
+                    buttonColor={Colors.primary}
+                    textColor={Colors.onPrimary}
+                    style={styles.cartBtn}
+                    labelStyle={{ fontWeight: '800', fontSize: 16 }}
+                    contentStyle={{ paddingVertical: 6 }}>
+                    Thêm vào giỏ
+                </Button>
             </View>
 
             <Toast
@@ -395,17 +418,8 @@ const styles = StyleSheet.create({
     price: { fontSize: 24, color: Colors.primary, fontWeight: '800' },
     desc: { fontSize: 15, color: Colors.textSecondary, paddingHorizontal: 20, marginTop: 12, lineHeight: 24 },
     tagRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, marginTop: 16 },
-    tag: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.primaryLight,
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 9999,
-        marginRight: 8,
-        marginBottom: 8,
-    },
-    tagText: { color: Colors.text, fontSize: 13, marginLeft: 6, fontWeight: '600' },
+    tagChip: { marginRight: 8, marginBottom: 8, backgroundColor: Colors.primaryLight },
+    tagChipText: { color: Colors.text, fontSize: 13, fontWeight: '600' },
     sectionCard: {
         marginHorizontal: 20,
         marginTop: 18,
@@ -417,58 +431,10 @@ const styles = StyleSheet.create({
     sectionTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 12 },
     ingredients: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22 },
     ingredientGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    ingredientChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-        borderRadius: 9999,
-        marginRight: 8,
-        marginBottom: 8,
-    },
-    ingredientIcon: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 6,
-    },
+    ingredientChip: { marginRight: 8, marginBottom: 8 },
     ingredientText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
     starRow: { flexDirection: 'row', marginBottom: 14 },
     starBtn: { marginRight: 4 },
-    reviewInputWrap: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 16,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    input: {
-        padding: 14,
-        minHeight: 96,
-        fontSize: 15,
-        color: Colors.text,
-    },
-    submitBtn: {
-        backgroundColor: Colors.primary,
-        paddingVertical: 14,
-        borderRadius: 20,
-        alignItems: 'center',
-        marginTop: 14,
-        flexDirection: 'row',
-        justifyContent: 'center',
-    },
-    submitText: { color: Colors.onPrimary, fontWeight: '700', fontSize: 15, marginLeft: 8 },
-    loginPromptBtn: {
-        backgroundColor: Colors.surfaceContainerLow,
-        paddingVertical: 14,
-        borderRadius: 20,
-        alignItems: 'center',
-        marginTop: 14,
-    },
-    loginPromptText: { color: Colors.text, fontWeight: '700', fontSize: 15 },
     reviewHeader: { marginHorizontal: 20, marginTop: 10 },
     reviewItem: {
         padding: 16,
@@ -513,23 +479,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         backgroundColor: Colors.surfaceContainerLow,
         borderRadius: 20,
-        paddingHorizontal: 6,
-        paddingVertical: 6,
+        paddingHorizontal: 2,
+        paddingVertical: 2,
     },
-    stepBtn: { width: 38, height: 38, borderRadius: 14, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surfaceContainerLowest },
+    stepBtn: { width: 38, height: 38, borderRadius: 14, backgroundColor: Colors.surfaceContainerLowest },
     quantityText: { minWidth: 36, textAlign: 'center', fontSize: 18, fontWeight: '800', color: Colors.text },
     cartBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: Colors.primary,
         borderRadius: 20,
-        paddingHorizontal: 20,
-        paddingVertical: 16,
         flex: 1,
         marginLeft: 12,
     },
-    cartBtnText: { color: Colors.onPrimary, fontWeight: '800', marginLeft: 8, fontSize: 16 },
     centerState: {
         flex: 1,
         backgroundColor: Colors.surface,
@@ -539,8 +498,6 @@ const styles = StyleSheet.create({
     },
     stateTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 16 },
     stateText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
-    retryBtn: { marginTop: 18, backgroundColor: Colors.primary, paddingHorizontal: 18, paddingVertical: 14, borderRadius: 20 },
-    retryText: { color: Colors.onPrimary, fontWeight: '700' },
 });
 
 export default DishDetail;

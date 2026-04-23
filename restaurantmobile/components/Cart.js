@@ -6,8 +6,8 @@ import {
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
 } from 'react-native';
+import { Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInUp, FadeIn } from '../utils/animations';
@@ -142,9 +142,13 @@ const Cart = ({ navigation }) => {
                     <View style={styles.cardBody}>
                         <View style={styles.cardHeader}>
                             <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
-                            <TouchableOpacity onPress={() => removeItem(item.id)} style={styles.removeBtn}>
-                                <MaterialCommunityIcons name="trash-can-outline" size={18} color={Colors.textSecondary} />
-                            </TouchableOpacity>
+                            <IconButton
+                                icon="trash-can-outline"
+                                size={18}
+                                iconColor={Colors.textSecondary}
+                                onPress={() => removeItem(item.id)}
+                                style={{ margin: -4 }}
+                            />
                         </View>
 
                         <Text style={styles.meta}>{item.preparation_time} phút · {item.chef_name || 'Nhà hàng'}</Text>
@@ -152,13 +156,21 @@ const Cart = ({ navigation }) => {
 
                         <View style={styles.cardFooter}>
                             <View style={styles.stepper}>
-                                <TouchableOpacity style={styles.stepBtn} onPress={() => updateQuantity(item.id, item.quantity - 1)}>
-                                    <MaterialCommunityIcons name="minus" size={16} color={Colors.text} />
-                                </TouchableOpacity>
+                                <IconButton
+                                    icon="minus"
+                                    size={16}
+                                    iconColor={Colors.text}
+                                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
+                                    style={styles.stepIconBtn}
+                                />
                                 <Text style={styles.quantity}>{item.quantity}</Text>
-                                <TouchableOpacity style={styles.stepBtn} onPress={() => updateQuantity(item.id, item.quantity + 1)}>
-                                    <MaterialCommunityIcons name="plus" size={16} color={Colors.text} />
-                                </TouchableOpacity>
+                                <IconButton
+                                    icon="plus"
+                                    size={16}
+                                    iconColor={Colors.text}
+                                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
+                                    style={styles.stepIconBtn}
+                                />
                             </View>
 
                             <Text style={styles.lineTotal}>
@@ -186,9 +198,16 @@ const Cart = ({ navigation }) => {
                     <Text style={styles.emptyText}>
                         Thêm món từ trang khám phá hoặc chi tiết món để bắt đầu đặt món.
                     </Text>
-                    <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('Home')} activeOpacity={0.85}>
-                        <Text style={styles.emptyBtnText}>Đi khám phá món</Text>
-                    </TouchableOpacity>
+                    <Button
+                        mode="contained"
+                        onPress={() => navigation.navigate('Home')}
+                        buttonColor={Colors.primary}
+                        textColor={Colors.onPrimary}
+                        labelStyle={{ fontWeight: '800', fontSize: 15 }}
+                        style={{ marginTop: 20, borderRadius: 20 }}
+                    >
+                        Đi khám phá món
+                    </Button>
                 </FadeIn>
             </View>
         );
@@ -215,20 +234,25 @@ const Cart = ({ navigation }) => {
                 <Text style={styles.sheetTitle}>Phương thức thanh toán</Text>
                 <View style={styles.paymentRow}>
                     {paymentOptions.map((option) => (
-                        <TouchableOpacity
+                        <Chip
                             key={option.key}
-                            style={[styles.paymentChip, paymentMethod === option.key && styles.paymentChipActive]}
+                            icon={option.icon}
+                            selected={paymentMethod === option.key}
+                            showSelectedOverlay
+                            mode="flat"
                             onPress={() => setPaymentMethod(option.key)}
-                            activeOpacity={0.8}>
-                            <MaterialCommunityIcons
-                                name={option.icon}
-                                size={16}
-                                color={paymentMethod === option.key ? Colors.onPrimary : Colors.text}
-                            />
-                            <Text style={[styles.paymentText, paymentMethod === option.key && styles.paymentTextActive]}>
-                                {option.label}
-                            </Text>
-                        </TouchableOpacity>
+                            style={[
+                                styles.chip,
+                                paymentMethod === option.key && { backgroundColor: Colors.primary },
+                            ]}
+                            textStyle={[
+                                styles.chipText,
+                                paymentMethod === option.key && { color: Colors.onPrimary },
+                            ]}
+                            selectedColor={paymentMethod === option.key ? Colors.onPrimary : Colors.text}
+                        >
+                            {option.label}
+                        </Chip>
                     ))}
                 </View>
 
@@ -241,10 +265,18 @@ const Cart = ({ navigation }) => {
 
                 {submitting ?
                     <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 10 }} /> :
-                    <TouchableOpacity style={styles.checkoutBtn} onPress={checkout} activeOpacity={0.85}>
-                        <MaterialCommunityIcons name="check-circle-outline" size={18} color={Colors.onPrimary} />
-                        <Text style={styles.checkoutText}>Tạo đơn hàng</Text>
-                    </TouchableOpacity>
+                    <Button
+                        mode="contained"
+                        icon="check-circle-outline"
+                        onPress={checkout}
+                        buttonColor={Colors.primary}
+                        textColor={Colors.onPrimary}
+                        labelStyle={{ fontWeight: '800', fontSize: 16 }}
+                        style={{ marginTop: 14, borderRadius: 20 }}
+                        contentStyle={{ paddingVertical: 8 }}
+                    >
+                        Tạo đơn hàng
+                    </Button>
                 }
             </View>
 
@@ -303,7 +335,6 @@ const styles = StyleSheet.create({
     cardBody: { flex: 1, marginLeft: 14 },
     cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     name: { fontSize: 16, fontWeight: '800', color: Colors.text, lineHeight: 21, flex: 1, marginRight: 8 },
-    removeBtn: { padding: 4 },
     meta: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
     price: { fontSize: 16, color: Colors.primary, fontWeight: '800', marginTop: 6 },
     cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
@@ -315,7 +346,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: 4,
         paddingVertical: 4,
     },
-    stepBtn: { width: 32, height: 32, borderRadius: 10, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surfaceContainerLowest },
+    stepIconBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.surfaceContainerLowest, margin: 0 },
     quantity: { minWidth: 30, textAlign: 'center', fontSize: 16, fontWeight: '800', color: Colors.text },
     lineTotal: { fontSize: 15, fontWeight: '800', color: Colors.text },
     bottomSheet: {
@@ -332,19 +363,11 @@ const styles = StyleSheet.create({
     },
     sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
     paymentRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
-    paymentChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-        borderRadius: 9999,
+    chip: {
         marginRight: 8,
         marginBottom: 8,
     },
-    paymentChipActive: { backgroundColor: Colors.primary },
-    paymentText: { fontSize: 13, color: Colors.text, fontWeight: '700', marginLeft: 6 },
-    paymentTextActive: { color: Colors.onPrimary },
+    chipText: { fontSize: 13, fontWeight: '700' },
     summaryBlock: {
         backgroundColor: Colors.surfaceContainerHigh,
         borderRadius: 16,
@@ -354,16 +377,6 @@ const styles = StyleSheet.create({
     summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
     summaryLabel: { fontSize: 15, color: Colors.textSecondary, fontWeight: '700' },
     summaryAmount: { fontSize: 24, fontWeight: '800', color: Colors.primary },
-    checkoutBtn: {
-        backgroundColor: Colors.primary,
-        marginTop: 14,
-        borderRadius: 20,
-        paddingVertical: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    checkoutText: { color: Colors.onPrimary, fontWeight: '800', fontSize: 16, marginLeft: 8 },
     empty: {
         flex: 1,
         backgroundColor: Colors.surface,
@@ -382,8 +395,6 @@ const styles = StyleSheet.create({
     },
     emptyTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
     emptyText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
-    emptyBtn: { marginTop: 20, backgroundColor: Colors.primary, paddingHorizontal: 20, paddingVertical: 14, borderRadius: 20 },
-    emptyBtnText: { color: Colors.onPrimary, fontWeight: '800', fontSize: 15 },
 });
 
 export default Cart;

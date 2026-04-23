@@ -4,10 +4,9 @@ import {
     Text,
     FlatList,
     StyleSheet,
-    ActivityIndicator,
-    TouchableOpacity,
     RefreshControl,
 } from 'react-native';
+import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInUp, FadeIn } from '../utils/animations';
@@ -150,9 +149,9 @@ const Orders = ({ navigation }) => {
                 <View style={styles.errorCard}>
                     <MaterialCommunityIcons name="alert-circle-outline" size={20} color={Colors.primary} />
                     <Text style={styles.errorText}>{error}</Text>
-                    <TouchableOpacity style={styles.retryBtn} onPress={() => loadOrders(true)}>
-                        <Text style={styles.retryText}>Thử lại</Text>
-                    </TouchableOpacity>
+                    <Button mode="contained-tonal" onPress={() => loadOrders(true)}>
+                        Thử lại
+                    </Button>
                 </View> :
                 null
             }
@@ -182,9 +181,9 @@ const Orders = ({ navigation }) => {
                         <Text style={styles.emptyText}>
                             Sau khi tạo đơn từ giỏ hàng, lịch sử đơn sẽ xuất hiện tại đây.
                         </Text>
-                        <TouchableOpacity style={styles.emptyBtn} onPress={() => navigation.navigate('Home')} activeOpacity={0.85}>
-                            <Text style={styles.emptyBtnText}>Đi chọn món</Text>
-                        </TouchableOpacity>
+                        <Button mode="contained" onPress={() => navigation.navigate('Home')} style={{ marginTop: 18, borderRadius: 20 }}>
+                            Đi chọn món
+                        </Button>
                     </View>
                 }
             />
@@ -216,8 +215,6 @@ const styles = StyleSheet.create({
         ...editorialShadow,
     },
     errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
-    retryBtn: { backgroundColor: Colors.surfaceContainerLow, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 10 },
-    retryText: { color: Colors.text, fontSize: 13, fontWeight: '700' },
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,
@@ -286,8 +283,6 @@ const styles = StyleSheet.create({
     },
     emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
     emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22, textAlign: 'center' },
-    emptyBtn: { marginTop: 18, backgroundColor: Colors.primary, borderRadius: 20, paddingHorizontal: 20, paddingVertical: 14 },
-    emptyBtnText: { color: Colors.onPrimary, fontWeight: '800' },
 });
 
 export default Orders;

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Image, ActivityIndicator, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { FadeInDown, FadeInUp } from '../utils/animations';
@@ -8,6 +9,9 @@ import PasswordInput from './PasswordInput';
 import BASE_URL, { endpoints } from '../configs';
 import Colors from '../styles/colors';
 import { editorialShadow } from '../styles/theme';
+
+const inputOutlineStyle = { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 };
+const inputBgStyle = { backgroundColor: Colors.surfaceContainerLowest };
 
 const Register = ({ navigation, route }) => {
     const initRole = route.params?.role || 'customer';
@@ -164,78 +168,90 @@ const Register = ({ navigation, route }) => {
                 <FadeInUp delay={300} duration={500}>
                     <Text style={styles.label}>HỌ VÀ TÊN</Text>
                     <View style={styles.nameRow}>
-                        <View style={[styles.inputWrap, { flex: 1, marginRight: 8 }]}>
-                            <MaterialCommunityIcons name="account-outline" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Họ"
-                                placeholderTextColor={Colors.placeholder}
-                                value={user.first_name}
-                                onChangeText={(v) => change('first_name', v)}
-                            />
-                        </View>
-                        <View style={[styles.inputWrap, { flex: 1 }]}>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Tên"
-                                placeholderTextColor={Colors.placeholder}
-                                value={user.last_name}
-                                onChangeText={(v) => change('last_name', v)}
-                            />
-                        </View>
+                        <TextInput
+                            mode="outlined"
+                            placeholder="Họ"
+                            placeholderTextColor={Colors.placeholder}
+                            value={user.first_name}
+                            onChangeText={(v) => change('first_name', v)}
+                            left={<TextInput.Icon icon="account-outline" />}
+                            textColor={Colors.text}
+                            activeOutlineColor={Colors.primary}
+                            outlineStyle={inputOutlineStyle}
+                            style={[inputBgStyle, { flex: 1, marginRight: 8, marginBottom: 16 }]}
+                        />
+                        <TextInput
+                            mode="outlined"
+                            placeholder="Tên"
+                            placeholderTextColor={Colors.placeholder}
+                            value={user.last_name}
+                            onChangeText={(v) => change('last_name', v)}
+                            textColor={Colors.text}
+                            activeOutlineColor={Colors.primary}
+                            outlineStyle={inputOutlineStyle}
+                            style={[inputBgStyle, { flex: 1, marginBottom: 16 }]}
+                        />
                     </View>
 
                     <Text style={styles.label}>TÊN ĐĂNG NHẬP</Text>
-                    <View style={styles.inputWrap}>
-                        <MaterialCommunityIcons name="at" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="username"
-                            placeholderTextColor={Colors.placeholder}
-                            value={user.username}
-                            onChangeText={(v) => change('username', v.replace(/\s/g, ''))}
-                            autoCapitalize="none"
-                        />
-                    </View>
+                    <TextInput
+                        mode="outlined"
+                        placeholder="username"
+                        placeholderTextColor={Colors.placeholder}
+                        value={user.username}
+                        onChangeText={(v) => change('username', v.replace(/\s/g, ''))}
+                        autoCapitalize="none"
+                        left={<TextInput.Icon icon="at" />}
+                        textColor={Colors.text}
+                        activeOutlineColor={Colors.primary}
+                        outlineStyle={inputOutlineStyle}
+                        style={[inputBgStyle, { marginBottom: 16 }]}
+                    />
 
                     <Text style={styles.label}>EMAIL</Text>
-                    <View style={styles.inputWrap}>
-                        <MaterialCommunityIcons name="email-outline" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="example@gmail.com"
-                            placeholderTextColor={Colors.placeholder}
-                            value={user.email}
-                            onChangeText={(v) => change('email', v.replace(/\s/g, ''))}
-                            keyboardType="email-address"
-                            autoCapitalize="none"
-                        />
-                    </View>
+                    <TextInput
+                        mode="outlined"
+                        placeholder="example@gmail.com"
+                        placeholderTextColor={Colors.placeholder}
+                        value={user.email}
+                        onChangeText={(v) => change('email', v.replace(/\s/g, ''))}
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        left={<TextInput.Icon icon="email-outline" />}
+                        textColor={Colors.text}
+                        activeOutlineColor={Colors.primary}
+                        outlineStyle={inputOutlineStyle}
+                        style={[inputBgStyle, { marginBottom: 16 }]}
+                    />
 
                     <Text style={styles.label}>SỐ ĐIỆN THOẠI</Text>
-                    <View style={styles.inputWrap}>
-                        <MaterialCommunityIcons name="phone-outline" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="+84 900 000 000"
-                            placeholderTextColor={Colors.placeholder}
-                            value={user.phone}
-                            onChangeText={(v) => change('phone', v)}
-                            keyboardType="phone-pad"
-                        />
-                    </View>
+                    <TextInput
+                        mode="outlined"
+                        placeholder="+84 900 000 000"
+                        placeholderTextColor={Colors.placeholder}
+                        value={user.phone}
+                        onChangeText={(v) => change('phone', v)}
+                        keyboardType="phone-pad"
+                        left={<TextInput.Icon icon="phone-outline" />}
+                        textColor={Colors.text}
+                        activeOutlineColor={Colors.primary}
+                        outlineStyle={inputOutlineStyle}
+                        style={[inputBgStyle, { marginBottom: 16 }]}
+                    />
 
                     <Text style={styles.label}>ĐỊA CHỈ LIÊN HỆ</Text>
-                    <View style={styles.inputWrap}>
-                        <MaterialCommunityIcons name="map-marker-outline" size={18} color={Colors.textSecondary} style={styles.inputIcon} />
-                        <TextInput
-                            style={styles.input}
-                            placeholder="Ví dụ: 371 Nguyễn Kiệm, Q. Gò Vấp"
-                            placeholderTextColor={Colors.placeholder}
-                            value={user.address}
-                            onChangeText={(v) => change('address', v)}
-                        />
-                    </View>
+                    <TextInput
+                        mode="outlined"
+                        placeholder="Ví dụ: 371 Nguyễn Kiệm, Q. Gò Vấp"
+                        placeholderTextColor={Colors.placeholder}
+                        value={user.address}
+                        onChangeText={(v) => change('address', v)}
+                        left={<TextInput.Icon icon="map-marker-outline" />}
+                        textColor={Colors.text}
+                        activeOutlineColor={Colors.primary}
+                        outlineStyle={inputOutlineStyle}
+                        style={[inputBgStyle, { marginBottom: 16 }]}
+                    />
 
                     <Text style={styles.label}>MẬT KHẨU</Text>
                     <PasswordInput
@@ -254,10 +270,18 @@ const Register = ({ navigation, route }) => {
 
                 <FadeInUp delay={500} duration={500}>
                     {loading ? <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 20 }} /> :
-                        <TouchableOpacity style={styles.btn} onPress={register} activeOpacity={0.85}>
-                            <Text style={styles.btnText}>Đăng ký tài khoản</Text>
-                            <MaterialCommunityIcons name="arrow-right" size={20} color={Colors.onPrimary} />
-                        </TouchableOpacity>
+                        <Button
+                            mode="contained"
+                            icon="arrow-right"
+                            onPress={register}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            contentStyle={{ flexDirection: 'row-reverse', paddingVertical: 8 }}
+                            style={{ borderRadius: 24, marginTop: 16, ...editorialShadow }}
+                            labelStyle={{ fontSize: 17, fontWeight: '800' }}
+                        >
+                            Đăng ký tài khoản
+                        </Button>
                     }
 
                     <View style={styles.footer}>
@@ -351,28 +375,6 @@ const styles = StyleSheet.create({
     noticeText: { flex: 1, fontSize: 13, color: Colors.primary, marginLeft: 10, lineHeight: 19 },
     label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
     nameRow: { flexDirection: 'row' },
-    inputWrap: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 16,
-        marginBottom: 16,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    inputIcon: { marginLeft: 16 },
-    input: { flex: 1, paddingVertical: 16, paddingHorizontal: 12, fontSize: 16, color: Colors.text },
-    btn: {
-        flexDirection: 'row',
-        backgroundColor: Colors.primary,
-        padding: 18,
-        borderRadius: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 16,
-        ...editorialShadow,
-    },
-    btnText: { color: Colors.onPrimary, fontSize: 17, fontWeight: '800', marginRight: 8 },
     footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 28, marginBottom: 40 },
     footerText: { color: Colors.textSecondary, fontSize: 14 },
     footerLink: { color: Colors.primary, fontSize: 14, fontWeight: '800' },

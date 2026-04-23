@@ -2,15 +2,14 @@ import { useCallback, useEffect, useState } from 'react';
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
+import { ActivityIndicator, Button, Chip, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { ConfirmDialog, Toast } from './CustomDialog';
@@ -28,6 +27,9 @@ import {
     getDisplayName,
     sanitizeNumberInput,
 } from '../utils/format';
+
+const outlineStyle = { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 };
+const inputStyle = { backgroundColor: Colors.surfaceContainerLow };
 
 const initialDish = {
     name: '',
@@ -231,9 +233,14 @@ const CreateDish = ({ navigation }) => {
                 <MaterialCommunityIcons name="database-alert-outline" size={52} color={Colors.primary} />
                 <Text style={styles.stateTitle}>Chưa thể mở form tạo món</Text>
                 <Text style={styles.stateText}>{loadError}</Text>
-                <TouchableOpacity style={styles.retryBtn} activeOpacity={0.85} onPress={loadData}>
-                    <Text style={styles.retryText}>Tải lại dữ liệu</Text>
-                </TouchableOpacity>
+                <Button
+                    mode="contained"
+                    buttonColor={Colors.primary}
+                    textColor={Colors.onPrimary}
+                    style={styles.stateBtn}
+                    onPress={loadData}>
+                    Tải lại dữ liệu
+                </Button>
             </View>
         );
     }
@@ -246,9 +253,14 @@ const CreateDish = ({ navigation }) => {
                 <Text style={styles.stateText}>
                     Quyền tạo món được quản lý trong phần Hồ sơ của đầu bếp. Hãy mở Hồ sơ để xem thông tin tài khoản.
                 </Text>
-                <TouchableOpacity style={styles.retryBtn} activeOpacity={0.85} onPress={() => navigation.navigate('Profile')}>
-                    <Text style={styles.retryText}>Mở hồ sơ</Text>
-                </TouchableOpacity>
+                <Button
+                    mode="contained-tonal"
+                    buttonColor={Colors.surfaceContainerLow}
+                    textColor={Colors.text}
+                    style={styles.stateBtn}
+                    onPress={() => navigation.navigate('Profile')}>
+                    Mở hồ sơ
+                </Button>
             </View>
         );
     }
@@ -292,50 +304,69 @@ const CreateDish = ({ navigation }) => {
                 <FadeInDown duration={500} style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Thông tin chính</Text>
 
-                    <Text style={styles.label}>TÊN MÓN</Text>
                     <TextInput
-                        style={[styles.input, fieldErrors.name && styles.inputError]}
+                        mode="outlined"
+                        label="TÊN MÓN"
                         placeholder="Ví dụ: Cơm chiên hải sản"
                         placeholderTextColor={Colors.placeholder}
                         value={dish.name}
                         onChangeText={(value) => changeField('name', value)}
+                        error={!!fieldErrors.name}
+                        outlineStyle={outlineStyle}
+                        style={[inputStyle, styles.formInput]}
+                        activeOutlineColor={Colors.primary}
+                        textColor={Colors.text}
                     />
                     {fieldErrors.name ? <Text style={styles.errorText}>{fieldErrors.name}</Text> : null}
 
-                    <Text style={styles.label}>MÔ TẢ NGẮN</Text>
                     <TextInput
-                        style={[styles.input, styles.multiline]}
+                        mode="outlined"
+                        label="MÔ TẢ NGẮN"
                         placeholder="Mô tả hương vị, điểm nổi bật hoặc cách phục vụ món."
                         placeholderTextColor={Colors.placeholder}
                         value={dish.description}
                         onChangeText={(value) => changeField('description', value)}
-                        multiline={true}
-                        textAlignVertical="top"
+                        multiline
+                        numberOfLines={4}
+                        outlineStyle={outlineStyle}
+                        style={[inputStyle, styles.formInput, styles.multilineInput]}
+                        activeOutlineColor={Colors.primary}
+                        textColor={Colors.text}
                     />
 
                     <View style={styles.row}>
                         <View style={styles.halfField}>
-                            <Text style={styles.label}>GIÁ BÁN (VNĐ)</Text>
                             <TextInput
-                                style={[styles.input, fieldErrors.price && styles.inputError]}
+                                mode="outlined"
+                                label="GIÁ BÁN (VNĐ)"
                                 placeholder="65000"
                                 placeholderTextColor={Colors.placeholder}
                                 value={dish.price}
                                 onChangeText={(value) => changeField('price', sanitizeNumberInput(value))}
                                 keyboardType="numeric"
+                                error={!!fieldErrors.price}
+                                outlineStyle={outlineStyle}
+                                style={[inputStyle, styles.formInput]}
+                                activeOutlineColor={Colors.primary}
+                                textColor={Colors.text}
                             />
                             {fieldErrors.price ? <Text style={styles.errorText}>{fieldErrors.price}</Text> : null}
                         </View>
 
                         <View style={styles.halfField}>
-                            <Text style={styles.label}>CHUẨN BỊ (PHÚT)</Text>
                             <TextInput
-                                style={[styles.input, fieldErrors.preparation_time && styles.inputError]}
+                                mode="outlined"
+                                label="CHUẨN BỊ (PHÚT)"
                                 placeholder="20"
                                 placeholderTextColor={Colors.placeholder}
                                 value={dish.preparation_time}
                                 onChangeText={(value) => changeField('preparation_time', sanitizeNumberInput(value))}
                                 keyboardType="numeric"
+                                error={!!fieldErrors.preparation_time}
+                                outlineStyle={outlineStyle}
+                                style={[inputStyle, styles.formInput]}
+                                activeOutlineColor={Colors.primary}
+                                textColor={Colors.text}
                             />
                             {fieldErrors.preparation_time ?
                                 <Text style={styles.errorText}>{fieldErrors.preparation_time}</Text> :
@@ -347,31 +378,35 @@ const CreateDish = ({ navigation }) => {
                 <FadeInDown duration={500} style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Nguyên liệu và phân loại</Text>
 
-                    <Text style={styles.label}>NGUYÊN LIỆU</Text>
                     <TextInput
-                        style={[styles.input, styles.multiline]}
+                        mode="outlined"
+                        label="NGUYÊN LIỆU"
                         placeholder="Liệt kê các thành phần chính, cách sơ chế hoặc lưu ý dị ứng nếu có."
                         placeholderTextColor={Colors.placeholder}
                         value={dish.ingredients}
                         onChangeText={(value) => changeField('ingredients', value)}
-                        multiline={true}
-                        textAlignVertical="top"
+                        multiline
+                        numberOfLines={4}
+                        outlineStyle={outlineStyle}
+                        style={[inputStyle, styles.formInput, styles.multilineInput]}
+                        activeOutlineColor={Colors.primary}
+                        textColor={Colors.text}
                     />
 
                     <Text style={styles.label}>MENU</Text>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                         {menus.map((menu) => (
-                            <TouchableOpacity
+                            <Chip
                                 key={menu.id}
-                                style={[styles.chip, selectedMenu === menu.id && styles.chipActive]}
+                                mode="flat"
+                                selected={selectedMenu === menu.id}
                                 onPress={() => {
                                     setSelectedMenu(menu.id);
                                     setFieldErrors((prev) => ({ ...prev, menu: '' }));
-                                }}>
-                                <Text style={[styles.chipText, selectedMenu === menu.id && styles.chipTextActive]}>
-                                    {menu.name}
-                                </Text>
-                            </TouchableOpacity>
+                                }}
+                                style={styles.selectionChip}>
+                                {menu.name}
+                            </Chip>
                         ))}
                     </ScrollView>
                     {fieldErrors.menu ? <Text style={styles.errorText}>{fieldErrors.menu}</Text> : null}
@@ -379,17 +414,17 @@ const CreateDish = ({ navigation }) => {
                     <Text style={styles.label}>LOẠI MÓN</Text>
                     <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
                         {categories.map((category) => (
-                            <TouchableOpacity
+                            <Chip
                                 key={category.id}
-                                style={[styles.chip, selectedCategory === category.id && styles.chipActive]}
+                                mode="flat"
+                                selected={selectedCategory === category.id}
                                 onPress={() => {
                                     setSelectedCategory(category.id);
                                     setFieldErrors((prev) => ({ ...prev, category: '' }));
-                                }}>
-                                <Text style={[styles.chipText, selectedCategory === category.id && styles.chipTextActive]}>
-                                    {category.name}
-                                </Text>
-                            </TouchableOpacity>
+                                }}
+                                style={styles.selectionChip}>
+                                {category.name}
+                            </Chip>
                         ))}
                     </ScrollView>
                     {fieldErrors.category ? <Text style={styles.errorText}>{fieldErrors.category}</Text> : null}
@@ -422,21 +457,17 @@ const CreateDish = ({ navigation }) => {
                     <Text style={styles.previewInfo}>Phụ trách: {getDisplayName(user, 'Đầu bếp')}</Text>
                 </FadeInDown>
 
-                <TouchableOpacity
-                    style={[
-                        styles.submitBtn,
-                        submitting && styles.submitBtnDisabled,
-                    ]}
-                    activeOpacity={0.85}
+                <Button
+                    mode="contained"
+                    icon="content-save-outline"
+                    buttonColor={Colors.primary}
+                    textColor={Colors.onPrimary}
+                    style={styles.submitAction}
                     disabled={submitting}
+                    loading={submitting}
                     onPress={submit}>
-                    {submitting ?
-                        <ActivityIndicator color={Colors.onPrimary} /> :
-                        <>
-                            <MaterialCommunityIcons name="content-save-outline" size={20} color={Colors.onPrimary} />
-                            <Text style={styles.submitText}>Xác nhận tạo món</Text>
-                        </>}
-                </TouchableOpacity>
+                    Xác nhận tạo món
+                </Button>
             </ScrollView>
 
             <ConfirmDialog
@@ -507,16 +538,8 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         textAlign: 'center',
     },
-    retryBtn: {
+    stateBtn: {
         marginTop: 18,
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingHorizontal: 18,
-        paddingVertical: 14,
-    },
-    retryText: {
-        color: Colors.onPrimary,
-        fontWeight: '700',
     },
     hero: {
         backgroundColor: Colors.surfaceContainerLowest,
@@ -610,22 +633,11 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         marginBottom: 6,
     },
-    input: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 14,
-        fontSize: 15,
-        color: Colors.text,
+    formInput: {
         marginBottom: 10,
     },
-    inputError: {
-        borderWidth: 1,
-        borderColor: Colors.primary,
-    },
-    multiline: {
+    multilineInput: {
         minHeight: 100,
-        textAlignVertical: 'top',
     },
     errorText: {
         marginBottom: 10,
@@ -643,23 +655,8 @@ const styles = StyleSheet.create({
     chipRow: {
         paddingBottom: 4,
     },
-    chip: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
+    selectionChip: {
         marginRight: 8,
-    },
-    chipActive: {
-        backgroundColor: Colors.primary,
-    },
-    chipText: {
-        fontSize: 14,
-        color: Colors.text,
-    },
-    chipTextActive: {
-        color: Colors.onPrimary,
-        fontWeight: '700',
     },
     previewCard: {
         marginTop: 16,
@@ -717,23 +714,8 @@ const styles = StyleSheet.create({
         lineHeight: 20,
         color: Colors.textSecondary,
     },
-    submitBtn: {
+    submitAction: {
         marginTop: 18,
-        backgroundColor: Colors.primary,
-        borderRadius: 20,
-        paddingVertical: 16,
-        justifyContent: 'center',
-        alignItems: 'center',
-        flexDirection: 'row',
-    },
-    submitBtnDisabled: {
-        opacity: 0.55,
-    },
-    submitText: {
-        marginLeft: 8,
-        color: Colors.onPrimary,
-        fontSize: 15,
-        fontWeight: '700',
     },
 });
 

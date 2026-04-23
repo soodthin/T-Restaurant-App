@@ -3,13 +3,12 @@ import {
     View,
     Text,
     FlatList,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
     Image,
-    ActivityIndicator,
     ScrollView,
 } from 'react-native';
+import { Searchbar, Chip, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInDown, FadeInUp, FadeIn } from '../utils/animations';
@@ -203,30 +202,32 @@ const Home = ({ navigation }) => {
                         </Text>
 
                         <View style={styles.cardActions}>
-                            <TouchableOpacity
-                                style={[styles.compareBtn, isSelected && styles.compareBtnActive]}
+                            <Button
+                                mode={isSelected ? 'contained' : 'contained-tonal'}
+                                compact
+                                icon={isSelected ? 'check-circle' : 'compare'}
                                 onPress={() => toggleCompare(item.id)}
-                                activeOpacity={0.8}>
-                                <MaterialCommunityIcons
-                                    name={isSelected ? 'check-circle' : 'compare'}
-                                    size={16}
-                                    color={isSelected ? Colors.onPrimary : Colors.text}
-                                />
-                                <Text style={[styles.compareText, isSelected && styles.compareTextActive]}>
-                                    {isSelected ? 'Đã chọn' : 'So sánh'}
-                                </Text>
-                            </TouchableOpacity>
+                                buttonColor={isSelected ? Colors.primary : Colors.surfaceContainerLow}
+                                textColor={isSelected ? Colors.onPrimary : Colors.text}
+                                style={styles.actionBtn}
+                                labelStyle={styles.actionBtnLabel}>
+                                {isSelected ? 'Đã chọn' : 'So sánh'}
+                            </Button>
 
-                            <TouchableOpacity
-                                style={styles.addBtn}
-                                activeOpacity={0.85}
+                            <Button
+                                mode="contained"
+                                compact
+                                icon="cart-plus"
                                 onPress={() => {
                                     addItem(item);
                                     showToast(`Đã thêm ${item.name} vào giỏ`);
-                                }}>
-                                <MaterialCommunityIcons name="cart-plus" size={18} color={Colors.onPrimary} />
-                                <Text style={styles.addBtnText}>Thêm</Text>
-                            </TouchableOpacity>
+                                }}
+                                buttonColor={Colors.primary}
+                                textColor={Colors.onPrimary}
+                                style={styles.actionBtn}
+                                labelStyle={styles.actionBtnLabel}>
+                                Thêm
+                            </Button>
                         </View>
                     </View>
                 </TouchableOpacity>
@@ -245,21 +246,25 @@ const Home = ({ navigation }) => {
             </FadeInDown>
 
             <FadeIn delay={200} duration={400} style={styles.searchRow}>
-                <View style={styles.searchInputWrap}>
-                    <MaterialCommunityIcons name="magnify" size={22} color={Colors.textSecondary} style={{ marginLeft: 16 }} />
-                    <TextInput
-                        style={styles.searchInput}
-                        placeholder="Tìm món ăn, đầu bếp hoặc thực đơn..."
-                        placeholderTextColor={Colors.placeholder}
-                        value={search}
-                        onChangeText={setSearch}
-                        onSubmitEditing={() => refresh({ search })}
-                        returnKeyType="search"
-                    />
-                </View>
-                <TouchableOpacity style={styles.searchBtn} onPress={() => refresh({ search })} activeOpacity={0.85}>
-                    <MaterialCommunityIcons name="tune-variant" size={22} color={Colors.onPrimary} />
-                </TouchableOpacity>
+                <Searchbar
+                    placeholder="Tìm món ăn, đầu bếp hoặc thực đơn..."
+                    value={search}
+                    onChangeText={setSearch}
+                    onSubmitEditing={() => refresh({ search })}
+                    style={styles.searchbar}
+                    inputStyle={{ color: Colors.text }}
+                    placeholderTextColor={Colors.placeholder}
+                    elevation={0}
+                />
+                <IconButton
+                    icon="tune-variant"
+                    mode="contained"
+                    containerColor={Colors.primary}
+                    iconColor={Colors.onPrimary}
+                    size={22}
+                    onPress={() => refresh({ search })}
+                    style={styles.filterBtn}
+                />
             </FadeIn>
 
             <FadeIn delay={300} duration={400} style={styles.compareBanner}>
@@ -272,12 +277,17 @@ const Home = ({ navigation }) => {
                         Đã chọn {selectedCompareIds.length}/3 món để so sánh.
                     </Text>
                 </View>
-                <TouchableOpacity
-                    style={[styles.compareCta, selectedCompareIds.length < 2 && styles.compareCtaDisabled]}
+                <Button
+                    mode="contained"
+                    compact
                     onPress={goToCompare}
-                    activeOpacity={0.85}>
-                    <Text style={styles.compareCtaText}>Mở bảng</Text>
-                </TouchableOpacity>
+                    disabled={selectedCompareIds.length < 2}
+                    buttonColor={Colors.text}
+                    textColor={Colors.onPrimary}
+                    style={{ borderRadius: 16 }}
+                    labelStyle={{ fontWeight: '700', fontSize: 13 }}>
+                    Mở bảng
+                </Button>
             </FadeIn>
 
             {menus.length > 0 &&
@@ -285,22 +295,26 @@ const Home = ({ navigation }) => {
                     horizontal={true}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={styles.chipRow}>
-                    <TouchableOpacity
-                        style={[styles.chip, menuId === null && styles.chipActive]}
+                    <Chip
+                        selected={menuId === null}
                         onPress={() => refresh({ menuId: null })}
-                        activeOpacity={0.8}>
-                        <Text style={[styles.chipText, menuId === null && styles.chipTextActive]}>Tất cả menu</Text>
-                    </TouchableOpacity>
+                        mode="flat"
+                        compact
+                        style={styles.filterChip}
+                        textStyle={styles.filterChipText}>
+                        Tất cả menu
+                    </Chip>
                     {menus.map((menu) => (
-                        <TouchableOpacity
+                        <Chip
                             key={menu.id}
-                            style={[styles.chip, menuId === menu.id && styles.chipActive]}
+                            selected={menuId === menu.id}
                             onPress={() => refresh({ menuId: menu.id })}
-                            activeOpacity={0.8}>
-                            <Text style={[styles.chipText, menuId === menu.id && styles.chipTextActive]}>
-                                {menu.name}
-                            </Text>
-                        </TouchableOpacity>
+                            mode="flat"
+                            compact
+                            style={styles.filterChip}
+                            textStyle={styles.filterChipText}>
+                            {menu.name}
+                        </Chip>
                     ))}
                 </ScrollView>
             }
@@ -310,22 +324,26 @@ const Home = ({ navigation }) => {
                     horizontal={true}
                     showsHorizontalScrollIndicator={false}
                     contentContainerStyle={[styles.chipRow, { paddingTop: 0 }]}>
-                    <TouchableOpacity
-                        style={[styles.chip, catId === null && styles.chipActive]}
+                    <Chip
+                        selected={catId === null}
                         onPress={() => refresh({ catId: null })}
-                        activeOpacity={0.8}>
-                        <Text style={[styles.chipText, catId === null && styles.chipTextActive]}>Tất cả loại món</Text>
-                    </TouchableOpacity>
+                        mode="flat"
+                        compact
+                        style={styles.filterChip}
+                        textStyle={styles.filterChipText}>
+                        Tất cả loại món
+                    </Chip>
                     {categories.map((category) => (
-                        <TouchableOpacity
+                        <Chip
                             key={category.id}
-                            style={[styles.chip, catId === category.id && styles.chipActive]}
+                            selected={catId === category.id}
                             onPress={() => refresh({ catId: category.id })}
-                            activeOpacity={0.8}>
-                            <Text style={[styles.chipText, catId === category.id && styles.chipTextActive]}>
-                                {category.name}
-                            </Text>
-                        </TouchableOpacity>
+                            mode="flat"
+                            compact
+                            style={styles.filterChip}
+                            textStyle={styles.filterChipText}>
+                            {category.name}
+                        </Chip>
                     ))}
                 </ScrollView>
             }
@@ -335,15 +353,16 @@ const Home = ({ navigation }) => {
                 showsHorizontalScrollIndicator={false}
                 contentContainerStyle={[styles.chipRow, { paddingTop: 0, paddingBottom: 12 }]}>
                 {sortOptions.map((option) => (
-                    <TouchableOpacity
+                    <Chip
                         key={option.key || 'default'}
-                        style={[styles.sortChip, ordering === option.key && styles.sortChipActive]}
+                        selected={ordering === option.key}
                         onPress={() => refresh({ ordering: option.key })}
-                        activeOpacity={0.8}>
-                        <Text style={[styles.sortText, ordering === option.key && styles.sortTextActive]}>
-                            {option.label}
-                        </Text>
-                    </TouchableOpacity>
+                        mode="flat"
+                        compact
+                        style={styles.filterChip}
+                        textStyle={styles.filterChipText}>
+                        {option.label}
+                    </Chip>
                 ))}
             </ScrollView>
 
@@ -354,9 +373,15 @@ const Home = ({ navigation }) => {
                         <Text style={styles.errorTitle}>Không tải được danh sách món</Text>
                         <Text style={styles.errorText}>{error}</Text>
                     </View>
-                    <TouchableOpacity style={styles.retryBtn} onPress={() => refresh({ search, catId, menuId, ordering })}>
-                        <Text style={styles.retryText}>Thử lại</Text>
-                    </TouchableOpacity>
+                    <Button
+                        mode="contained-tonal"
+                        compact
+                        onPress={() => refresh({ search, catId, menuId, ordering })}
+                        buttonColor={Colors.surfaceContainerLow}
+                        textColor={Colors.text}
+                        labelStyle={{ fontWeight: '700', fontSize: 13 }}>
+                        Thử lại
+                    </Button>
                 </View> :
                 null
             }
@@ -401,30 +426,15 @@ const styles = StyleSheet.create({
     heroEyebrow: { color: Colors.primary, fontSize: 11, fontWeight: '800', letterSpacing: 3 },
     heroTitle: { fontSize: 30, fontWeight: '800', color: Colors.text, marginTop: 10, lineHeight: 38 },
     heroSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22 },
-    searchRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8 },
-    searchInputWrap: {
+    searchRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center' },
+    searchbar: {
         flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLowest,
         marginRight: 10,
         ...editorialShadow,
     },
-    searchInput: {
-        flex: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 15,
-        fontSize: 15,
-        color: Colors.text,
-    },
-    searchBtn: {
-        backgroundColor: Colors.primary,
-        width: 54,
-        borderRadius: 20,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
+    filterBtn: { borderRadius: 20 },
     compareBanner: {
         marginHorizontal: 16,
         marginTop: 14,
@@ -447,35 +457,9 @@ const styles = StyleSheet.create({
     },
     compareTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
     compareSubtitle: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
-    compareCta: {
-        backgroundColor: Colors.text,
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-    },
-    compareCtaDisabled: { backgroundColor: Colors.textSecondary },
-    compareCtaText: { color: Colors.onPrimary, fontSize: 13, fontWeight: '700' },
     chipRow: { paddingHorizontal: 16, paddingVertical: 8 },
-    chip: {
-        backgroundColor: Colors.surfaceContainerHigh,
-        paddingHorizontal: 18,
-        paddingVertical: 10,
-        borderRadius: 9999,
-        marginRight: 8,
-    },
-    chipActive: { backgroundColor: Colors.primary },
-    chipText: { fontSize: 14, color: Colors.text, fontWeight: '600' },
-    chipTextActive: { color: Colors.onPrimary, fontWeight: '700' },
-    sortChip: {
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        borderRadius: 9999,
-        marginRight: 8,
-        backgroundColor: Colors.surfaceContainerLow,
-    },
-    sortChipActive: { backgroundColor: Colors.text },
-    sortText: { fontSize: 13, color: Colors.textSecondary, fontWeight: '600' },
-    sortTextActive: { color: Colors.onPrimary },
+    filterChip: { marginRight: 8 },
+    filterChipText: { fontWeight: '600' },
     errorCard: {
         marginHorizontal: 16,
         marginTop: 6,
@@ -489,8 +473,6 @@ const styles = StyleSheet.create({
     },
     errorTitle: { fontSize: 15, fontWeight: '700', color: Colors.text },
     errorText: { fontSize: 13, color: Colors.textSecondary, marginTop: 4, lineHeight: 18 },
-    retryBtn: { backgroundColor: Colors.surfaceContainerLow, paddingHorizontal: 14, paddingVertical: 10, borderRadius: 14 },
-    retryText: { color: Colors.text, fontWeight: '700', fontSize: 13 },
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,
@@ -530,30 +512,9 @@ const styles = StyleSheet.create({
     },
     metricText: { fontSize: 12, color: Colors.text, marginLeft: 6, fontWeight: '600' },
     chefText: { fontSize: 13, color: Colors.textSecondary, marginTop: 12 },
-    cardActions: { flexDirection: 'row', marginTop: 16 },
-    compareBtn: {
-        flex: 1,
-        marginRight: 8,
-        borderRadius: 20,
-        paddingVertical: 12,
-        backgroundColor: Colors.surfaceContainerLow,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    compareBtnActive: { backgroundColor: Colors.primary },
-    compareText: { fontSize: 14, fontWeight: '700', color: Colors.text, marginLeft: 6 },
-    compareTextActive: { color: Colors.onPrimary },
-    addBtn: {
-        flex: 1,
-        borderRadius: 20,
-        paddingVertical: 12,
-        backgroundColor: Colors.primary,
-        alignItems: 'center',
-        justifyContent: 'center',
-        flexDirection: 'row',
-    },
-    addBtnText: { color: Colors.onPrimary, fontSize: 14, fontWeight: '700', marginLeft: 6 },
+    cardActions: { flexDirection: 'row', marginTop: 16, gap: 8 },
+    actionBtn: { flex: 1, borderRadius: 20 },
+    actionBtnLabel: { fontWeight: '700', fontSize: 14 },
     empty: { alignItems: 'center', marginTop: 36, paddingHorizontal: 32, paddingBottom: 10 },
     emptyTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginTop: 14 },
     emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 21 },

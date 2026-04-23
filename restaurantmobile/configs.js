@@ -1,4 +1,4 @@
-const BASE_URL = "http://10.17.37.102:8000";
+const BASE_URL = "http://10.17.48.251:8000";
 
 export const endpoints = {
     'login': '/o/token/',

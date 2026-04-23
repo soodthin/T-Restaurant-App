@@ -3,11 +3,11 @@ import {
     View,
     Text,
     StyleSheet,
-    ActivityIndicator,
     ScrollView,
     RefreshControl,
     TouchableOpacity,
 } from 'react-native';
+import { ActivityIndicator, Button } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -182,9 +182,14 @@ const ChefHome = ({ navigation }) => {
                         <Text style={styles.errorTitle}>Không tải được bảng điều khiển</Text>
                         <Text style={styles.errorText}>{error}</Text>
                     </View>
-                    <TouchableOpacity style={styles.retryBtn} onPress={() => loadDashboard(true)}>
-                        <Text style={styles.retryText}>Thử lại</Text>
-                    </TouchableOpacity>
+                    <Button
+                        mode="contained-tonal"
+                        buttonColor={Colors.surfaceContainerLow}
+                        textColor={Colors.text}
+                        compact
+                        onPress={() => loadDashboard(true)}>
+                        Thử lại
+                    </Button>
                 </View> :
                 null}
 
@@ -325,17 +330,6 @@ const styles = StyleSheet.create({
         fontSize: 13,
         lineHeight: 20,
         color: Colors.textSecondary,
-    },
-    retryBtn: {
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 20,
-        paddingHorizontal: 14,
-        paddingVertical: 10,
-    },
-    retryText: {
-        fontSize: 13,
-        fontWeight: '700',
-        color: Colors.text,
     },
     statsSection: {
         flexDirection: 'row',

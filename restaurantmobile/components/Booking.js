@@ -2,15 +2,14 @@ import { useCallback, useState } from 'react';
 import {
     View,
     Text,
-    TextInput,
     TouchableOpacity,
     StyleSheet,
-    ActivityIndicator,
     KeyboardAvoidingView,
     Platform,
     FlatList,
     RefreshControl,
 } from 'react-native';
+import { TextInput, Button, ActivityIndicator, IconButton, Chip, SegmentedButtons } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -228,9 +227,14 @@ const Booking = ({ navigation }) => {
                     </View> : null}
 
                 {item.status === 'pending' ?
-                    <TouchableOpacity style={styles.cancelBookingBtn} onPress={() => setCancelBookingId(item.id)} activeOpacity={0.8}>
-                        <Text style={styles.cancelBookingText}>Hủy lịch này</Text>
-                    </TouchableOpacity> :
+                    <Button
+                        mode="contained-tonal"
+                        onPress={() => setCancelBookingId(item.id)}
+                        style={{ alignSelf: 'flex-start', marginTop: 14, borderRadius: 9999 }}
+                        labelStyle={{ fontWeight: '700', fontSize: 13 }}
+                    >
+                        Hủy lịch này
+                    </Button> :
                     null
                 }
             </View>
@@ -241,21 +245,16 @@ const Booking = ({ navigation }) => {
         <KeyboardAvoidingView
             style={{ flex: 1, backgroundColor: Colors.surface }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <FadeIn duration={300} style={styles.tabRow}>
-                <TouchableOpacity
-                    style={[styles.tabBtn, tab === 'new' && styles.tabActive]}
-                    onPress={() => setTab('new')}
-                    activeOpacity={0.8}>
-                    <MaterialCommunityIcons name="calendar-plus" size={18} color={tab === 'new' ? Colors.onPrimary : Colors.textSecondary} />
-                    <Text style={[styles.tabText, tab === 'new' && styles.tabTextActive]}>Đặt bàn mới</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                    style={[styles.tabBtn, tab === 'history' && styles.tabActive]}
-                    onPress={() => setTab('history')}
-                    activeOpacity={0.8}>
-                    <MaterialCommunityIcons name="history" size={18} color={tab === 'history' ? Colors.onPrimary : Colors.textSecondary} />
-                    <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>Lịch sử</Text>
-                </TouchableOpacity>
+            <FadeIn duration={300} style={styles.segmentedRow}>
+                <SegmentedButtons
+                    value={tab}
+                    onValueChange={setTab}
+                    buttons={[
+                        { value: 'new', label: 'Đặt bàn mới', icon: 'calendar-plus' },
+                        { value: 'history', label: 'Lịch sử', icon: 'history' },
+                    ]}
+                    style={{ flex: 1 }}
+                />
             </FadeIn>
 
             {tab === 'new' ? (
@@ -293,13 +292,23 @@ const Booking = ({ navigation }) => {
                                 <Text style={styles.suggestedLabel}>Giờ gợi ý</Text>
                                 <View style={styles.suggestedRow}>
                                     {suggestedTimes.map((time) => (
-                                        <TouchableOpacity
+                                        <Chip
                                             key={time}
-                                            style={[styles.suggestedChip, fmtTime(date) === time && styles.suggestedChipActive]}
+                                            selected={fmtTime(date) === time}
+                                            mode="flat"
                                             onPress={() => selectSuggestedTime(time)}
-                                            activeOpacity={0.8}>
-                                            <Text style={[styles.suggestedText, fmtTime(date) === time && styles.suggestedTextActive]}>{time}</Text>
-                                        </TouchableOpacity>
+                                            style={[
+                                                styles.suggestedChip,
+                                                fmtTime(date) === time && styles.suggestedChipActive,
+                                            ]}
+                                            textStyle={[
+                                                styles.suggestedText,
+                                                fmtTime(date) === time && styles.suggestedTextActive,
+                                            ]}
+                                            showSelectedOverlay
+                                        >
+                                            {time}
+                                        </Chip>
                                     ))}
                                 </View>
 
@@ -315,38 +324,52 @@ const Booking = ({ navigation }) => {
 
                                 <Text style={styles.label}>SỐ KHÁCH</Text>
                                 <View style={styles.guestStepper}>
-                                    <TouchableOpacity
-                                        style={styles.guestStepBtn}
-                                        onPress={() => setGuests((prev) => Math.max(1, prev - 1))}>
-                                        <MaterialCommunityIcons name="minus" size={20} color={Colors.text} />
-                                    </TouchableOpacity>
+                                    <IconButton
+                                        icon="minus"
+                                        size={20}
+                                        iconColor={Colors.text}
+                                        onPress={() => setGuests((prev) => Math.max(1, prev - 1))}
+                                        style={styles.guestStepIconBtn}
+                                    />
                                     <Text style={styles.guestCount}>{guests}</Text>
-                                    <TouchableOpacity
-                                        style={styles.guestStepBtn}
-                                        onPress={() => setGuests((prev) => prev + 1)}>
-                                        <MaterialCommunityIcons name="plus" size={20} color={Colors.text} />
-                                    </TouchableOpacity>
-                                </View>
-
-                                <Text style={styles.label}>GHI CHÚ</Text>
-                                <View style={styles.noteInputWrap}>
-                                    <TextInput
-                                        style={styles.noteInput}
-                                        placeholder="Yêu cầu đặc biệt, dị ứng, ghế trẻ em..."
-                                        placeholderTextColor={Colors.placeholder}
-                                        value={note}
-                                        onChangeText={setNote}
-                                        multiline={true}
-                                        textAlignVertical="top"
+                                    <IconButton
+                                        icon="plus"
+                                        size={20}
+                                        iconColor={Colors.text}
+                                        onPress={() => setGuests((prev) => prev + 1)}
+                                        style={styles.guestStepIconBtn}
                                     />
                                 </View>
 
+                                <Text style={styles.label}>GHI CHÚ</Text>
+                                <TextInput
+                                    mode="outlined"
+                                    placeholder="Yêu cầu đặc biệt, dị ứng, ghế trẻ em..."
+                                    placeholderTextColor={Colors.placeholder}
+                                    value={note}
+                                    onChangeText={setNote}
+                                    multiline
+                                    textAlignVertical="top"
+                                    outlineStyle={{ borderRadius: 20, borderColor: Colors.outline, borderWidth: 1.5 }}
+                                    style={{ backgroundColor: Colors.surfaceContainerLowest, height: 90, marginBottom: 18 }}
+                                    activeOutlineColor={Colors.primary}
+                                    textColor={Colors.text}
+                                />
+
                                 {loading ?
                                     <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 16 }} /> :
-                                    <TouchableOpacity style={styles.btn} onPress={book} activeOpacity={0.85}>
-                                        <Text style={styles.btnText}>Xác nhận đặt bàn</Text>
-                                        <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.onPrimary} />
-                                    </TouchableOpacity>
+                                    <Button
+                                        mode="contained"
+                                        icon="chevron-right"
+                                        onPress={book}
+                                        buttonColor={Colors.primary}
+                                        textColor={Colors.onPrimary}
+                                        labelStyle={{ fontWeight: '800', fontSize: 17 }}
+                                        style={{ borderRadius: 20, marginTop: 8 }}
+                                        contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
+                                    >
+                                        Xác nhận đặt bàn
+                                    </Button>
                                 }
                             </FadeInUp>
                         </View>
@@ -424,20 +447,7 @@ const Booking = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-    tabRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 12 },
-    tabBtn: {
-        flex: 1,
-        flexDirection: 'row',
-        paddingVertical: 12,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: 9999,
-        backgroundColor: Colors.surfaceContainerLow,
-        marginHorizontal: 4,
-    },
-    tabActive: { backgroundColor: Colors.primary },
-    tabText: { fontSize: 15, fontWeight: '700', color: Colors.textSecondary, marginLeft: 6 },
-    tabTextActive: { color: Colors.onPrimary },
+    segmentedRow: { paddingHorizontal: 16, paddingTop: 12 },
     form: { padding: 20 },
     summaryCard: {
         backgroundColor: Colors.surfaceContainerLowest,
@@ -473,14 +483,8 @@ const styles = StyleSheet.create({
     suggestedLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
     suggestedRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 18 },
     suggestedChip: {
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 9999,
-        backgroundColor: Colors.surfaceContainerLow,
         marginRight: 8,
         marginBottom: 8,
-        borderWidth: 1.5,
-        borderColor: 'transparent',
     },
     suggestedChipActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
     suggestedText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
@@ -497,33 +501,14 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         borderColor: Colors.outline,
     },
-    guestStepBtn: {
+    guestStepIconBtn: {
         width: 42,
         height: 42,
         borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
         backgroundColor: Colors.surfaceContainerLow,
+        margin: 0,
     },
     guestCount: { minWidth: 50, textAlign: 'center', fontSize: 20, fontWeight: '800', color: Colors.text },
-    noteInputWrap: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        marginBottom: 18,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    noteInput: { padding: 16, height: 90, fontSize: 15, color: Colors.text, textAlignVertical: 'top' },
-    btn: {
-        flexDirection: 'row',
-        backgroundColor: Colors.primary,
-        padding: 16,
-        borderRadius: 20,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginTop: 8,
-    },
-    btnText: { color: Colors.onPrimary, fontSize: 17, fontWeight: '800', marginRight: 6 },
     historyHeader: { paddingHorizontal: 18, paddingBottom: 8 },
     historyTitle: { fontSize: 26, fontWeight: '800', color: Colors.text },
     historySubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
@@ -566,15 +551,6 @@ const styles = StyleSheet.create({
         marginTop: 12,
     },
     bookingNote: { fontSize: 14, color: Colors.text, marginLeft: 8, flex: 1, lineHeight: 20, fontStyle: 'italic' },
-    cancelBookingBtn: {
-        marginTop: 14,
-        alignSelf: 'flex-start',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
-    },
-    cancelBookingText: { color: Colors.text, fontWeight: '700', fontSize: 13 },
     empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
     emptyIconWrap: {
         width: 72,

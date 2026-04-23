@@ -1,4 +1,5 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, StyleSheet } from 'react-native';
+import { Text, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '../styles/colors';
 
@@ -33,13 +34,20 @@ const ChefVerificationBanner = ({
             </View>
 
             <View style={styles.content}>
-                <Text style={[styles.title, { color: config.color }]}>{config.title}</Text>
-                <Text style={styles.message}>{config.message}</Text>
+                <Text variant="labelLarge" style={{ color: config.color }}>{config.title}</Text>
+                <Text variant="bodySmall" style={styles.message}>{config.message}</Text>
 
                 {actionLabel && onAction ?
-                    <TouchableOpacity style={styles.actionBtn} onPress={onAction} activeOpacity={0.8}>
-                        <Text style={styles.actionText}>{actionLabel}</Text>
-                    </TouchableOpacity> :
+                    <Button
+                        mode="contained-tonal"
+                        onPress={onAction}
+                        compact
+                        style={styles.actionBtn}
+                        labelStyle={styles.actionLabel}
+                        buttonColor={Colors.surfaceContainerLowest}
+                        textColor={Colors.text}>
+                        {actionLabel}
+                    </Button> :
                     null}
             </View>
         </View>
@@ -62,25 +70,19 @@ const styles = StyleSheet.create({
         marginRight: 12,
     },
     content: { flex: 1 },
-    title: { fontSize: 15, fontWeight: '800' },
     message: {
         marginTop: 6,
-        fontSize: 13,
         lineHeight: 20,
         color: Colors.textSecondary,
     },
     actionBtn: {
         alignSelf: 'flex-start',
         marginTop: 12,
-        paddingHorizontal: 16,
-        paddingVertical: 10,
         borderRadius: 9999,
-        backgroundColor: Colors.surfaceContainerLowest,
     },
-    actionText: {
+    actionLabel: {
         fontSize: 13,
         fontWeight: '700',
-        color: Colors.text,
     },
 });
 
