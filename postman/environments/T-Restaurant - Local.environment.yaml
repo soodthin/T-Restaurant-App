@@ -1,7 +1,7 @@
 name: T-Restaurant - Local
 values:
   - key: base_url
-    value: 'http://127.0.0.1:8000'
+    value: 'https://t-restaurant.onrender.com'
     enabled: true
   - key: client_id
     value: restaurant_client_id

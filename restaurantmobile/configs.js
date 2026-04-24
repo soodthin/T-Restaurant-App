@@ -1,4 +1,4 @@
-const BASE_URL = "http://10.17.48.251:8000";
+const BASE_URL = "https://t-restaurant.onrender.com";
 
 export const endpoints = {
     'login': '/o/token/',
