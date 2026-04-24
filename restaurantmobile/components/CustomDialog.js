@@ -1,7 +1,8 @@
-import { Portal, Dialog, Button, Text, Snackbar } from 'react-native-paper';
-import { View, StyleSheet } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Portal, Dialog, Button, Text } from 'react-native-paper';
+import { View, StyleSheet, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Colors from '../styles/colors';
+import Colors from '@styles/colors';
 
 const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmText, cancelText, type }) => {
     const iconMap = {
@@ -47,24 +48,30 @@ const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmTe
 };
 
 const Toast = ({ visible, message, type, onHide }) => {
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(-20)).current;
     const isError = type === 'error';
 
+    useEffect(() => {
+        if (visible) {
+            Animated.parallel([
+                Animated.timing(opacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+                Animated.timing(translateY, { toValue: 0, duration: 250, useNativeDriver: true }),
+            ]).start();
+            const timer = setTimeout(() => {
+                Animated.timing(opacity, { toValue: 0, duration: 200, useNativeDriver: true }).start(() => onHide());
+            }, 2500);
+            return () => clearTimeout(timer);
+        }
+    }, [visible]);
+
+    if (!visible) return null;
+
     return (
-        <Snackbar
-            visible={visible}
-            onDismiss={onHide}
-            duration={2500}
-            style={[styles.snackbar, { backgroundColor: isError ? Colors.primary : Colors.success }]}
-            wrapperStyle={styles.snackbarWrapper}>
-            <View style={styles.snackbarContent}>
-                <MaterialCommunityIcons
-                    name={isError ? 'close-circle' : 'check-circle'}
-                    size={22}
-                    color={Colors.onPrimary}
-                />
-                <Text style={styles.snackbarText}>{message}</Text>
-            </View>
-        </Snackbar>
+        <Animated.View style={[styles.toast, { opacity, transform: [{ translateY }], backgroundColor: isError ? Colors.primary : Colors.success }]}>
+            <MaterialCommunityIcons name={isError ? 'close-circle' : 'check-circle'} size={20} color={Colors.onPrimary} />
+            <Text style={styles.toastText} numberOfLines={2}>{message}</Text>
+        </Animated.View>
     );
 };
 
@@ -91,18 +98,19 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.primary,
     },
     confirmLabel: { fontWeight: '700', color: Colors.onPrimary },
-    snackbar: {
-        borderRadius: 20,
-    },
-    snackbarWrapper: {
-        top: 60,
-        bottom: undefined,
-    },
-    snackbarContent: {
+    toast: {
+        position: 'absolute',
+        top: 50,
+        left: 20,
+        right: 20,
         flexDirection: 'row',
         alignItems: 'center',
+        borderRadius: 16,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        zIndex: 9999,
     },
-    snackbarText: { color: Colors.onPrimary, fontSize: 15, fontWeight: '600', marginLeft: 10, flex: 1 },
+    toastText: { color: Colors.onPrimary, fontSize: 14, fontWeight: '600', marginLeft: 10, flex: 1 },
 });
 
 export { ConfirmDialog, Toast };

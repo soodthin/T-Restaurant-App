@@ -1,7 +1,7 @@
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
 
 const GuestPromptCard = ({
     icon = 'account-lock-outline',
