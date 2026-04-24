@@ -1,12 +1,16 @@
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = 'django-insecure-0e0-t_72u_#+d)6s#v$&kyznk-(qhw*8g@(&5$2q6or$2jkb2f'
+SECRET_KEY = os.environ.get(
+    'DJANGO_SECRET_KEY',
+    'django-insecure-0e0-t_72u_#+d)6s#v$&kyznk-(qhw*8g@(&5$2q6or$2jkb2f'
+)
 
-DEBUG = True
+DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', '*').split(',') if h.strip()]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -58,11 +62,15 @@ WSGI_APPLICATION = 'RestaurantBackend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'restaurantdb',
-        'USER': 'root',
-        'PASSWORD': '12345',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': os.environ.get('MYSQL_ADDON_DB', 'restaurantdb'),
+        'USER': os.environ.get('MYSQL_ADDON_USER', 'root'),
+        'PASSWORD': os.environ.get('MYSQL_ADDON_PASSWORD', '12345'),
+        'HOST': os.environ.get('MYSQL_ADDON_HOST', 'localhost'),
+        'PORT': os.environ.get('MYSQL_ADDON_PORT', '3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'connect_timeout': 10,
+        },
     }
 }
 
@@ -82,9 +90,9 @@ STATIC_URL = '/static/'
 
 # luu anh len cloudinary
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': 'dxhp3sukx',
-    'API_KEY': '657381574582262',
-    'API_SECRET': 'GAVUf-uitHW43NVQk63mWChPUL8',
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dxhp3sukx'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '657381574582262'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'GAVUf-uitHW43NVQk63mWChPUL8'),
 }
 STORAGES = {
     "default": {
