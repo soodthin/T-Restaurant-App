@@ -2,20 +2,19 @@ import { useEffect, useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     TouchableOpacity,
     Image,
 } from 'react-native';
 import { ActivityIndicator, Button, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeInRight } from '../utils/animations';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { endpoints } from '../configs';
-import { buildApiUrl, getApiErrorMessage } from '../utils/api';
-import { useCart } from '../contexts/CartContext';
-import { Toast } from './CustomDialog';
+import { FadeInRight } from '@utils/animations';
+import Colors from '@styles/colors';
+import { endpoints } from '@configs';
+import { buildApiUrl, getApiErrorMessage } from '@utils/api';
+import { useCart } from '@contexts/CartContext';
+import { Toast } from '@components/CustomDialog';
+import styles from './styles';
 
 const CompareDishes = ({ route, navigation }) => {
     const ids = route.params?.ids || [];
@@ -31,13 +30,13 @@ const CompareDishes = ({ route, navigation }) => {
             try {
                 const res = await fetch(buildApiUrl(`${endpoints['dish-compare']}?ids=${ids.join(',')}`));
                 if (!res.ok) {
-                    throw new Error(await getApiErrorMessage(res, 'Không thể tải dữ liệu so sánh'));
+                    throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u so s\u00e1nh'));
                 }
                 const data = await res.json();
                 setDishes(data);
                 setError('');
             } catch (err) {
-                setError(err.message || 'Không thể tải dữ liệu so sánh');
+                setError(err.message || 'Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u so s\u00e1nh');
             } finally {
                 setLoading(false);
             }
@@ -45,7 +44,7 @@ const CompareDishes = ({ route, navigation }) => {
 
         if (ids.length >= 2) loadDishes();
         else {
-            setError('Cần ít nhất 2 món để so sánh');
+            setError('C\u1ea7n \u00edt nh\u1ea5t 2 m\u00f3n \u0111\u1ec3 so s\u00e1nh');
             setLoading(false);
         }
     }, [ids]);
@@ -60,7 +59,7 @@ const CompareDishes = ({ route, navigation }) => {
                 <View style={styles.errorIcon}>
                     <MaterialCommunityIcons name="compare" size={36} color={Colors.primary} />
                 </View>
-                <Text style={styles.stateTitle}>Không mở được bảng so sánh</Text>
+                <Text style={styles.stateTitle}>{`Kh\u00f4ng m\u1edf \u0111\u01b0\u1ee3c b\u1ea3ng so s\u00e1nh`}</Text>
                 <Text style={styles.stateText}>{error}</Text>
                 <Button
                     mode="contained"
@@ -68,7 +67,7 @@ const CompareDishes = ({ route, navigation }) => {
                     buttonColor={Colors.primary}
                     textColor={Colors.onPrimary}
                     style={styles.actionBtn}>
-                    Quay lại chọn món
+                    {`Quay l\u1ea1i ch\u1ecdn m\u00f3n`}
                 </Button>
             </View>
         );
@@ -100,8 +99,8 @@ const CompareDishes = ({ route, navigation }) => {
                                         <MaterialCommunityIcons name="tag-outline" size={16} color={Colors.primary} />
                                     </View>
                                     <View>
-                                        <Text style={styles.metricLabel}>Giá</Text>
-                                        <Text style={styles.metricValue}>{Number(dish.price).toLocaleString()}đ</Text>
+                                        <Text style={styles.metricLabel}>{`Gi\u00e1`}</Text>
+                                        <Text style={styles.metricValue}>{Number(dish.price).toLocaleString()}{`\u0111`}</Text>
                                     </View>
                                 </View>
 
@@ -110,9 +109,9 @@ const CompareDishes = ({ route, navigation }) => {
                                         <MaterialCommunityIcons name="star-outline" size={16} color={Colors.star} />
                                     </View>
                                     <View>
-                                        <Text style={styles.metricLabel}>Đánh giá</Text>
+                                        <Text style={styles.metricLabel}>{`\u0110\u00e1nh gi\u00e1`}</Text>
                                         <Text style={styles.metricValue}>
-                                            {dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'Mới'} ({dish.review_count || 0})
+                                            {dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'M\u1edbi'} ({dish.review_count || 0})
                                         </Text>
                                     </View>
                                 </View>
@@ -122,8 +121,8 @@ const CompareDishes = ({ route, navigation }) => {
                                         <MaterialCommunityIcons name="clock-outline" size={16} color={Colors.tertiary} />
                                     </View>
                                     <View>
-                                        <Text style={styles.metricLabel}>Chuẩn bị</Text>
-                                        <Text style={styles.metricValue}>{dish.preparation_time} phút</Text>
+                                        <Text style={styles.metricLabel}>{`Chu\u1ea9n b\u1ecb`}</Text>
+                                        <Text style={styles.metricValue}>{dish.preparation_time} {`ph\u00fat`}</Text>
                                     </View>
                                 </View>
 
@@ -132,8 +131,8 @@ const CompareDishes = ({ route, navigation }) => {
                                         <MaterialCommunityIcons name="chef-hat" size={16} color={Colors.text} />
                                     </View>
                                     <View>
-                                        <Text style={styles.metricLabel}>Phụ trách</Text>
-                                        <Text style={styles.metricValue}>{dish.chef_name || 'Nhà hàng'}</Text>
+                                        <Text style={styles.metricLabel}>{`Ph\u1ee5 tr\u00e1ch`}</Text>
+                                        <Text style={styles.metricValue}>{dish.chef_name || 'Nh\u00e0 h\u00e0ng'}</Text>
                                     </View>
                                 </View>
 
@@ -142,9 +141,9 @@ const CompareDishes = ({ route, navigation }) => {
                                         <MaterialCommunityIcons name="leaf" size={16} color={Colors.success} />
                                     </View>
                                     <View style={{ flex: 1 }}>
-                                        <Text style={styles.metricLabel}>Nguyên liệu</Text>
+                                        <Text style={styles.metricLabel}>{`Nguy\u00ean li\u1ec7u`}</Text>
                                         <View style={styles.ingredientPills}>
-                                            {(dish.ingredients || 'Chưa cập nhật').split(',').map((item, idx) => (
+                                            {(dish.ingredients || 'Ch\u01b0a c\u1eadp nh\u1eadt').split(',').map((item, idx) => (
                                                 <Chip
                                                     key={idx}
                                                     mode="outlined"
@@ -167,9 +166,9 @@ const CompareDishes = ({ route, navigation }) => {
                                         style={styles.cartBtn}
                                         onPress={() => {
                                             addItem(dish);
-                                            setToast({ visible: true, message: `Đã thêm ${dish.name} vào giỏ`, type: 'success' });
+                                            setToast({ visible: true, message: `\u0110\u00e3 th\u00eam ${dish.name} v\u00e0o gi\u1ecf`, type: 'success' });
                                         }}>
-                                        Thêm vào giỏ
+                                        {`Th\u00eam v\u00e0o gi\u1ecf`}
                                     </Button>
 
                                     <Button
@@ -177,7 +176,7 @@ const CompareDishes = ({ route, navigation }) => {
                                         buttonColor={Colors.surfaceContainerLow}
                                         textColor={Colors.text}
                                         onPress={() => navigation.navigate('DishDetail', { id: dish.id })}>
-                                        Chi tiết
+                                        Chi ti\u1ebft
                                     </Button>
                                 </View>
                             </View>
@@ -195,57 +194,5 @@ const CompareDishes = ({ route, navigation }) => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.surface },
-    scrollContent: { paddingHorizontal: 16, paddingVertical: 18 },
-    card: {
-        width: 310,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        overflow: 'hidden',
-        marginRight: 14,
-        ...editorialShadow,
-    },
-    image: { width: '100%', height: 190, borderTopLeftRadius: 24, borderTopRightRadius: 24 },
-    imagePlaceholder: { backgroundColor: Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' },
-    cardBody: { padding: 20 },
-    name: { fontSize: 22, fontWeight: '800', color: Colors.text, lineHeight: 28 },
-    metricGroup: { flexDirection: 'row', alignItems: 'center', marginTop: 14 },
-    metricIconWrap: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: Colors.surfaceContainerLow,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    metricLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.7 },
-    metricValue: { fontSize: 16, color: Colors.text, fontWeight: '700', marginTop: 2 },
-    ingredientPills: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 4 },
-    ingredientChip: { marginRight: 6, marginBottom: 4 },
-    ingredientChipText: { fontSize: 12 },
-    btnRow: { flexDirection: 'row', marginTop: 20 },
-    cartBtn: { flex: 1, marginRight: 8 },
-    actionBtn: { marginTop: 18, borderRadius: 20 },
-    centerState: {
-        flex: 1,
-        backgroundColor: Colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
-    },
-    errorIcon: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    stateTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
-    stateText: { fontSize: 15, color: Colors.textSecondary, marginTop: 10, textAlign: 'center', lineHeight: 22 },
-});
 
 export default CompareDishes;

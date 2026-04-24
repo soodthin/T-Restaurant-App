@@ -4,21 +4,24 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import Login from './components/Login';
-import Register from './components/Register';
-import Home from './components/Home';
-import DishDetail from './components/DishDetail';
-import Booking from './components/Booking';
-import Cart from './components/Cart';
-import CompareDishes from './components/CompareDishes';
-import Orders from './components/Orders';
-import Profile from './components/Profile';
-import ChefHome from './components/ChefHome';
-import MyDishes from './components/MyDishes';
-import CreateDish from './components/CreateDish';
-import Colors from './styles/colors';
-import { editorialShadow, paperTheme } from './styles/theme';
-import { CartProvider, useCart } from './contexts/CartContext';
+import { View } from 'react-native';
+
+import Login from '@pages/auth/Login';
+import Register from '@pages/auth/Register';
+import Home from '@pages/customer/Home';
+import DishDetail from '@pages/customer/DishDetail';
+import Booking from '@pages/customer/Booking';
+import Cart from '@pages/customer/Cart';
+import CompareDishes from '@pages/customer/CompareDishes';
+import Orders from '@pages/customer/Orders';
+import Profile from '@pages/shared/Profile';
+import ChefHome from '@pages/chef/ChefHome';
+import MyDishes from '@pages/chef/MyDishes';
+import CreateDish from '@pages/chef/CreateDish';
+import GuestPromptCard from '@components/GuestPromptCard';
+import Colors from '@styles/colors';
+import { editorialShadow, paperTheme } from '@styles/theme';
+import { CartProvider, useCart } from '@contexts/CartContext';
 
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -125,6 +128,58 @@ const CustomerTab = () => {
     );
 };
 
+const GuestAccount = ({ navigation }) => (
+    <View style={{ flex: 1, backgroundColor: Colors.surface, justifyContent: 'center', padding: 20 }}>
+        <GuestPromptCard
+            title="Đăng nhập để trải nghiệm đầy đủ"
+            description="Đặt món, đặt bàn, theo dõi đơn hàng và nhiều tiện ích khác dành cho thành viên."
+            onPrimary={() => navigation.navigate('Login')}
+            onSecondary={() => navigation.navigate('Register', { role: 'customer' })}
+        />
+    </View>
+);
+
+const GuestTab = () => {
+    const { totalItems } = useCart();
+
+    return (
+        <Tab.Navigator screenOptions={tabOptions}>
+            <Tab.Screen
+                name="Home"
+                component={Home}
+                options={{
+                    title: 'Khám phá',
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialCommunityIcons name="silverware-fork-knife" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="Cart"
+                component={Cart}
+                options={{
+                    title: 'Giỏ hàng',
+                    tabBarBadge: totalItems > 0 ? totalItems : undefined,
+                    tabBarBadgeStyle: { backgroundColor: Colors.primary, fontSize: 10, fontWeight: '700' },
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialCommunityIcons name="shopping-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+            <Tab.Screen
+                name="GuestAccount"
+                component={GuestAccount}
+                options={{
+                    title: 'Tài khoản',
+                    tabBarIcon: ({ color, size }) => (
+                        <MaterialCommunityIcons name="account-circle-outline" size={size} color={color} />
+                    ),
+                }}
+            />
+        </Tab.Navigator>
+    );
+};
+
 const ChefTab = () => (
     <Tab.Navigator screenOptions={tabOptions}>
         <Tab.Screen
@@ -166,7 +221,9 @@ const ChefTab = () => (
 
 const MainScreen = ({ route }) => {
     const role = route.params?.role || 'customer';
-    return role === 'chef' ? <ChefTab /> : <CustomerTab />;
+    if (role === 'chef') return <ChefTab />;
+    if (role === 'guest') return <GuestTab />;
+    return <CustomerTab />;
 };
 
 const stackScreenOptions = {

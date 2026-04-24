@@ -1,0 +1,83 @@
+import { StyleSheet } from 'react-native';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+
+const styles = StyleSheet.create({
+    container: { padding: 28, paddingTop: 80 },
+    bgBlob: {
+        position: 'absolute',
+        top: -80,
+        right: -60,
+        width: 220,
+        height: 220,
+        borderRadius: 110,
+        backgroundColor: Colors.primaryLight,
+        opacity: 0.6,
+    },
+    bgBlob2: {
+        position: 'absolute',
+        bottom: 100,
+        left: -80,
+        width: 180,
+        height: 180,
+        borderRadius: 90,
+        backgroundColor: Colors.tertiaryLight,
+        opacity: 0.4,
+    },
+    logoWrap: { alignItems: 'center', marginBottom: 12 },
+    logo: {
+        width: 60,
+        height: 60,
+        borderRadius: 18,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        transform: [{ rotate: '-3deg' }],
+        ...editorialShadow,
+    },
+    logoText: {
+        fontSize: 32,
+        fontWeight: '900',
+        fontStyle: 'italic',
+        color: Colors.onPrimary,
+    },
+    brandSmall: {
+        textAlign: 'center',
+        color: Colors.primary,
+        fontSize: 12,
+        fontWeight: '700',
+        letterSpacing: 3,
+        marginBottom: 36,
+    },
+    title: { fontSize: 32, fontWeight: '800', color: Colors.text, textAlign: 'center', lineHeight: 40 },
+    subtitle: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, marginBottom: 40, lineHeight: 23 },
+    label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
+    helperText: { fontSize: 12, color: Colors.textSecondary, marginTop: -10, marginBottom: 18 },
+    dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 32, marginBottom: 24 },
+    dividerLine: { flex: 1, height: 1, backgroundColor: Colors.outlineVariant + '40' },
+    dividerText: { marginHorizontal: 16, color: Colors.textSecondary, fontSize: 13 },
+    footer: { alignItems: 'center', marginBottom: 24 },
+    footerText: { color: Colors.textSecondary, fontSize: 14 },
+    guestLink: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 40,
+        ...editorialShadow,
+    },
+    guestIconWrap: {
+        width: 42,
+        height: 42,
+        borderRadius: 14,
+        backgroundColor: Colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginRight: 14,
+    },
+    guestLinkTitle: { fontSize: 15, fontWeight: '800', color: Colors.text },
+    guestLinkSub: { fontSize: 13, color: Colors.textSecondary, marginTop: 2 },
+});
+
+export default styles;

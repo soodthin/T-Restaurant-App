@@ -38,22 +38,6 @@ export const getStoredUser = async () => {
     }
 };
 
-export const resetToPublicHome = async (navigation) => {
-    await clearSession();
-    navigation.reset({
-        index: 0,
-        routes: [
-            {
-                name: 'Main',
-                params: {
-                    role: 'guest',
-                    isGuest: true,
-                },
-            },
-        ],
-    });
-};
-
 export const getApiErrorMessage = async (res, fallback = 'Đã có lỗi xảy ra') => {
     try {
         const data = await res.clone().json();

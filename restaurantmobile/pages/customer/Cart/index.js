@@ -4,22 +4,21 @@ import {
     Text,
     FlatList,
     TouchableOpacity,
-    StyleSheet,
     Image,
 } from 'react-native';
 import { Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeInUp, FadeIn } from '../utils/animations';
-import { useCart } from '../contexts/CartContext';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { ConfirmDialog, Toast } from './CustomDialog';
-import authFetch, { clearSession, getApiErrorMessage } from '../utils/api';
-import { endpoints } from '../configs';
+import { FadeInUp, FadeIn } from '@utils/animations';
+import { useCart } from '@contexts/CartContext';
+import Colors from '@styles/colors';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
+import authFetch, { clearSession, getApiErrorMessage, getStoredUser } from '@utils/api';
+import { endpoints } from '@configs';
+import styles from './styles';
 
 const paymentOptions = [
-    { key: 'cash', label: 'Tiền mặt', icon: 'cash' },
+    { key: 'cash', label: 'Ti\u1ec1n m\u1eb7t', icon: 'cash' },
     { key: 'momo', label: 'MoMo', icon: 'wallet-outline' },
     { key: 'zalopay', label: 'ZaloPay', icon: 'credit-card-outline' },
     { key: 'paypal', label: 'PayPal', icon: 'paypal' },
@@ -47,9 +46,14 @@ const Cart = ({ navigation }) => {
         setToast({ visible: true, message, type });
     };
 
-    const checkout = () => {
+    const checkout = async () => {
         if (!items.length) {
-            showToast('Giỏ hàng đang trống');
+            showToast('Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng');
+            return;
+        }
+        const user = await getStoredUser();
+        if (!user) {
+            showToast('Vui l\u00f2ng \u0111\u0103ng nh\u1eadp \u0111\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng');
             return;
         }
         setConfirmCheckout(true);
@@ -71,7 +75,7 @@ const Cart = ({ navigation }) => {
             }
 
             if (!orderRes.ok) {
-                showToast(await getApiErrorMessage(orderRes, 'Không thể tạo đơn hàng'));
+                showToast(await getApiErrorMessage(orderRes, 'Kh\u00f4ng th\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng'));
                 return;
             }
 
@@ -93,7 +97,7 @@ const Cart = ({ navigation }) => {
                 }
 
                 if (!detailRes.ok) {
-                    showToast(await getApiErrorMessage(detailRes, 'Không thể thêm món vào đơn hàng'));
+                    showToast(await getApiErrorMessage(detailRes, 'Kh\u00f4ng th\u1ec3 th\u00eam m\u00f3n v\u00e0o \u0111\u01a1n h\u00e0ng'));
                     return;
                 }
 
@@ -118,11 +122,11 @@ const Cart = ({ navigation }) => {
             const paymentSaved = paymentRes.ok;
             clearCart();
             setSuccessMessage(paymentSaved
-                ? 'Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.'
-                : 'Đơn hàng đã được tạo, nhưng hệ thống chưa ghi nhận thanh toán. Bạn vẫn có thể xem đơn trong lịch sử.');
+                ? '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o v\u00e0 ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n \u0111\u00e3 \u0111\u01b0\u1ee3c ghi nh\u1eadn.'
+                : '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o, nh\u01b0ng h\u1ec7 th\u1ed1ng ch\u01b0a ghi nh\u1eadn thanh to\u00e1n. B\u1ea1n v\u1eabn c\u00f3 th\u1ec3 xem \u0111\u01a1n trong l\u1ecbch s\u1eed.');
             setSuccessDialog(true);
         } catch (err) {
-            showToast('Không thể hoàn tất đặt món. Vui lòng thử lại.');
+            showToast('Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t \u0111\u1eb7t m\u00f3n. Vui l\u00f2ng th\u1eed l\u1ea1i.');
         } finally {
             setSubmitting(false);
         }
@@ -151,8 +155,8 @@ const Cart = ({ navigation }) => {
                             />
                         </View>
 
-                        <Text style={styles.meta}>{item.preparation_time} phút · {item.chef_name || 'Nhà hàng'}</Text>
-                        <Text style={styles.price}>{Number(item.price).toLocaleString()}đ</Text>
+                        <Text style={styles.meta}>{item.preparation_time} {`ph\u00fat`} · {item.chef_name || 'Nh\u00e0 h\u00e0ng'}</Text>
+                        <Text style={styles.price}>{Number(item.price).toLocaleString()}{`\u0111`}</Text>
 
                         <View style={styles.cardFooter}>
                             <View style={styles.stepper}>
@@ -174,7 +178,7 @@ const Cart = ({ navigation }) => {
                             </View>
 
                             <Text style={styles.lineTotal}>
-                                {(item.price * item.quantity).toLocaleString()}đ
+                                {(item.price * item.quantity).toLocaleString()}{`\u0111`}
                             </Text>
                         </View>
                     </View>
@@ -194,9 +198,9 @@ const Cart = ({ navigation }) => {
                     <View style={styles.emptyIconCircle}>
                         <MaterialCommunityIcons name="cart-outline" size={40} color={Colors.primary} />
                     </View>
-                    <Text style={styles.emptyTitle}>Giỏ hàng đang trống</Text>
+                    <Text style={styles.emptyTitle}>{`Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng`}</Text>
                     <Text style={styles.emptyText}>
-                        Thêm món từ trang khám phá hoặc chi tiết món để bắt đầu đặt món.
+                        {`Th\u00eam m\u00f3n t\u1eeb trang kh\u00e1m ph\u00e1 ho\u1eb7c chi ti\u1ebft m\u00f3n \u0111\u1ec3 b\u1eaft \u0111\u1ea7u \u0111\u1eb7t m\u00f3n.`}
                     </Text>
                     <Button
                         mode="contained"
@@ -206,7 +210,7 @@ const Cart = ({ navigation }) => {
                         labelStyle={{ fontWeight: '800', fontSize: 15 }}
                         style={{ marginTop: 20, borderRadius: 20 }}
                     >
-                        Đi khám phá món
+                        {`\u0110i kh\u00e1m ph\u00e1 m\u00f3n`}
                     </Button>
                 </FadeIn>
             </View>
@@ -222,16 +226,16 @@ const Cart = ({ navigation }) => {
                 contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: tabBarHeight + 260 }}
                 ListHeaderComponent={
                     <FadeIn duration={400} style={styles.headerCard}>
-                        <Text style={styles.headerTitle}>Giỏ hàng của bạn</Text>
+                        <Text style={styles.headerTitle}>{`Gi\u1ecf h\u00e0ng c\u1ee7a b\u1ea1n`}</Text>
                         <Text style={styles.headerSubtitle}>
-                            {totalItems} món đang chờ xác nhận. Kiểm tra lại trước khi tạo đơn.
+                            {totalItems} {`m\u00f3n \u0111ang ch\u1edd x\u00e1c nh\u1eadn. Ki\u1ec3m tra l\u1ea1i tr\u01b0\u1edbc khi t\u1ea1o \u0111\u01a1n.`}
                         </Text>
                     </FadeIn>
                 }
             />
 
             <View style={[styles.bottomSheet, { bottom: tabBarHeight }]}>
-                <Text style={styles.sheetTitle}>Phương thức thanh toán</Text>
+                <Text style={styles.sheetTitle}>{`Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n`}</Text>
                 <View style={styles.paymentRow}>
                     {paymentOptions.map((option) => (
                         <Chip
@@ -258,8 +262,8 @@ const Cart = ({ navigation }) => {
 
                 <View style={styles.summaryBlock}>
                     <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>Tổng thanh toán</Text>
-                        <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}đ</Text>
+                        <Text style={styles.summaryLabel}>{`T\u1ed5ng thanh to\u00e1n`}</Text>
+                        <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{`\u0111`}</Text>
                     </View>
                 </View>
 
@@ -275,7 +279,7 @@ const Cart = ({ navigation }) => {
                         style={{ marginTop: 14, borderRadius: 20 }}
                         contentStyle={{ paddingVertical: 8 }}
                     >
-                        Tạo đơn hàng
+                        {`T\u1ea1o \u0111\u01a1n h\u00e0ng`}
                     </Button>
                 }
             </View>
@@ -283,19 +287,19 @@ const Cart = ({ navigation }) => {
             <ConfirmDialog
                 visible={confirmCheckout}
                 type="confirm"
-                title="Xác nhận tạo đơn"
-                message={`${totalItems} món với tổng giá trị ${totalAmount.toLocaleString()}đ sẽ được tạo thành đơn hàng mới.`}
+                title="X\u00e1c nh\u1eadn t\u1ea1o \u0111\u01a1n"
+                message={`${totalItems} m\u00f3n v\u1edbi t\u1ed5ng gi\u00e1 tr\u1ecb ${totalAmount.toLocaleString()}\u0111 s\u1ebd \u0111\u01b0\u1ee3c t\u1ea1o th\u00e0nh \u0111\u01a1n h\u00e0ng m\u1edbi.`}
                 onCancel={() => setConfirmCheckout(false)}
                 onConfirm={doCheckout}
-                confirmText="Tạo đơn"
+                confirmText="T\u1ea1o \u0111\u01a1n"
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title="Đặt món thành công"
+                title="\u0110\u1eb7t m\u00f3n th\u00e0nh c\u00f4ng"
                 message={successMessage}
-                confirmText="Xem đơn hàng"
+                confirmText="Xem \u0111\u01a1n h\u00e0ng"
                 onConfirm={() => {
                     setSuccessDialog(false);
                     navigation.navigate('Orders');
@@ -311,90 +315,5 @@ const Cart = ({ navigation }) => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.surface },
-    headerCard: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 12,
-        ...editorialShadow,
-    },
-    headerTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
-    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    card: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        marginBottom: 12,
-        ...editorialShadow,
-    },
-    cardContent: { flexDirection: 'row', padding: 14 },
-    image: { width: 100, height: 100, borderRadius: 18 },
-    imagePlaceholder: { backgroundColor: Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' },
-    cardBody: { flex: 1, marginLeft: 14 },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    name: { fontSize: 16, fontWeight: '800', color: Colors.text, lineHeight: 21, flex: 1, marginRight: 8 },
-    meta: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
-    price: { fontSize: 16, color: Colors.primary, fontWeight: '800', marginTop: 6 },
-    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
-    stepper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 14,
-        paddingHorizontal: 4,
-        paddingVertical: 4,
-    },
-    stepIconBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.surfaceContainerLowest, margin: 0 },
-    quantity: { minWidth: 30, textAlign: 'center', fontSize: 16, fontWeight: '800', color: Colors.text },
-    lineTotal: { fontSize: 15, fontWeight: '800', color: Colors.text },
-    bottomSheet: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        backgroundColor: Colors.surface + 'CC',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        paddingHorizontal: 20,
-        paddingTop: 18,
-        paddingBottom: 30,
-        ...editorialShadow,
-    },
-    sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
-    paymentRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
-    chip: {
-        marginRight: 8,
-        marginBottom: 8,
-    },
-    chipText: { fontSize: 13, fontWeight: '700' },
-    summaryBlock: {
-        backgroundColor: Colors.surfaceContainerHigh,
-        borderRadius: 16,
-        padding: 14,
-        marginTop: 8,
-    },
-    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    summaryLabel: { fontSize: 15, color: Colors.textSecondary, fontWeight: '700' },
-    summaryAmount: { fontSize: 24, fontWeight: '800', color: Colors.primary },
-    empty: {
-        flex: 1,
-        backgroundColor: Colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
-    },
-    emptyIconCircle: {
-        width: 80,
-        height: 80,
-        borderRadius: 40,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 18,
-    },
-    emptyTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
-    emptyText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
-});
 
 export default Cart;

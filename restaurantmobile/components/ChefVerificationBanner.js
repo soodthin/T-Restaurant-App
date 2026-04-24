@@ -1,7 +1,7 @@
 import { View, StyleSheet } from 'react-native';
 import { Text, Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import Colors from '../styles/colors';
+import Colors from '@styles/colors';
 
 const ChefVerificationBanner = ({
     verified,

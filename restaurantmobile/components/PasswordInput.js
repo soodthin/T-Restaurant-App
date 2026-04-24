@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TextInput } from 'react-native-paper';
-import Colors from '../styles/colors';
+import Colors from '@styles/colors';
 
 const PasswordInput = ({ value, onChangeText, placeholder }) => {
     const [show, setShow] = useState(false);

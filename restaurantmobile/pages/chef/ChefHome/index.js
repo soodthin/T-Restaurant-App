@@ -2,7 +2,6 @@ import { useCallback, useState } from 'react';
 import {
     View,
     Text,
-    StyleSheet,
     ScrollView,
     RefreshControl,
     TouchableOpacity,
@@ -15,12 +14,12 @@ import authFetch, {
     clearSession,
     getApiErrorMessage,
     storeUser,
-} from '../utils/api';
-import { endpoints } from '../configs';
-import { FadeInDown } from '../utils/animations';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { formatCurrency, getDisplayName } from '../utils/format';
+} from '@utils/api';
+import { endpoints } from '@configs';
+import { FadeInDown } from '@utils/animations';
+import Colors from '@styles/colors';
+import { formatCurrency, getDisplayName } from '@utils/format';
+import styles from './styles';
 
 const defaultStats = {
     total_dishes: 0,
@@ -253,225 +252,5 @@ const ChefHome = ({ navigation }) => {
         </ScrollView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: Colors.surface,
-    },
-    content: {
-        padding: 20,
-        paddingBottom: 32,
-    },
-    loading: {
-        flex: 1,
-        backgroundColor: Colors.surface,
-    },
-    hero: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 16,
-        ...editorialShadow,
-    },
-    heroTop: {
-        flexDirection: 'row',
-        justifyContent: 'flex-start',
-        alignItems: 'center',
-    },
-    heroBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.primary,
-        borderRadius: 9999,
-        paddingHorizontal: 12,
-        paddingVertical: 8,
-    },
-    heroBadgeText: {
-        marginLeft: 6,
-        color: Colors.onPrimary,
-        fontSize: 13,
-        fontWeight: '700',
-    },
-    greeting: {
-        marginTop: 16,
-        fontSize: 28,
-        lineHeight: 34,
-        fontWeight: '800',
-        color: Colors.text,
-    },
-    subGreeting: {
-        marginTop: 10,
-        fontSize: 14,
-        lineHeight: 22,
-        color: Colors.textSecondary,
-    },
-    errorCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 16,
-        marginBottom: 16,
-        ...editorialShadow,
-    },
-    errorContent: {
-        flex: 1,
-        marginLeft: 12,
-        marginRight: 12,
-    },
-    errorTitle: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: Colors.text,
-    },
-    errorText: {
-        marginTop: 4,
-        fontSize: 13,
-        lineHeight: 20,
-        color: Colors.textSecondary,
-    },
-    statsSection: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
-        marginTop: 16,
-    },
-    statCard: {
-        width: '48.5%',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 18,
-        marginBottom: 12,
-        ...editorialShadow,
-    },
-    statCardWide: {
-        width: '100%',
-    },
-    statIcon: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    statValue: {
-        marginTop: 18,
-        fontSize: 24,
-        fontWeight: '800',
-        color: Colors.text,
-    },
-    statLabel: {
-        marginTop: 6,
-        fontSize: 13,
-        lineHeight: 19,
-        color: Colors.textSecondary,
-    },
-    revenueCard: {
-        marginTop: 4,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        ...editorialShadow,
-    },
-    sectionEyebrow: {
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 0.8,
-        color: Colors.textSecondary,
-        textTransform: 'uppercase',
-    },
-    revenueValue: {
-        marginTop: 8,
-        fontSize: 30,
-        fontWeight: '800',
-        color: Colors.primary,
-    },
-    revenueCaption: {
-        marginTop: 10,
-        maxWidth: '88%',
-        fontSize: 13,
-        lineHeight: 20,
-        color: Colors.textSecondary,
-    },
-    revenueIconWrap: {
-        width: 54,
-        height: 54,
-        borderRadius: 18,
-        backgroundColor: `${Colors.primary}12`,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    sectionHeader: {
-        marginTop: 24,
-        marginBottom: 10,
-    },
-    sectionTitle: {
-        fontSize: 20,
-        fontWeight: '800',
-        color: Colors.text,
-    },
-    sectionSubtitle: {
-        marginTop: 6,
-        fontSize: 14,
-        lineHeight: 21,
-        color: Colors.textSecondary,
-    },
-    actionCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 16,
-        marginTop: 12,
-        ...editorialShadow,
-    },
-    actionIcon: {
-        width: 46,
-        height: 46,
-        borderRadius: 16,
-        backgroundColor: Colors.surfaceContainerLow,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    actionContent: {
-        flex: 1,
-        marginLeft: 14,
-        marginRight: 10,
-    },
-    actionTitle: {
-        fontSize: 15,
-        fontWeight: '700',
-        color: Colors.text,
-    },
-    actionSubtitle: {
-        marginTop: 4,
-        fontSize: 13,
-        lineHeight: 19,
-        color: Colors.textSecondary,
-    },
-    noteCard: {
-        marginTop: 24,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        ...editorialShadow,
-    },
-    noteTitle: {
-        fontSize: 17,
-        fontWeight: '800',
-        color: Colors.text,
-        marginBottom: 10,
-    },
-    noteItem: {
-        fontSize: 14,
-        lineHeight: 22,
-        color: Colors.textSecondary,
-        marginTop: 6,
-    },
-});
 
 export default ChefHome;

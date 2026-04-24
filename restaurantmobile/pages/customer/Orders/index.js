@@ -3,19 +3,18 @@ import {
     View,
     Text,
     FlatList,
-    StyleSheet,
     RefreshControl,
 } from 'react-native';
 import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeInUp, FadeIn } from '../utils/animations';
+import { FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
-import authFetch, { clearSession, getApiErrorMessage } from '../utils/api';
-import { endpoints } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { Toast } from './CustomDialog';
+import authFetch, { clearSession, getApiErrorMessage } from '@utils/api';
+import { endpoints } from '@configs';
+import Colors from '@styles/colors';
+import { Toast } from '@components/CustomDialog';
+import styles from './styles';
 
 const statusColor = {
     pending: Colors.star,
@@ -25,14 +24,14 @@ const statusColor = {
 };
 
 const statusLabel = {
-    pending: 'Chờ xử lý',
-    preparing: 'Đang chuẩn bị',
-    served: 'Đã phục vụ',
-    cancelled: 'Đã hủy',
+    pending: 'Ch\u1edd x\u1eed l\u00fd',
+    preparing: '\u0110ang chu\u1ea9n b\u1ecb',
+    served: '\u0110\u00e3 ph\u1ee5c v\u1ee5',
+    cancelled: '\u0110\u00e3 h\u1ee7y',
 };
 
 const paymentMethodLabel = {
-    cash: 'Tiền mặt',
+    cash: 'Ti\u1ec1n m\u1eb7t',
     momo: 'MoMo',
     zalopay: 'ZaloPay',
     paypal: 'PayPal',
@@ -40,9 +39,9 @@ const paymentMethodLabel = {
 };
 
 const paymentStatusLabel = {
-    pending: 'Chờ thanh toán',
-    completed: 'Đã thanh toán',
-    failed: 'Thanh toán lỗi',
+    pending: 'Ch\u1edd thanh to\u00e1n',
+    completed: '\u0110\u00e3 thanh to\u00e1n',
+    failed: 'Thanh to\u00e1n l\u1ed7i',
 };
 
 const Orders = ({ navigation }) => {
@@ -65,7 +64,7 @@ const Orders = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                throw new Error(await getApiErrorMessage(res, 'Không thể tải đơn hàng'));
+                throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng'));
             }
 
             const data = await res.json();
@@ -73,7 +72,7 @@ const Orders = ({ navigation }) => {
             setError('');
         } catch (err) {
             setOrders([]);
-            setError(err.message || 'Không thể tải đơn hàng');
+            setError(err.message || 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng');
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -89,7 +88,7 @@ const Orders = ({ navigation }) => {
             <View style={styles.card}>
                 <View style={styles.cardHeaderRow}>
                     <View style={{ flex: 1 }}>
-                        <Text style={styles.orderId}>Đơn #{item.id}</Text>
+                        <Text style={styles.orderId}>{`\u0110\u01a1n`} #{item.id}</Text>
                         <Text style={styles.date}>
                             {new Date(item.created_date).toLocaleDateString('vi-VN')} · {new Date(item.created_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                         </Text>
@@ -102,7 +101,7 @@ const Orders = ({ navigation }) => {
                     </View>
                 </View>
 
-                <Text style={styles.amount}>{Number(item.total_amount).toLocaleString()}đ</Text>
+                <Text style={styles.amount}>{Number(item.total_amount).toLocaleString()}{`\u0111`}</Text>
 
                 <View style={styles.paymentBlock}>
                     <View style={styles.paymentIconWrap}>
@@ -110,10 +109,10 @@ const Orders = ({ navigation }) => {
                     </View>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.paymentText}>
-                            {paymentMethodLabel[item.payment_method] || 'Chưa chọn phương thức'}
+                            {paymentMethodLabel[item.payment_method] || 'Ch\u01b0a ch\u1ecdn ph\u01b0\u01a1ng th\u1ee9c'}
                         </Text>
                         <Text style={styles.paymentStatus}>
-                            {paymentStatusLabel[item.payment_status] || 'Chưa ghi nhận trạng thái'}
+                            {paymentStatusLabel[item.payment_status] || 'Ch\u01b0a ghi nh\u1eadn tr\u1ea1ng th\u00e1i'}
                         </Text>
                     </View>
                 </View>
@@ -126,10 +125,10 @@ const Orders = ({ navigation }) => {
                                     <Text style={styles.detailQtyText}>x{detail.quantity}</Text>
                                 </View>
                                 <Text style={styles.detailItem}>
-                                    {detail.dish_name || `Món #${detail.dish}`}
+                                    {detail.dish_name || `M\u00f3n #${detail.dish}`}
                                 </Text>
                                 <Text style={styles.detailPrice}>
-                                    {Number(detail.unit_price).toLocaleString()}đ
+                                    {Number(detail.unit_price).toLocaleString()}{`\u0111`}
                                 </Text>
                             </View>
                         ))}
@@ -150,7 +149,7 @@ const Orders = ({ navigation }) => {
                     <MaterialCommunityIcons name="alert-circle-outline" size={20} color={Colors.primary} />
                     <Text style={styles.errorText}>{error}</Text>
                     <Button mode="contained-tonal" onPress={() => loadOrders(true)}>
-                        Thử lại
+                        {`Th\u1eed l\u1ea1i`}
                     </Button>
                 </View> :
                 null
@@ -166,9 +165,9 @@ const Orders = ({ navigation }) => {
                 }
                 ListHeaderComponent={
                     <FadeIn duration={400} style={styles.header}>
-                        <Text style={styles.headerTitle}>Đơn hàng của bạn</Text>
+                        <Text style={styles.headerTitle}>{`\u0110\u01a1n h\u00e0ng c\u1ee7a b\u1ea1n`}</Text>
                         <Text style={styles.headerSubtitle}>
-                            Theo dõi tiến độ chuẩn bị món và trạng thái thanh toán tại đây.
+                            {`Theo d\u00f5i ti\u1ebfn \u0111\u1ed9 chu\u1ea9n b\u1ecb m\u00f3n v\u00e0 tr\u1ea1ng th\u00e1i thanh to\u00e1n t\u1ea1i \u0111\u00e2y.`}
                         </Text>
                     </FadeIn>
                 }
@@ -177,12 +176,12 @@ const Orders = ({ navigation }) => {
                         <View style={styles.emptyIconCircle}>
                             <MaterialCommunityIcons name="receipt" size={36} color={Colors.primary} />
                         </View>
-                        <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
+                        <Text style={styles.emptyTitle}>{`Ch\u01b0a c\u00f3 \u0111\u01a1n h\u00e0ng n\u00e0o`}</Text>
                         <Text style={styles.emptyText}>
-                            Sau khi tạo đơn từ giỏ hàng, lịch sử đơn sẽ xuất hiện tại đây.
+                            {`Sau khi t\u1ea1o \u0111\u01a1n t\u1eeb gi\u1ecf h\u00e0ng, l\u1ecbch s\u1eed \u0111\u01a1n s\u1ebd xu\u1ea5t hi\u1ec7n t\u1ea1i \u0111\u00e2y.`}
                         </Text>
                         <Button mode="contained" onPress={() => navigation.navigate('Home')} style={{ marginTop: 18, borderRadius: 20 }}>
-                            Đi chọn món
+                            {`\u0110i ch\u1ecdn m\u00f3n`}
                         </Button>
                     </View>
                 }
@@ -197,92 +196,5 @@ const Orders = ({ navigation }) => {
         </View>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { flex: 1, backgroundColor: Colors.surface },
-    header: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10 },
-    headerTitle: { fontSize: 26, fontWeight: '800', color: Colors.text },
-    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    errorCard: {
-        marginHorizontal: 16,
-        marginTop: 16,
-        marginBottom: 4,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        ...editorialShadow,
-    },
-    errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
-    card: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        marginHorizontal: 16,
-        marginVertical: 6,
-        borderRadius: 24,
-        padding: 18,
-        ...editorialShadow,
-    },
-    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    orderId: { fontSize: 18, fontWeight: '800', color: Colors.text },
-    badge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 9999,
-        marginLeft: 12,
-    },
-    badgeDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
-    amount: { fontSize: 24, fontWeight: '800', color: Colors.primary, marginTop: 12 },
-    date: { fontSize: 13, color: Colors.textSecondary, marginTop: 6 },
-    paymentBlock: {
-        marginTop: 16,
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 18,
-        padding: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    paymentIconWrap: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: Colors.tertiaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 12,
-    },
-    paymentText: { fontSize: 15, fontWeight: '700', color: Colors.text },
-    paymentStatus: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
-    detailList: { marginTop: 16 },
-    detailRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 8,
-    },
-    detailQtyBadge: {
-        backgroundColor: Colors.primaryLight,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: 8,
-        marginRight: 10,
-    },
-    detailQtyText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
-    detailItem: { flex: 1, paddingRight: 12, fontSize: 14, color: Colors.text, fontWeight: '600' },
-    detailPrice: { fontSize: 13, color: Colors.textSecondary, fontWeight: '700' },
-    empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
-    emptyIconCircle: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
-    emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22, textAlign: 'center' },
-});
 
 export default Orders;

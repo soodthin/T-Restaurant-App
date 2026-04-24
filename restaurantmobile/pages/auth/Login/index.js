@@ -1,14 +1,15 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { FadeInDown, FadeInUp } from '../utils/animations';
-import { Toast } from './CustomDialog';
-import PasswordInput from './PasswordInput';
-import BASE_URL, { endpoints, CLIENT_ID, CLIENT_SECRET } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
+import { FadeInDown, FadeInUp } from '@utils/animations';
+import { Toast } from '@components/CustomDialog';
+import PasswordInput from '@components/PasswordInput';
+import BASE_URL, { endpoints, CLIENT_ID, CLIENT_SECRET } from '@configs';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+import styles from './styles';
 
 const Login = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -152,11 +153,17 @@ const Login = ({ navigation }) => {
 
                 <FadeInUp delay={900} duration={500}>
                     <TouchableOpacity
-                        style={styles.chefLink}
-                        activeOpacity={0.7}
-                        onPress={() => navigation.navigate('Register', { role: 'chef' })}>
-                        <MaterialCommunityIcons name="chef-hat" size={18} color={Colors.primary} />
-                        <Text style={styles.chefLinkText}>Bạn là một đầu bếp?</Text>
+                        style={styles.guestLink}
+                        activeOpacity={0.85}
+                        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main', params: { role: 'guest' } }] })}>
+                        <View style={styles.guestIconWrap}>
+                            <MaterialCommunityIcons name="compass-outline" size={20} color={Colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.guestLinkTitle}>Khám phá món ăn</Text>
+                            <Text style={styles.guestLinkSub}>Xem thực đơn mà không cần đăng nhập</Text>
+                        </View>
+                        <MaterialCommunityIcons name="chevron-right" size={22} color={Colors.textSecondary} />
                     </TouchableOpacity>
                 </FadeInUp>
 
@@ -170,65 +177,5 @@ const Login = ({ navigation }) => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { padding: 28, paddingTop: 80 },
-    bgBlob: {
-        position: 'absolute',
-        top: -80,
-        right: -60,
-        width: 220,
-        height: 220,
-        borderRadius: 110,
-        backgroundColor: Colors.primaryLight,
-        opacity: 0.6,
-    },
-    bgBlob2: {
-        position: 'absolute',
-        bottom: 100,
-        left: -80,
-        width: 180,
-        height: 180,
-        borderRadius: 90,
-        backgroundColor: Colors.tertiaryLight,
-        opacity: 0.4,
-    },
-    logoWrap: { alignItems: 'center', marginBottom: 12 },
-    logo: {
-        width: 60,
-        height: 60,
-        borderRadius: 18,
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        transform: [{ rotate: '-3deg' }],
-        ...editorialShadow,
-    },
-    logoText: {
-        fontSize: 32,
-        fontWeight: '900',
-        fontStyle: 'italic',
-        color: Colors.onPrimary,
-    },
-    brandSmall: {
-        textAlign: 'center',
-        color: Colors.primary,
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 3,
-        marginBottom: 36,
-    },
-    title: { fontSize: 32, fontWeight: '800', color: Colors.text, textAlign: 'center', lineHeight: 40 },
-    subtitle: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, marginBottom: 40, lineHeight: 23 },
-    label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    helperText: { fontSize: 12, color: Colors.textSecondary, marginTop: -10, marginBottom: 18 },
-    dividerRow: { flexDirection: 'row', alignItems: 'center', marginTop: 32, marginBottom: 24 },
-    dividerLine: { flex: 1, height: 1, backgroundColor: Colors.outlineVariant + '40' },
-    dividerText: { marginHorizontal: 16, color: Colors.textSecondary, fontSize: 13 },
-    footer: { alignItems: 'center' },
-    footerText: { color: Colors.textSecondary, fontSize: 14 },
-    chefLink: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 28, marginBottom: 40 },
-    chefLinkText: { color: Colors.primary, fontSize: 14, fontWeight: '700', marginLeft: 8 },
-});
 
 export default Login;

@@ -1,14 +1,16 @@
 import { useState } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, ScrollView, Image, KeyboardAvoidingView, Platform } from 'react-native';
 import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { FadeInDown, FadeInUp } from '../utils/animations';
-import { ConfirmDialog, Toast } from './CustomDialog';
-import PasswordInput from './PasswordInput';
-import BASE_URL, { endpoints } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
+import { FadeInDown, FadeInUp } from '@utils/animations';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
+import PasswordInput from '@components/PasswordInput';
+import AddressDialog from '@components/AddressDialog';
+import BASE_URL, { endpoints } from '@configs';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+import styles from './styles';
 
 const inputOutlineStyle = { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 };
 const inputBgStyle = { backgroundColor: Colors.surfaceContainerLowest };
@@ -31,6 +33,7 @@ const Register = ({ navigation, route }) => {
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [confirm, setConfirm] = useState(false);
     const [successDialog, setSuccessDialog] = useState(false);
+    const [showAddress, setShowAddress] = useState(false);
 
     const showToast = (message, type = 'error') => setToast({ visible: true, message, type });
     const change = (field, value) => setUser({ ...user, [field]: value });
@@ -240,18 +243,13 @@ const Register = ({ navigation, route }) => {
                     />
 
                     <Text style={styles.label}>ĐỊA CHỈ LIÊN HỆ</Text>
-                    <TextInput
-                        mode="outlined"
-                        placeholder="Ví dụ: 371 Nguyễn Kiệm, Q. Gò Vấp"
-                        placeholderTextColor={Colors.placeholder}
-                        value={user.address}
-                        onChangeText={(v) => change('address', v)}
-                        left={<TextInput.Icon icon="map-marker-outline" />}
-                        textColor={Colors.text}
-                        activeOutlineColor={Colors.primary}
-                        outlineStyle={inputOutlineStyle}
-                        style={[inputBgStyle, { marginBottom: 16 }]}
-                    />
+                    <TouchableOpacity style={styles.addressBtn} onPress={() => setShowAddress(true)} activeOpacity={0.7}>
+                        <MaterialCommunityIcons name="map-marker-outline" size={22} color={user.address ? Colors.primary : Colors.placeholder} />
+                        <Text style={[styles.addressText, !user.address && styles.addressPlaceholder]} numberOfLines={2}>
+                            {user.address || 'Bấm để chọn địa chỉ'}
+                        </Text>
+                        <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textSecondary} />
+                    </TouchableOpacity>
 
                     <Text style={styles.label}>MẬT KHẨU</Text>
                     <PasswordInput
@@ -290,8 +288,28 @@ const Register = ({ navigation, route }) => {
                             <Text style={styles.footerLink}>Đăng nhập ngay</Text>
                         </TouchableOpacity>
                     </View>
+
+                    {initRole !== 'chef' &&
+                        <TouchableOpacity
+                            style={styles.chefLink}
+                            activeOpacity={0.7}
+                            onPress={() => navigation.replace('Register', { role: 'chef' })}>
+                            <MaterialCommunityIcons name="chef-hat" size={18} color={Colors.primary} />
+                            <Text style={styles.chefLinkText}>Bạn là một đầu bếp?</Text>
+                        </TouchableOpacity>
+                    }
                 </FadeInUp>
             </ScrollView>
+
+            <AddressDialog
+                visible={showAddress}
+                onClose={() => setShowAddress(false)}
+                onConfirm={(addr) => {
+                    change('address', addr);
+                    setShowAddress(false);
+                }}
+                initialAddress={user.address}
+            />
 
             <ConfirmDialog
                 visible={confirm}
@@ -323,61 +341,5 @@ const Register = ({ navigation, route }) => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    container: { padding: 28, paddingTop: 20 },
-    bgBlob: {
-        position: 'absolute',
-        top: -50,
-        right: -70,
-        width: 200,
-        height: 200,
-        borderRadius: 100,
-        backgroundColor: Colors.primaryLight,
-        opacity: 0.5,
-    },
-    pageTitle: { fontSize: 32, fontWeight: '800', color: Colors.text, marginBottom: 28 },
-    avatarWrap: { alignSelf: 'center', marginBottom: 8 },
-    avatar: { width: 112, height: 112, borderRadius: 56, borderWidth: 3, borderColor: Colors.outlineVariant + '40' },
-    avatarPlaceholder: {
-        width: 112,
-        height: 112,
-        borderRadius: 56,
-        backgroundColor: Colors.surfaceContainerLow,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 2,
-        borderColor: Colors.outline,
-        borderStyle: 'dashed',
-    },
-    cameraBadge: {
-        position: 'absolute',
-        right: -4,
-        bottom: -4,
-        width: 32,
-        height: 32,
-        borderRadius: 16,
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: Colors.surface,
-    },
-    avatarLabel: { textAlign: 'center', fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginTop: 8, marginBottom: 24, letterSpacing: 1 },
-    notice: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.primaryLight,
-        padding: 16,
-        borderRadius: 16,
-        marginBottom: 24,
-    },
-    noticeText: { flex: 1, fontSize: 13, color: Colors.primary, marginLeft: 10, lineHeight: 19 },
-    label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    nameRow: { flexDirection: 'row' },
-    footer: { flexDirection: 'row', justifyContent: 'center', marginTop: 28, marginBottom: 40 },
-    footerText: { color: Colors.textSecondary, fontSize: 14 },
-    footerLink: { color: Colors.primary, fontSize: 14, fontWeight: '800' },
-});
 
 export default Register;

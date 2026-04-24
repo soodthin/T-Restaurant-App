@@ -3,7 +3,6 @@ import {
     View,
     Text,
     TouchableOpacity,
-    StyleSheet,
     KeyboardAvoidingView,
     Platform,
     FlatList,
@@ -13,13 +12,13 @@ import { TextInput, Button, ActivityIndicator, IconButton, Chip, SegmentedButton
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeInDown, FadeInUp, FadeIn } from '../utils/animations';
+import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
-import { ConfirmDialog, Toast } from './CustomDialog';
-import authFetch, { clearSession, getApiErrorMessage } from '../utils/api';
-import { endpoints } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
+import authFetch, { clearSession, getApiErrorMessage } from '@utils/api';
+import { endpoints } from '@configs';
+import Colors from '@styles/colors';
+import styles from './styles';
 
 const createInitialDate = () => {
     const nextHour = new Date();
@@ -35,10 +34,10 @@ const statusColor = {
 };
 
 const statusLabel = {
-    pending: 'Chờ xác nhận',
-    confirmed: 'Đã xác nhận',
-    cancelled: 'Đã hủy',
-    completed: 'Hoàn thành',
+    pending: 'Ch\u1edd x\u00e1c nh\u1eadn',
+    confirmed: '\u0110\u00e3 x\u00e1c nh\u1eadn',
+    cancelled: '\u0110\u00e3 h\u1ee7y',
+    completed: 'Ho\u00e0n th\u00e0nh',
 };
 
 const suggestedTimes = ['11:30', '12:00', '12:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
@@ -73,13 +72,13 @@ const Booking = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                throw new Error(await getApiErrorMessage(res, 'Không thể tải lịch đặt bàn'));
+                throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n'));
             }
             const data = await res.json();
             setBookings(data.results || []);
         } catch (err) {
             setBookings([]);
-            showToast(err.message || 'Không thể tải lịch đặt bàn');
+            showToast(err.message || 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n');
         } finally {
             setLoadingList(false);
             setRefreshing(false);
@@ -119,11 +118,11 @@ const Booking = ({ navigation }) => {
 
     const book = () => {
         if (guests < 1) {
-            showToast('Số khách phải lớn hơn 0');
+            showToast('S\u1ed1 kh\u00e1ch ph\u1ea3i l\u1edbn h\u01a1n 0');
             return;
         }
         if (date <= new Date()) {
-            showToast('Vui lòng chọn thời gian trong tương lai');
+            showToast('Vui l\u00f2ng ch\u1ecdn th\u1eddi gian trong t\u01b0\u01a1ng lai');
             return;
         }
         setConfirm(true);
@@ -149,7 +148,7 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Không thể đặt bàn'));
+                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 \u0111\u1eb7t b\u00e0n'));
                 return;
             }
 
@@ -159,7 +158,7 @@ const Booking = ({ navigation }) => {
             setSuccessDialog(true);
             loadBookings(false);
         } catch (err) {
-            showToast('Không thể kết nối server');
+            showToast('Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i server');
         } finally {
             setLoading(false);
         }
@@ -181,16 +180,16 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Không thể hủy lịch đặt bàn'));
+                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n'));
                 return;
             }
 
             setBookings((prev) => prev.map((booking) => booking.id === cancelBookingId
                 ? { ...booking, status: 'cancelled' }
                 : booking));
-            showToast('Đã hủy lịch đặt bàn', 'success');
+            showToast('\u0110\u00e3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n', 'success');
         } catch (err) {
-            showToast('Không thể hủy lịch đặt bàn');
+            showToast('Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n');
         } finally {
             setCancelBookingId(null);
             setLoading(false);
@@ -208,7 +207,7 @@ const Booking = ({ navigation }) => {
                         <View style={styles.bookingInfoRow}>
                             <View style={styles.bookingInfoChip}>
                                 <MaterialCommunityIcons name="account-group-outline" size={14} color={Colors.text} />
-                                <Text style={styles.bookingInfoText}>{item.guests} khách</Text>
+                                <Text style={styles.bookingInfoText}>{item.guests} {`kh\u00e1ch`}</Text>
                             </View>
                         </View>
                     </View>
@@ -233,7 +232,7 @@ const Booking = ({ navigation }) => {
                         style={{ alignSelf: 'flex-start', marginTop: 14, borderRadius: 9999 }}
                         labelStyle={{ fontWeight: '700', fontSize: 13 }}
                     >
-                        Hủy lịch này
+                        {`H\u1ee7y l\u1ecbch n\u00e0y`}
                     </Button> :
                     null
                 }
@@ -250,8 +249,8 @@ const Booking = ({ navigation }) => {
                     value={tab}
                     onValueChange={setTab}
                     buttons={[
-                        { value: 'new', label: 'Đặt bàn mới', icon: 'calendar-plus' },
-                        { value: 'history', label: 'Lịch sử', icon: 'history' },
+                        { value: 'new', label: '\u0110\u1eb7t b\u00e0n m\u1edbi', icon: 'calendar-plus' },
+                        { value: 'history', label: 'L\u1ecbch s\u1eed', icon: 'history' },
                     ]}
                     style={{ flex: 1 }}
                 />
@@ -269,27 +268,27 @@ const Booking = ({ navigation }) => {
                                 <View style={styles.summaryIcon}>
                                     <MaterialCommunityIcons name="calendar-check" size={24} color={Colors.primary} />
                                 </View>
-                                <Text style={styles.summaryTitle}>Khung giờ bạn đang chọn</Text>
+                                <Text style={styles.summaryTitle}>{`Khung gi\u1edd b\u1ea1n \u0111ang ch\u1ecdn`}</Text>
                                 <Text style={styles.summaryValue}>{fmt(date)} · {fmtTime(date)}</Text>
-                                <Text style={styles.summaryHint}>Bạn có thể đổi ngày, giờ và số lượng khách ngay bên dưới.</Text>
+                                <Text style={styles.summaryHint}>{`B\u1ea1n c\u00f3 th\u1ec3 \u0111\u1ed5i ng\u00e0y, gi\u1edd v\u00e0 s\u1ed1 l\u01b0\u1ee3ng kh\u00e1ch ngay b\u00ean d\u01b0\u1edbi.`}</Text>
                             </FadeInDown>
 
                             <FadeInUp delay={200} duration={400}>
-                                <Text style={styles.label}>NGÀY</Text>
+                                <Text style={styles.label}>{`NG\u00c0Y`}</Text>
                                 <TouchableOpacity style={styles.pickerBtn} onPress={() => setMode('date')} activeOpacity={0.8}>
                                     <MaterialCommunityIcons name="calendar" size={22} color={Colors.primary} />
                                     <Text style={styles.pickerText}>{fmt(date)}</Text>
                                     <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textSecondary} style={{ marginLeft: 'auto' }} />
                                 </TouchableOpacity>
 
-                                <Text style={styles.label}>GIỜ</Text>
+                                <Text style={styles.label}>{`GI\u1ede`}</Text>
                                 <TouchableOpacity style={styles.pickerBtn} onPress={() => setMode('time')} activeOpacity={0.8}>
                                     <MaterialCommunityIcons name="clock-outline" size={22} color={Colors.primary} />
                                     <Text style={styles.pickerText}>{fmtTime(date)}</Text>
                                     <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textSecondary} style={{ marginLeft: 'auto' }} />
                                 </TouchableOpacity>
 
-                                <Text style={styles.suggestedLabel}>Giờ gợi ý</Text>
+                                <Text style={styles.suggestedLabel}>{`Gi\u1edd g\u1ee3i \u00fd`}</Text>
                                 <View style={styles.suggestedRow}>
                                     {suggestedTimes.map((time) => (
                                         <Chip
@@ -322,7 +321,7 @@ const Booking = ({ navigation }) => {
                                     />
                                 }
 
-                                <Text style={styles.label}>SỐ KHÁCH</Text>
+                                <Text style={styles.label}>{`S\u1ed0 KH\u00c1CH`}</Text>
                                 <View style={styles.guestStepper}>
                                     <IconButton
                                         icon="minus"
@@ -341,10 +340,10 @@ const Booking = ({ navigation }) => {
                                     />
                                 </View>
 
-                                <Text style={styles.label}>GHI CHÚ</Text>
+                                <Text style={styles.label}>{`GHI CH\u00da`}</Text>
                                 <TextInput
                                     mode="outlined"
-                                    placeholder="Yêu cầu đặc biệt, dị ứng, ghế trẻ em..."
+                                    placeholder="Y\u00eau c\u1ea7u \u0111\u1eb7c bi\u1ec7t, d\u1ecb \u1ee9ng, gh\u1ebf tr\u1ebb em..."
                                     placeholderTextColor={Colors.placeholder}
                                     value={note}
                                     onChangeText={setNote}
@@ -368,7 +367,7 @@ const Booking = ({ navigation }) => {
                                         style={{ borderRadius: 20, marginTop: 8 }}
                                         contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
                                     >
-                                        Xác nhận đặt bàn
+                                        {`X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n`}
                                     </Button>
                                 }
                             </FadeInUp>
@@ -388,8 +387,8 @@ const Booking = ({ navigation }) => {
                         }
                         ListHeaderComponent={
                             <FadeIn duration={400} style={styles.historyHeader}>
-                                <Text style={styles.historyTitle}>Lịch sử đặt bàn</Text>
-                                <Text style={styles.historySubtitle}>Theo dõi trạng thái xác nhận và hủy lịch khi còn đang chờ.</Text>
+                                <Text style={styles.historyTitle}>{`L\u1ecbch s\u1eed \u0111\u1eb7t b\u00e0n`}</Text>
+                                <Text style={styles.historySubtitle}>{`Theo d\u00f5i tr\u1ea1ng th\u00e1i x\u00e1c nh\u1eadn v\u00e0 h\u1ee7y l\u1ecbch khi c\u00f2n \u0111ang ch\u1edd.`}</Text>
                             </FadeIn>
                         }
                         ListEmptyComponent={
@@ -397,8 +396,8 @@ const Booking = ({ navigation }) => {
                                 <View style={styles.emptyIconWrap}>
                                     <MaterialCommunityIcons name="calendar-blank" size={36} color={Colors.primary} />
                                 </View>
-                                <Text style={styles.emptyTitle}>Chưa có lịch đặt bàn</Text>
-                                <Text style={styles.emptyText}>Khi bạn tạo lịch mới, thông tin sẽ hiển thị tại đây.</Text>
+                                <Text style={styles.emptyTitle}>{`Ch\u01b0a c\u00f3 l\u1ecbch \u0111\u1eb7t b\u00e0n`}</Text>
+                                <Text style={styles.emptyText}>{`Khi b\u1ea1n t\u1ea1o l\u1ecbch m\u1edbi, th\u00f4ng tin s\u1ebd hi\u1ec3n th\u1ecb t\u1ea1i \u0111\u00e2y.`}</Text>
                             </View>
                         }
                     />
@@ -407,29 +406,29 @@ const Booking = ({ navigation }) => {
             <ConfirmDialog
                 visible={confirm}
                 type="confirm"
-                title="Xác nhận đặt bàn"
-                message={`${guests} khách vào ${fmt(date)} lúc ${fmtTime(date)}`}
+                title="X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n"
+                message={`${guests} kh\u00e1ch v\u00e0o ${fmt(date)} l\u00fac ${fmtTime(date)}`}
                 onCancel={() => setConfirm(false)}
                 onConfirm={doBook}
-                confirmText="Đặt bàn"
+                confirmText="\u0110\u1eb7t b\u00e0n"
             />
 
             <ConfirmDialog
                 visible={Boolean(cancelBookingId)}
                 type="warning"
-                title="Hủy lịch đặt bàn"
-                message="Bạn chắc chắn muốn hủy lịch đặt bàn này?"
+                title="H\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n"
+                message="B\u1ea1n ch\u1eafc ch\u1eafn mu\u1ed1n h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n n\u00e0y?"
                 onCancel={() => setCancelBookingId(null)}
                 onConfirm={cancelBooking}
-                confirmText="Hủy lịch"
+                confirmText="H\u1ee7y l\u1ecbch"
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title="Đặt bàn thành công"
-                message="Nhà hàng sẽ xác nhận lịch đặt bàn của bạn trong thời gian sớm nhất."
-                confirmText="Xem lịch sử"
+                title="\u0110\u1eb7t b\u00e0n th\u00e0nh c\u00f4ng"
+                message="Nh\u00e0 h\u00e0ng s\u1ebd x\u00e1c nh\u1eadn l\u1ecbch \u0111\u1eb7t b\u00e0n c\u1ee7a b\u1ea1n trong th\u1eddi gian s\u1edbm nh\u1ea5t."
+                confirmText="Xem l\u1ecbch s\u1eed"
                 onConfirm={() => {
                     setSuccessDialog(false);
                     setTab('history');
@@ -445,123 +444,5 @@ const Booking = ({ navigation }) => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    segmentedRow: { paddingHorizontal: 16, paddingTop: 12 },
-    form: { padding: 20 },
-    summaryCard: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 20,
-        ...editorialShadow,
-    },
-    summaryIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: 16,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    summaryTitle: { fontSize: 12, color: Colors.textSecondary, fontWeight: '700', letterSpacing: 1 },
-    summaryValue: { fontSize: 24, fontWeight: '800', color: Colors.text, marginTop: 8 },
-    summaryHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    pickerBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 18,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    pickerText: { fontSize: 17, color: Colors.text, fontWeight: '700', marginLeft: 12 },
-    suggestedLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    suggestedRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 18 },
-    suggestedChip: {
-        marginRight: 8,
-        marginBottom: 8,
-    },
-    suggestedChipActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
-    suggestedText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
-    suggestedTextActive: { color: Colors.primary, fontWeight: '700' },
-    guestStepper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        paddingHorizontal: 6,
-        paddingVertical: 6,
-        marginBottom: 18,
-        alignSelf: 'flex-start',
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    guestStepIconBtn: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        backgroundColor: Colors.surfaceContainerLow,
-        margin: 0,
-    },
-    guestCount: { minWidth: 50, textAlign: 'center', fontSize: 20, fontWeight: '800', color: Colors.text },
-    historyHeader: { paddingHorizontal: 18, paddingBottom: 8 },
-    historyTitle: { fontSize: 26, fontWeight: '800', color: Colors.text },
-    historySubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    bookingCard: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        marginHorizontal: 16,
-        marginVertical: 6,
-        borderRadius: 24,
-        padding: 18,
-        ...editorialShadow,
-    },
-    bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    bookingDate: { fontSize: 16, fontWeight: '800', color: Colors.text, lineHeight: 22 },
-    bookingInfoRow: { flexDirection: 'row', marginTop: 8 },
-    bookingInfoChip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 9999,
-    },
-    bookingInfoText: { fontSize: 13, color: Colors.text, fontWeight: '600', marginLeft: 4 },
-    statusBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 9999,
-        marginLeft: 10,
-    },
-    statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-    statusText: { fontSize: 12, fontWeight: '700' },
-    noteBlock: {
-        flexDirection: 'row',
-        alignItems: 'flex-start',
-        backgroundColor: Colors.surfaceContainerLow,
-        padding: 12,
-        borderRadius: 14,
-        marginTop: 12,
-    },
-    bookingNote: { fontSize: 14, color: Colors.text, marginLeft: 8, flex: 1, lineHeight: 20, fontStyle: 'italic' },
-    empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
-    emptyIconWrap: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-    },
-    emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
-    emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22, textAlign: 'center' },
-});
 
 export default Booking;

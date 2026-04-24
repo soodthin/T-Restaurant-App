@@ -5,24 +5,23 @@ import {
     Image,
     FlatList,
     TouchableOpacity,
-    StyleSheet,
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
 import { TextInput, Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeIn, FadeInUp } from '../utils/animations';
+import { FadeIn, FadeInUp } from '@utils/animations';
 import authFetch, {
     buildApiUrl,
     clearSession,
     getApiErrorMessage,
     getStoredUser,
-} from '../utils/api';
-import { endpoints } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { Toast } from './CustomDialog';
-import { useCart } from '../contexts/CartContext';
+} from '@utils/api';
+import { endpoints } from '@configs';
+import Colors from '@styles/colors';
+import { Toast } from '@components/CustomDialog';
+import { useCart } from '@contexts/CartContext';
+import styles from './styles';
 
 const DishDetail = ({ route, navigation }) => {
     const { id } = route.params;
@@ -54,10 +53,10 @@ const DishDetail = ({ route, navigation }) => {
             ]);
 
             if (!dishRes.ok) {
-                throw new Error(await getApiErrorMessage(dishRes, 'Không tải được chi tiết món ăn'));
+                throw new Error(await getApiErrorMessage(dishRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c chi ti\u1ebft m\u00f3n \u0103n'));
             }
             if (!reviewRes.ok) {
-                throw new Error(await getApiErrorMessage(reviewRes, 'Không tải được danh sách đánh giá'));
+                throw new Error(await getApiErrorMessage(reviewRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch \u0111\u00e1nh gi\u00e1'));
             }
 
             const [dishData, reviewData] = await Promise.all([dishRes.json(), reviewRes.json()]);
@@ -77,7 +76,7 @@ const DishDetail = ({ route, navigation }) => {
 
             setError('');
         } catch (err) {
-            setError(err.message || 'Không tải được chi tiết món ăn');
+            setError(err.message || 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c chi ti\u1ebft m\u00f3n \u0103n');
         } finally {
             setLoading(false);
         }
@@ -94,11 +93,11 @@ const DishDetail = ({ route, navigation }) => {
 
     const submitReview = async () => {
         if (!currentUser) {
-            showToast('Vui lòng đăng nhập để đánh giá món ăn');
+            showToast('Vui l\u00f2ng \u0111\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u00e1nh gi\u00e1 m\u00f3n \u0103n');
             return;
         }
         if (rating < 1 || rating > 5) {
-            showToast('Vui lòng chọn số sao từ 1 đến 5');
+            showToast('Vui l\u00f2ng ch\u1ecdn s\u1ed1 sao t\u1eeb 1 \u0111\u1ebfn 5');
             return;
         }
 
@@ -122,7 +121,7 @@ const DishDetail = ({ route, navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Không thể gửi đánh giá'));
+                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1'));
                 return;
             }
 
@@ -143,9 +142,9 @@ const DishDetail = ({ route, navigation }) => {
                 const avg = allRatings.reduce((sum, value) => sum + value, 0) / allRatings.length;
                 return { ...prev, avg_rating: avg, review_count: nextCount };
             });
-            showToast(myReview ? 'Đã cập nhật đánh giá của bạn' : 'Đã gửi đánh giá thành công', 'success');
+            showToast(myReview ? '\u0110\u00e3 c\u1eadp nh\u1eadt \u0111\u00e1nh gi\u00e1 c\u1ee7a b\u1ea1n' : '\u0110\u00e3 g\u1eedi \u0111\u00e1nh gi\u00e1 th\u00e0nh c\u00f4ng', 'success');
         } catch (err) {
-            showToast('Không thể gửi đánh giá');
+            showToast('Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1');
         } finally {
             setSubmittingReview(false);
         }
@@ -159,8 +158,8 @@ const DishDetail = ({ route, navigation }) => {
         return (
             <View style={styles.centerState}>
                 <MaterialCommunityIcons name="alert-circle-outline" size={52} color={Colors.primary} />
-                <Text style={styles.stateTitle}>Không tải được món ăn</Text>
-                <Text style={styles.stateText}>{error || 'Dữ liệu món ăn hiện không khả dụng.'}</Text>
+                <Text style={styles.stateTitle}>{`Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c m\u00f3n \u0103n`}</Text>
+                <Text style={styles.stateText}>{error || 'D\u1eef li\u1ec7u m\u00f3n \u0103n hi\u1ec7n kh\u00f4ng kh\u1ea3 d\u1ee5ng.'}</Text>
                 <Button
                     mode="contained"
                     onPress={loadData}
@@ -168,7 +167,7 @@ const DishDetail = ({ route, navigation }) => {
                     textColor={Colors.onPrimary}
                     style={{ borderRadius: 20, marginTop: 18 }}
                     labelStyle={{ fontWeight: '700' }}>
-                    Thử lại
+                    {`Th\u1eed l\u1ea1i`}
                 </Button>
             </View>
         );
@@ -199,7 +198,7 @@ const DishDetail = ({ route, navigation }) => {
                             <View style={styles.ratingOverlay}>
                                 <MaterialCommunityIcons name="star" size={18} color={Colors.star} />
                                 <Text style={styles.ratingOverlayText}>
-                                    {dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'Mới'}
+                                    {dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'M\u1edbi'}
                                 </Text>
                                 <Text style={styles.ratingOverlaySub}> · {dish.review_count || 0}</Text>
                             </View>
@@ -208,10 +207,10 @@ const DishDetail = ({ route, navigation }) => {
                         <FadeInUp delay={200} duration={400} style={styles.infoBox}>
                             <View style={styles.titleRow}>
                                 <Text style={styles.name}>{dish.name}</Text>
-                                <Text style={styles.price}>{Number(dish.price).toLocaleString()}đ</Text>
+                                <Text style={styles.price}>{Number(dish.price).toLocaleString()}{`\u0111`}</Text>
                             </View>
 
-                            <Text style={styles.desc}>{dish.description || 'Nhà hàng chưa cập nhật mô tả cho món này.'}</Text>
+                            <Text style={styles.desc}>{dish.description || 'Nh\u00e0 h\u00e0ng ch\u01b0a c\u1eadp nh\u1eadt m\u00f4 t\u1ea3 cho m\u00f3n n\u00e0y.'}</Text>
 
                             <View style={styles.tagRow}>
                                 <Chip
@@ -220,7 +219,7 @@ const DishDetail = ({ route, navigation }) => {
                                     compact
                                     style={styles.tagChip}
                                     textStyle={styles.tagChipText}>
-                                    {dish.preparation_time} phút
+                                    {dish.preparation_time} {`ph\u00fat`}
                                 </Chip>
                                 <Chip
                                     icon="chef-hat"
@@ -228,13 +227,13 @@ const DishDetail = ({ route, navigation }) => {
                                     compact
                                     style={styles.tagChip}
                                     textStyle={styles.tagChipText}>
-                                    {dish.chef_name || 'Nhà hàng'}
+                                    {dish.chef_name || 'Nh\u00e0 h\u00e0ng'}
                                 </Chip>
                             </View>
                         </FadeInUp>
 
                         <FadeInUp delay={300} duration={400} style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>Nguyên liệu</Text>
+                            <Text style={styles.sectionTitle}>{`Nguy\u00ean li\u1ec7u`}</Text>
                             {ingredientsList.length > 0 ? (
                                 <View style={styles.ingredientGrid}>
                                     {ingredientsList.map((item, idx) => (
@@ -250,13 +249,13 @@ const DishDetail = ({ route, navigation }) => {
                                     ))}
                                 </View>
                             ) : (
-                                <Text style={styles.ingredients}>Thông tin nguyên liệu đang được cập nhật.</Text>
+                                <Text style={styles.ingredients}>{`Th\u00f4ng tin nguy\u00ean li\u1ec7u \u0111ang \u0111\u01b0\u1ee3c c\u1eadp nh\u1eadt.`}</Text>
                             )}
                         </FadeInUp>
 
                         <FadeInUp delay={400} duration={400} style={styles.sectionCard}>
                             <Text style={styles.sectionTitle}>
-                                {myReview ? 'Đánh giá của bạn' : 'Viết đánh giá'}
+                                {myReview ? '\u0110\u00e1nh gi\u00e1 c\u1ee7a b\u1ea1n' : 'Vi\u1ebft \u0111\u00e1nh gi\u00e1'}
                             </Text>
                             <View style={styles.starRow}>
                                 {[1, 2, 3, 4, 5].map((star) => (
@@ -275,7 +274,7 @@ const DishDetail = ({ route, navigation }) => {
 
                             <TextInput
                                 mode="outlined"
-                                placeholder="Chia sẻ cảm nhận của bạn về món này..."
+                                placeholder="Chia s\u1ebb c\u1ea3m nh\u1eadn c\u1ee7a b\u1ea1n v\u1ec1 m\u00f3n n\u00e0y..."
                                 placeholderTextColor={Colors.placeholder}
                                 value={comment}
                                 onChangeText={setComment}
@@ -297,20 +296,20 @@ const DishDetail = ({ route, navigation }) => {
                                     textColor={Colors.onPrimary}
                                     style={{ borderRadius: 20, marginTop: 14 }}
                                     labelStyle={{ fontWeight: '700', fontSize: 15 }}>
-                                    {myReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá'}
+                                    {myReview ? 'C\u1eadp nh\u1eadt \u0111\u00e1nh gi\u00e1' : 'G\u1eedi \u0111\u00e1nh gi\u00e1'}
                                 </Button> :
                                 <Button
                                     mode="contained-tonal"
                                     onPress={() => navigation.navigate('Login')}
                                     style={{ borderRadius: 20, marginTop: 14 }}
                                     labelStyle={{ fontWeight: '700', fontSize: 15 }}>
-                                    Đăng nhập để đánh giá món này
+                                    {`\u0110\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u00e1nh gi\u00e1 m\u00f3n n\u00e0y`}
                                 </Button>
                             }
                         </FadeInUp>
 
                         <FadeInUp delay={500} duration={400} style={styles.reviewHeader}>
-                            <Text style={styles.sectionTitle}>Đánh giá gần đây ({reviews.length})</Text>
+                            <Text style={styles.sectionTitle}>{`\u0110\u00e1nh gi\u00e1 g\u1ea7n \u0111\u00e2y`} ({reviews.length})</Text>
                         </FadeInUp>
                     </View>
                 }
@@ -320,7 +319,7 @@ const DishDetail = ({ route, navigation }) => {
                             <View style={styles.reviewTop}>
                                 <View style={{ flex: 1, paddingRight: 12 }}>
                                     <Text style={styles.reviewAuthor}>
-                                        {item.customer_name || `Khách #${item.customer}`}
+                                        {item.customer_name || `Kh\u00e1ch #${item.customer}`}
                                     </Text>
                                     <Text style={styles.reviewDate}>
                                         {new Date(item.created_date).toLocaleDateString('vi-VN')}
@@ -338,7 +337,7 @@ const DishDetail = ({ route, navigation }) => {
                 ListEmptyComponent={
                     <View style={styles.emptyReview}>
                         <MaterialCommunityIcons name="message-outline" size={44} color={Colors.textSecondary} />
-                        <Text style={styles.emptyReviewText}>Chưa có đánh giá nào cho món này.</Text>
+                        <Text style={styles.emptyReviewText}>{`Ch\u01b0a c\u00f3 \u0111\u00e1nh gi\u00e1 n\u00e0o cho m\u00f3n n\u00e0y.`}</Text>
                     </View>
                 }
                 contentContainerStyle={{ paddingBottom: 100 }}
@@ -367,14 +366,14 @@ const DishDetail = ({ route, navigation }) => {
                     icon="cart-plus"
                     onPress={() => {
                         addItem(dish, quantity);
-                        showToast(`Đã thêm ${quantity} ${dish.name} vào giỏ`, 'success');
+                        showToast(`\u0110\u00e3 th\u00eam ${quantity} ${dish.name} v\u00e0o gi\u1ecf`, 'success');
                     }}
                     buttonColor={Colors.primary}
                     textColor={Colors.onPrimary}
                     style={styles.cartBtn}
                     labelStyle={{ fontWeight: '800', fontSize: 16 }}
                     contentStyle={{ paddingVertical: 6 }}>
-                    Thêm vào giỏ
+                    {`Th\u00eam v\u00e0o gi\u1ecf`}
                 </Button>
             </View>
 
@@ -387,117 +386,5 @@ const DishDetail = ({ route, navigation }) => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    heroWrap: { position: 'relative' },
-    img: { width: '100%', height: 300, borderBottomLeftRadius: 28, borderBottomRightRadius: 28 },
-    imagePlaceholder: { backgroundColor: Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' },
-    ratingOverlay: {
-        position: 'absolute',
-        bottom: 16,
-        right: 16,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest + 'E6',
-        paddingHorizontal: 14,
-        paddingVertical: 8,
-        borderRadius: 16,
-        ...editorialShadow,
-    },
-    ratingOverlayText: { color: Colors.text, fontWeight: '800', marginLeft: 6, fontSize: 16 },
-    ratingOverlaySub: { color: Colors.textSecondary, fontSize: 13 },
-    infoBox: { paddingBottom: 8 },
-    titleRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        paddingHorizontal: 20,
-        paddingTop: 24,
-    },
-    name: { fontSize: 28, fontWeight: '800', color: Colors.text, flex: 1, marginRight: 12, lineHeight: 34 },
-    price: { fontSize: 24, color: Colors.primary, fontWeight: '800' },
-    desc: { fontSize: 15, color: Colors.textSecondary, paddingHorizontal: 20, marginTop: 12, lineHeight: 24 },
-    tagRow: { flexDirection: 'row', flexWrap: 'wrap', paddingHorizontal: 20, marginTop: 16 },
-    tagChip: { marginRight: 8, marginBottom: 8, backgroundColor: Colors.primaryLight },
-    tagChipText: { color: Colors.text, fontSize: 13, fontWeight: '600' },
-    sectionCard: {
-        marginHorizontal: 20,
-        marginTop: 18,
-        padding: 20,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        ...editorialShadow,
-    },
-    sectionTitle: { fontSize: 20, fontWeight: '800', color: Colors.text, marginBottom: 12 },
-    ingredients: { fontSize: 15, color: Colors.textSecondary, lineHeight: 22 },
-    ingredientGrid: { flexDirection: 'row', flexWrap: 'wrap' },
-    ingredientChip: { marginRight: 8, marginBottom: 8 },
-    ingredientText: { fontSize: 13, color: Colors.text, fontWeight: '600' },
-    starRow: { flexDirection: 'row', marginBottom: 14 },
-    starBtn: { marginRight: 4 },
-    reviewHeader: { marginHorizontal: 20, marginTop: 10 },
-    reviewItem: {
-        padding: 16,
-        marginHorizontal: 20,
-        marginVertical: 5,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        ...editorialShadow,
-    },
-    reviewTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    reviewAuthor: { fontSize: 15, fontWeight: '700', color: Colors.text },
-    reviewDate: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
-    reviewStarBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.star + '15',
-        paddingHorizontal: 10,
-        paddingVertical: 4,
-        borderRadius: 10,
-    },
-    reviewStarText: { color: Colors.star, fontWeight: '700', fontSize: 14, marginLeft: 4 },
-    reviewComment: { color: Colors.text, fontSize: 15, lineHeight: 22, marginTop: 10 },
-    emptyReview: { alignItems: 'center', marginTop: 16, paddingHorizontal: 24 },
-    emptyReviewText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, textAlign: 'center' },
-    bottomBar: {
-        position: 'absolute',
-        left: 0,
-        right: 0,
-        bottom: 0,
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surface + 'CC',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        paddingHorizontal: 18,
-        paddingVertical: 14,
-        paddingBottom: 28,
-        ...editorialShadow,
-    },
-    stepper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 20,
-        paddingHorizontal: 2,
-        paddingVertical: 2,
-    },
-    stepBtn: { width: 38, height: 38, borderRadius: 14, backgroundColor: Colors.surfaceContainerLowest },
-    quantityText: { minWidth: 36, textAlign: 'center', fontSize: 18, fontWeight: '800', color: Colors.text },
-    cartBtn: {
-        borderRadius: 20,
-        flex: 1,
-        marginLeft: 12,
-    },
-    centerState: {
-        flex: 1,
-        backgroundColor: Colors.surface,
-        justifyContent: 'center',
-        alignItems: 'center',
-        paddingHorizontal: 32,
-    },
-    stateTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 16 },
-    stateText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
-});
 
 export default DishDetail;

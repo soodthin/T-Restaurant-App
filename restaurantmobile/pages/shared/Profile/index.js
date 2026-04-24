@@ -3,7 +3,6 @@ import {
     View,
     Text,
     TouchableOpacity,
-    StyleSheet,
     ScrollView,
     KeyboardAvoidingView,
     Platform,
@@ -12,19 +11,20 @@ import { TextInput, Button, ActivityIndicator, Avatar } from 'react-native-paper
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
-import { FadeInDown, FadeInUp, FadeIn } from '../utils/animations';
+import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
-import { ConfirmDialog, Toast } from './CustomDialog';
-import ChefVerificationBanner from './ChefVerificationBanner';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
+import ChefVerificationBanner from '@components/ChefVerificationBanner';
 import authFetch, {
     clearSession,
     getApiErrorMessage,
     storeUser,
-} from '../utils/api';
-import { endpoints } from '../configs';
-import Colors from '../styles/colors';
-import { editorialShadow } from '../styles/theme';
-import { getDisplayName, getInitialLetter } from '../utils/format';
+} from '@utils/api';
+import { endpoints } from '@configs';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+import { getDisplayName, getInitialLetter } from '@utils/format';
+import styles from './styles';
 
 const roleLabelMap = {
     admin: 'Quản trị viên',
@@ -449,120 +449,5 @@ const Profile = ({ navigation }) => {
         </KeyboardAvoidingView>
     );
 };
-
-const styles = StyleSheet.create({
-    keyboard: { flex: 1, backgroundColor: Colors.surface },
-    scroll: { backgroundColor: Colors.surface },
-    container: { padding: 20, paddingBottom: 36 },
-    loading: { flex: 1, backgroundColor: Colors.surface },
-    centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surface },
-    centerText: { color: Colors.text, fontSize: 15 },
-    hero: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 28,
-        padding: 24,
-        alignItems: 'center',
-        ...editorialShadow,
-    },
-    editAvatarBadge: {
-        position: 'absolute',
-        right: -2,
-        bottom: -2,
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        backgroundColor: Colors.primary,
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: 3,
-        borderColor: Colors.surfaceContainerLowest,
-    },
-    name: {
-        marginTop: 18,
-        fontSize: 26,
-        lineHeight: 32,
-        fontWeight: '800',
-        textAlign: 'center',
-        color: Colors.text,
-    },
-    username: { marginTop: 6, fontSize: 14, color: Colors.textSecondary },
-    badgeRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        justifyContent: 'center',
-        marginTop: 14,
-    },
-    roleBadge: {
-        backgroundColor: Colors.primary,
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginHorizontal: 4,
-        marginBottom: 8,
-    },
-    roleText: { fontSize: 13, fontWeight: '700', color: Colors.onPrimary },
-    statusBadge: {
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginHorizontal: 4,
-        marginBottom: 8,
-    },
-    statusApproved: { backgroundColor: Colors.success + '18' },
-    statusPending: { backgroundColor: Colors.star + '18' },
-    statusBadgeText: { fontSize: 13, fontWeight: '700' },
-    banner: { marginTop: 18, width: '100%' },
-    infoCard: {
-        marginTop: 18,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        ...editorialShadow,
-    },
-    noteCard: {
-        marginTop: 14,
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 24,
-        padding: 20,
-    },
-    cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 10 },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingVertical: 12,
-    },
-    infoIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 16,
-        backgroundColor: Colors.primaryLight,
-        justifyContent: 'center',
-        alignItems: 'center',
-        marginRight: 14,
-    },
-    infoContent: { flex: 1 },
-    infoLabel: {
-        fontSize: 12,
-        fontWeight: '700',
-        letterSpacing: 0.7,
-        color: Colors.textSecondary,
-        textTransform: 'uppercase',
-    },
-    infoValue: { marginTop: 5, fontSize: 15, lineHeight: 22, color: Colors.text },
-    noteItem: { marginTop: 8, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    btn: { marginTop: 12, borderRadius: 20 },
-    btnContent: { paddingVertical: 8 },
-    editCard: {
-        marginTop: 18,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        ...editorialShadow,
-    },
-    editSubtitle: { marginBottom: 16, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    inputOutline: { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 },
-    input: { backgroundColor: Colors.surfaceContainerLow, marginBottom: 14 },
-    actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-});
 
 export default Profile;

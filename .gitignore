@@ -33,3 +33,4 @@ capture/
 Thumbs.db
 
 .postman/
+.claude/
