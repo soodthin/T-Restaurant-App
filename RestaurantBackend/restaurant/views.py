@@ -17,6 +17,7 @@ from .serializers import (
     ReviewSerializer, PaymentSerializer
 )
 from .perms import IsChef, IsOwner
+from .paginators import ItemPaginator, ReviewPaginator
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
@@ -24,6 +25,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
     queryset = User.objects.filter(is_active=True)
     serializer_class = UserSerializer
     parser_classes = [MultiPartParser]
+    pagination_class = ItemPaginator
 
     def get_permissions(self):
         if self.action in ['create']:
@@ -78,6 +80,7 @@ class MenuViewSet(viewsets.ModelViewSet):
 class DishViewSet(viewsets.ModelViewSet):
     queryset = Dish.objects.filter(active=True)
     serializer_class = DishSerializer
+    pagination_class = ItemPaginator
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
     search_fields = [
         'name', 'chef__username', 'chef__first_name', 'chef__last_name',
@@ -112,8 +115,12 @@ class DishViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['get'])
     def reviews(self, request, pk=None):
-        dish = self.get_object()
-        return Response(ReviewSerializer(dish.reviews.all(), many=True).data)
+        reviews = self.get_object().reviews.all()
+        p = ReviewPaginator()
+        page = p.paginate_queryset(reviews, request)
+        if page is not None:
+            return p.get_paginated_response(ReviewSerializer(page, many=True).data)
+        return Response(ReviewSerializer(reviews, many=True).data)
 
     @action(detail=False, methods=['get'], url_path='compare')
     def compare(self, request):
@@ -129,6 +136,7 @@ class DishViewSet(viewsets.ModelViewSet):
 class TableBookingViewSet(viewsets.ModelViewSet):
     queryset = TableBooking.objects.all()
     serializer_class = TableBookingSerializer
+    pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -141,6 +149,7 @@ class TableBookingViewSet(viewsets.ModelViewSet):
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
+    pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):
@@ -166,6 +175,7 @@ class OrderViewSet(viewsets.ModelViewSet):
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    pagination_class = ReviewPaginator
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
@@ -176,6 +186,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 class PaymentViewSet(viewsets.ModelViewSet):
     queryset = Payment.objects.all()
     serializer_class = PaymentSerializer
+    pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
 
     def get_queryset(self):

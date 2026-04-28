@@ -25,8 +25,12 @@ INSTALLED_APPS = [
     'oauth2_provider',
     'cloudinary',
     'cloudinary_storage',
+    'ckeditor',
+    'ckeditor_uploader',
     'restaurant',
 ]
+
+CKEDITOR_UPLOAD_PATH = 'images/dishes/'
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -113,10 +117,8 @@ AUTH_USER_MODEL = 'restaurant.User'
 # cho phep frontend goi API tu domain khac
 CORS_ALLOW_ALL_ORIGINS = True
 
-# phan trang 20 item/trang, chung thuc bang OAuth2
+# chung thuc bang OAuth2 (phan trang khai bao tren tung viewset)
 REST_FRAMEWORK = {
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.PageNumberPagination',
-    'PAGE_SIZE': 20,
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),

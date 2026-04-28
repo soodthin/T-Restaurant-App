@@ -1,10 +1,10 @@
-from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from rest_framework import permissions
 from drf_yasg.views import get_schema_view
 from drf_yasg import openapi
+from restaurant.admin import admin_site
 
 schema_view = get_schema_view(
     openapi.Info(
@@ -17,8 +17,9 @@ schema_view = get_schema_view(
 )
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('admin/', admin_site.urls),
     path('api/', include('restaurant.urls')),
+    re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
     # OAuth2 endpoints
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
     # Swagger va Redoc

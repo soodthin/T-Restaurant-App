@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from ckeditor.fields import RichTextField
 
 
 class User(AbstractUser):
@@ -54,7 +55,7 @@ class Menu(ModelBase):
 
 class Dish(ModelBase):
     name = models.CharField(max_length=200)
-    description = models.TextField(null=True, blank=True)
+    description = RichTextField(null=True, blank=True)
     image = models.ImageField(upload_to='dishes/%Y/%m/', null=True, blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=0)
     ingredients = models.TextField(null=True, blank=True)

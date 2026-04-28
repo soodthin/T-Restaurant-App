@@ -1,0 +1,40 @@
+{% extends 'admin/base_site.html' %}
+{% block content %}
+<h1>THỐNG KÊ MÓN ĂN THEO DANH MỤC</h1>
+<ul>
+    {% for c in stats %}
+    <li><strong>{{ c.name }}</strong> có {{ c.count }} món.</li>
+    {% endfor %}
+</ul>
+
+<div style="width:50%">
+    <canvas id="dishChart"></canvas>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    let labels = [];
+    let data = [];
+    {% for c in stats %}
+    labels.push('{{ c.name }}');
+    data.push({{ c.count }});
+    {% endfor %}
+    window.onload = function () {
+        const ctx = document.getElementById('dishChart');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'So mon theo danh muc',
+                    data: data,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {y: {beginAtZero: true}}
+            }
+        });
+    }
+</script>
+{% endblock %}
