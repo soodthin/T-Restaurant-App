@@ -3,12 +3,13 @@ from django.contrib.auth.models import AbstractUser
 
 
 class User(AbstractUser):
-    class Role(models.TextChoices):
-        ADMIN = 'admin', 'ADMIN'
-        CHEF = 'chef', 'CHEF'
-        CUSTOMER = 'customer', 'CUSTOMER'
+    ROLES = [
+        ('admin', 'ADMIN'),
+        ('chef', 'CHEF'),
+        ('customer', 'CUSTOMER'),
+    ]
 
-    role = models.CharField(max_length=20, choices=Role.choices, default=Role.CUSTOMER)
+    role = models.CharField(max_length=20, choices=ROLES, default='customer')
     avatar = models.ImageField(upload_to='avatars/%Y/%m/', null=True, blank=True)
     phone = models.CharField(max_length=15, null=True, blank=True)
     address = models.CharField(max_length=255, null=True, blank=True)
@@ -16,7 +17,7 @@ class User(AbstractUser):
 
     def save(self, *args, **kwargs):
         if self.is_superuser:
-            self.role = User.Role.ADMIN
+            self.role = 'admin'
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -72,16 +73,17 @@ class Dish(ModelBase):
 
 
 class TableBooking(ModelBase):
-    class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        CONFIRMED = 'confirmed', 'Confirmed'
-        CANCELLED = 'cancelled', 'Cancelled'
-        COMPLETED = 'completed', 'Completed'
+    BOOKING_STATUSES = [
+        ('pending', 'Pending'),
+        ('confirmed', 'Confirmed'),
+        ('cancelled', 'Cancelled'),
+        ('completed', 'Completed'),
+    ]
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='bookings')
     booking_date = models.DateTimeField()
     guests = models.PositiveIntegerField()
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=BOOKING_STATUSES, default='pending')
     note = models.TextField(null=True, blank=True)
 
     def __str__(self):
@@ -89,16 +91,17 @@ class TableBooking(ModelBase):
 
 
 class Order(ModelBase):
-    class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        PREPARING = 'preparing', 'Preparing'
-        SERVED = 'served', 'Served'
-        CANCELLED = 'cancelled', 'Cancelled'
+    ORDER_STATUSES = [
+        ('pending', 'Pending'),
+        ('preparing', 'Preparing'),
+        ('served', 'Served'),
+        ('cancelled', 'Cancelled'),
+    ]
 
     customer = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     booking = models.ForeignKey(TableBooking, on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name='orders')
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    status = models.CharField(max_length=20, choices=ORDER_STATUSES, default='pending')
     total_amount = models.DecimalField(max_digits=12, decimal_places=0, default=0)
 
     def __str__(self):
@@ -130,21 +133,23 @@ class Review(models.Model):
 
 
 class Payment(models.Model):
-    class Method(models.TextChoices):
-        CASH = 'cash', 'Cash'
-        PAYPAL = 'paypal', 'PayPal'
-        STRIPE = 'stripe', 'Stripe'
-        MOMO = 'momo', 'MoMo'
-        ZALOPAY = 'zalopay', 'ZaloPay'
+    PAYMENT_METHODS = [
+        ('cash', 'Cash'),
+        ('paypal', 'PayPal'),
+        ('stripe', 'Stripe'),
+        ('momo', 'MoMo'),
+        ('zalopay', 'ZaloPay'),
+    ]
 
-    class Status(models.TextChoices):
-        PENDING = 'pending', 'Pending'
-        COMPLETED = 'completed', 'Completed'
-        FAILED = 'failed', 'Failed'
+    PAYMENT_STATUSES = [
+        ('pending', 'Pending'),
+        ('completed', 'Completed'),
+        ('failed', 'Failed'),
+    ]
 
     order = models.OneToOneField(Order, on_delete=models.CASCADE, related_name='payment')
-    method = models.CharField(max_length=20, choices=Method.choices)
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUSES, default='pending')
     amount = models.DecimalField(max_digits=12, decimal_places=0)
     transaction_id = models.CharField(max_length=255, null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
