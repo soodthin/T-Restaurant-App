@@ -18,6 +18,7 @@ import Profile from '@pages/shared/Profile';
 import ChefHome from '@pages/chef/ChefHome';
 import MyDishes from '@pages/chef/MyDishes';
 import CreateDish from '@pages/chef/CreateDish';
+import ChefReviews from '@pages/chef/ChefReviews';
 import GuestPromptCard from '@components/GuestPromptCard';
 import Colors from '@styles/colors';
 import { editorialShadow, paperTheme } from '@styles/theme';
@@ -200,6 +201,16 @@ const ChefTab = () => (
                 title: 'Món của tôi',
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="food" size={size} color={color} />
+                ),
+            }}
+        />
+        <Tab.Screen
+            name="ChefReviews"
+            component={ChefReviews}
+            options={{
+                title: 'Đánh giá',
+                tabBarIcon: ({ color, size }) => (
+                    <MaterialCommunityIcons name="comment-text-multiple-outline" size={size} color={color} />
                 ),
             }}
         />

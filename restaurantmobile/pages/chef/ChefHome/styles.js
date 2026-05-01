@@ -220,4 +220,58 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
         marginTop: 6,
     },
+    periodRow: {
+        marginTop: 6,
+        marginBottom: 12,
+    },
+    chartCard: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 24,
+        padding: 16,
+        ...editorialShadow,
+    },
+    barRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        marginBottom: 12,
+    },
+    barLabel: {
+        width: 64,
+        fontSize: 12,
+        fontWeight: '600',
+        color: Colors.text,
+    },
+    barTrack: {
+        flex: 1,
+        height: 12,
+        borderRadius: 6,
+        backgroundColor: Colors.surfaceContainerLow,
+        marginHorizontal: 10,
+        overflow: 'hidden',
+    },
+    barFill: {
+        height: '100%',
+        backgroundColor: Colors.primary,
+    },
+    barValueWrap: {
+        width: 100,
+        alignItems: 'flex-end',
+    },
+    barValue: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    barSub: {
+        marginTop: 2,
+        fontSize: 11,
+        color: Colors.textSecondary,
+    },
+    emptyChartText: {
+        fontSize: 13,
+        lineHeight: 20,
+        color: Colors.textSecondary,
+        textAlign: 'center',
+        paddingVertical: 16,
+    },
 });

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -121,6 +121,19 @@ const Home = ({ navigation }) => {
         loadDishes(1, '', null, null, '');
     }, []);
 
+    // Debounce search: gõ keyword → tự fetch sau 350ms.
+    // Dùng ref để tránh fetch khi onRefresh / refresh đã set search rồi.
+    const lastSearchedRef = useRef('');
+    useEffect(() => {
+        if (search === lastSearchedRef.current) return;
+        const timer = setTimeout(() => {
+            lastSearchedRef.current = search;
+            setPage(1);
+            loadDishes(1, search, catId, menuId, ordering);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [search]);
+
     const refresh = (next = {}) => {
         const nextSearch = next.search ?? search;
         const nextCategory = next.catId ?? catId;
@@ -168,6 +181,7 @@ const Home = ({ navigation }) => {
 
             // Cập nhật state TẤT CẢ cùng 1 lượt sau khi API trả về,
             // để UI (compare FAB, filter, search...) reset đồng bộ với data mới.
+            lastSearchedRef.current = '';
             setSearch('');
             setCatId(null);
             setMenuId(null);
@@ -263,7 +277,7 @@ const Home = ({ navigation }) => {
                     onChangeText={setSearch}
                     onFocus={() => setSearchFocused(true)}
                     onBlur={() => setSearchFocused(false)}
-                    onSubmitEditing={() => refresh({ search })}
+                    loading={loading && search !== ''}
                     style={styles.searchbar}
                     inputStyle={{ color: Colors.text }}
                     placeholderTextColor={Colors.placeholder}
@@ -307,45 +321,45 @@ const Home = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {loading ? <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} /> :
-                <FlatList
-                    data={dishes}
-                    renderItem={({ item, index }) => (
-                        <DishCard
-                            dish={item}
-                            index={index}
-                            onPress={() => navigation.navigate('DishDetail', { id: item.id })}
-                            onCompare={() => toggleCompare(item.id)}
-                            onAddCart={() => {
-                                addItem(item);
-                                showToast(`\u0110\u00e3 th\u00eam ${item.name} v\u00e0o gi\u1ecf`);
-                            }}
-                            isCompareSelected={selectedCompareIds.includes(item.id)}
-                        />
-                    )}
-                    keyExtractor={(item) => item.id.toString()}
-                    onEndReached={loadMore}
-                    onEndReachedThreshold={0.35}
-                    ListHeaderComponent={ListHeader}
-                    ListFooterComponent={loadingMore ? <ActivityIndicator color={Colors.primary} style={{ marginTop: 12 }} /> : null}
-                    contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
-                    refreshControl={
-                        <RefreshControl
-                            refreshing={refreshing}
-                            onRefresh={onRefresh}
-                            tintColor={Colors.primary}
-                            colors={[Colors.primary]}
-                        />
-                    }
-                    ListEmptyComponent={
+            <FlatList
+                data={dishes}
+                renderItem={({ item, index }) => (
+                    <DishCard
+                        dish={item}
+                        index={index}
+                        onPress={() => navigation.navigate('DishDetail', { id: item.id })}
+                        onCompare={() => toggleCompare(item.id)}
+                        onAddCart={() => {
+                            addItem(item);
+                            showToast(`\u0110\u00e3 th\u00eam ${item.name} v\u00e0o gi\u1ecf`);
+                        }}
+                        isCompareSelected={selectedCompareIds.includes(item.id)}
+                    />
+                )}
+                keyExtractor={(item) => item.id.toString()}
+                onEndReached={loadMore}
+                onEndReachedThreshold={0.35}
+                ListHeaderComponent={ListHeader}
+                ListFooterComponent={loadingMore ? <ActivityIndicator color={Colors.primary} style={{ marginTop: 12 }} /> : null}
+                contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+                refreshControl={
+                    <RefreshControl
+                        refreshing={refreshing}
+                        onRefresh={onRefresh}
+                        tintColor={Colors.primary}
+                        colors={[Colors.primary]}
+                    />
+                }
+                ListEmptyComponent={
+                    loading ?
+                        <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} /> :
                         <View style={styles.empty}>
                             <MaterialCommunityIcons name="food-off" size={50} color={Colors.textSecondary} />
                             <Text style={styles.emptyTitle}>{`Kh\u00f4ng c\u00f3 m\u00f3n n\u00e0o ph\u00f9 h\u1ee3p`}</Text>
                             <Text style={styles.emptyText}>{`Th\u1eed \u0111\u1ed5i b\u1ed9 l\u1ecdc ho\u1eb7c t\u1eeb kh\u00f3a t\u00ecm ki\u1ebfm \u0111\u1ec3 xem th\u00eam k\u1ebft qu\u1ea3.`}</Text>
                         </View>
-                    }
-                />
-            }
+                }
+            />
 
             {selectedCompareIds.length >= 2 &&
                 <View style={[styles.compareFab, { bottom: tabBarHeight + 16 }]}>

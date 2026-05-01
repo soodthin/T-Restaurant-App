@@ -6,7 +6,7 @@ import {
     RefreshControl,
     TouchableOpacity,
 } from 'react-native';
-import { ActivityIndicator, Button } from 'react-native-paper';
+import { ActivityIndicator, Button, SegmentedButtons } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -26,6 +26,24 @@ const defaultStats = {
     total_dishes: 0,
     total_orders: 0,
     revenue: 0,
+    by_dish: [],
+    series: [],
+};
+
+const periodLabel = {
+    day: 'Ngày',
+    week: 'Tuần',
+    month: 'Tháng',
+};
+
+const formatPeriodLabel = (iso, period) => {
+    if (!iso) return '';
+    const d = new Date(iso);
+    if (Number.isNaN(d.getTime())) return iso;
+    if (period === 'month') {
+        return `${(d.getMonth() + 1).toString().padStart(2, '0')}/${d.getFullYear()}`;
+    }
+    return `${d.getDate().toString().padStart(2, '0')}/${(d.getMonth() + 1).toString().padStart(2, '0')}`;
 };
 
 const ChefHome = ({ navigation }) => {
@@ -35,20 +53,21 @@ const ChefHome = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
+    const [period, setPeriod] = useState('day');
 
     const resetToLogin = useCallback(async () => {
         await clearSession();
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     }, [navigation]);
 
-    const loadDashboard = useCallback(async (showLoader = true) => {
+    const loadDashboard = useCallback(async (currentPeriod = period, showLoader = true) => {
         if (showLoader) setLoading(true);
         else setRefreshing(true);
 
         try {
             const [userRes, statsRes] = await Promise.all([
                 authFetch(endpoints['current-user']),
-                authFetch(endpoints['stats']),
+                authFetch(`${endpoints['stats']}?period=${currentPeriod}`),
             ]);
 
             if (userRes.status === 401 || statsRes.status === 401) {
@@ -76,11 +95,16 @@ const ChefHome = ({ navigation }) => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [resetToLogin]);
+    }, [period, resetToLogin]);
 
     useFocusEffect(useCallback(() => {
-        loadDashboard(true);
-    }, [loadDashboard]));
+        loadDashboard(period, true);
+    }, [loadDashboard, period]));
+
+    const onChangePeriod = (next) => {
+        setPeriod(next);
+        loadDashboard(next, true);
+    };
 
     if (loading) {
         return (
@@ -137,6 +161,13 @@ const ChefHome = ({ navigation }) => {
             onPress: () => navigation.navigate('MyDishes'),
         },
         {
+            key: 'reviews',
+            icon: 'comment-text-multiple-outline',
+            title: 'Đánh giá khách hàng',
+            subtitle: 'Xem nhận xét của khách dành cho các món bạn phụ trách.',
+            onPress: () => navigation.navigate('ChefReviews'),
+        },
+        {
             key: 'profile',
             icon: 'account-cog-outline',
             title: 'Cập nhật hồ sơ',
@@ -145,6 +176,18 @@ const ChefHome = ({ navigation }) => {
         },
     ];
 
+    const series = Array.isArray(stats.series) ? stats.series : [];
+    const byDish = Array.isArray(stats.by_dish) ? stats.by_dish : [];
+    const seriesMaxRevenue = series.reduce(
+        (max, item) => Math.max(max, Number(item.revenue) || 0),
+        0,
+    );
+    const topDishes = byDish.slice(0, 5);
+    const topDishMaxRevenue = topDishes.reduce(
+        (max, item) => Math.max(max, Number(item.revenue) || 0),
+        0,
+    );
+
     return (
         <ScrollView
             style={styles.container}
@@ -152,7 +195,7 @@ const ChefHome = ({ navigation }) => {
             refreshControl={
                 <RefreshControl
                     refreshing={refreshing}
-                    onRefresh={() => loadDashboard(false)}
+                    onRefresh={() => loadDashboard(period, false)}
                     tintColor={Colors.primary}
                 />
             }>
@@ -188,7 +231,7 @@ const ChefHome = ({ navigation }) => {
                         buttonColor={Colors.surfaceContainerLow}
                         textColor={Colors.text}
                         compact
-                        onPress={() => loadDashboard(true)}>
+                        onPress={() => loadDashboard(period, true)}>
                         Thử lại
                     </Button>
                 </View> :
@@ -220,6 +263,88 @@ const ChefHome = ({ navigation }) => {
                     <MaterialCommunityIcons name="cash-register" size={28} color={Colors.primary} />
                 </View>
             </FadeInDown>
+
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Doanh thu theo thời gian</Text>
+                <Text style={styles.sectionSubtitle}>
+                    Tổng hợp doanh thu và số suất bán trong 90 ngày gần nhất, gom theo {periodLabel[period].toLowerCase()}.
+                </Text>
+            </View>
+
+            <View style={styles.periodRow}>
+                <SegmentedButtons
+                    value={period}
+                    onValueChange={onChangePeriod}
+                    buttons={[
+                        { value: 'day', label: 'Ngày' },
+                        { value: 'week', label: 'Tuần' },
+                        { value: 'month', label: 'Tháng' },
+                    ]}
+                />
+            </View>
+
+            <View style={styles.chartCard}>
+                {series.length === 0 ? (
+                    <Text style={styles.emptyChartText}>
+                        Chưa có dữ liệu doanh thu trong khoảng thời gian này.
+                    </Text>
+                ) : (
+                    series.map((item) => {
+                        const ratio = seriesMaxRevenue > 0
+                            ? Math.max(0.04, Number(item.revenue) / seriesMaxRevenue)
+                            : 0;
+                        return (
+                            <View key={item.period} style={styles.barRow}>
+                                <Text style={styles.barLabel}>
+                                    {formatPeriodLabel(item.period, period)}
+                                </Text>
+                                <View style={styles.barTrack}>
+                                    <View style={[styles.barFill, { width: `${ratio * 100}%` }]} />
+                                </View>
+                                <View style={styles.barValueWrap}>
+                                    <Text style={styles.barValue}>{formatCurrency(item.revenue)}</Text>
+                                    <Text style={styles.barSub}>{item.orders} suất</Text>
+                                </View>
+                            </View>
+                        );
+                    })
+                )}
+            </View>
+
+            <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Top món theo doanh thu</Text>
+                <Text style={styles.sectionSubtitle}>
+                    Xếp hạng các món bạn phụ trách theo doanh thu tổng cộng từ trước đến nay.
+                </Text>
+            </View>
+
+            <View style={styles.chartCard}>
+                {topDishes.length === 0 ? (
+                    <Text style={styles.emptyChartText}>
+                        Chưa có món nào phát sinh doanh thu.
+                    </Text>
+                ) : (
+                    topDishes.map((item) => {
+                        const ratio = topDishMaxRevenue > 0
+                            ? Math.max(0.04, Number(item.revenue) / topDishMaxRevenue)
+                            : 0;
+                        return (
+                            <View key={item.dish_id} style={styles.barRow}>
+                                <Text style={styles.barLabel} numberOfLines={1}>
+                                    {item.dish__name}
+                                </Text>
+                                <View style={styles.barTrack}>
+                                    <View style={[styles.barFill, { width: `${ratio * 100}%` }]} />
+                                </View>
+                                <View style={styles.barValueWrap}>
+                                    <Text style={styles.barValue}>{formatCurrency(item.revenue)}</Text>
+                                    <Text style={styles.barSub}>{item.orders} suất</Text>
+                                </View>
+                            </View>
+                        );
+                    })
+                )}
+            </View>
 
             <View style={styles.sectionHeader}>
                 <Text style={styles.sectionTitle}>Tác vụ nên làm tiếp theo</Text>
