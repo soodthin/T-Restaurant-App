@@ -12,8 +12,10 @@ class IsChef(permissions.BasePermission):
 
 
 class IsOwner(permissions.BasePermission):
-    # chi chinh chu moi duoc sua/xoa
+    # chi chinh chu moi duoc sua/xoa, ai cung doc duoc
     def has_object_permission(self, request, view, obj):
+        if request.method in permissions.SAFE_METHODS:
+            return True
         if hasattr(obj, 'customer'):
             return obj.customer == request.user
         if hasattr(obj, 'chef'):
