@@ -91,6 +91,9 @@ class DishViewSet(viewsets.ModelViewSet):
     def get_permissions(self):
         if self.action in ['list', 'retrieve', 'reviews', 'compare']:
             return [permissions.AllowAny()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            # Chef da duyet va dung la chu cua mon do.
+            return [IsChef(), IsOwner()]
         return [IsChef()]
 
     def get_queryset(self):
@@ -161,25 +164,34 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post'], url_path='add-detail')
     def add_detail(self, request, pk=None):
         order = self.get_object()
-        serializer = OrderDetailSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(order=order)
-            order.total_amount = sum(
-                d.unit_price * d.quantity for d in order.details.all()
+        if order.customer_id != request.user.id:
+            return Response({'detail': 'Đơn hàng này không thuộc về bạn.'},
+                            status=status.HTTP_403_FORBIDDEN)
+        if order.status != 'pending':
+            return Response(
+                {'detail': 'Chỉ có thể thêm món khi đơn còn ở trạng thái chờ.'},
+                status=status.HTTP_400_BAD_REQUEST,
             )
-            order.save()
-            return Response(OrderSerializer(order).data)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        serializer = OrderDetailSerializer(data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save(order=order)
+        order.total_amount = sum(
+            d.unit_price * d.quantity for d in order.details.all()
+        )
+        order.save()
+        return Response(OrderSerializer(order, context={'request': request}).data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
-    queryset = Review.objects.all()
+    queryset = Review.objects.select_related('customer', 'dish').all()
     serializer_class = ReviewSerializer
     pagination_class = ReviewPaginator
 
     def get_permissions(self):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAuthenticated(), IsOwner()]
         return [permissions.IsAuthenticated()]
 
 
@@ -194,6 +206,65 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return Payment.objects.all()
         return Payment.objects.filter(order__customer=user)
+
+
+PERIOD_TRUNC = {
+    'day': TruncDay,
+    'week': TruncWeek,
+    'month': TruncMonth,
+}
+
+
+def _parse_period(request, default='day'):
+    period = request.query_params.get('period', default)
+    if period not in PERIOD_TRUNC:
+        period = default
+    return period
+
+
+def _series_for_chef(user, period, since):
+    trunc = PERIOD_TRUNC[period]
+    qs = OrderDetail.objects.filter(
+        dish__chef=user,
+        order__created_date__gte=since,
+    ).annotate(bucket=trunc('order__created_date')).values('bucket').annotate(
+        orders=Sum('quantity'),
+        revenue=Sum(F('unit_price') * F('quantity')),
+    ).order_by('bucket')
+    return [
+        {
+            'period': row['bucket'].date().isoformat() if row['bucket'] else None,
+            'orders': row['orders'] or 0,
+            'revenue': row['revenue'] or 0,
+        }
+        for row in qs
+    ]
+
+
+def _series_for_admin(period, since):
+    trunc = PERIOD_TRUNC[period]
+    bookings = TableBooking.objects.filter(
+        created_date__gte=since,
+    ).annotate(bucket=trunc('created_date')).values('bucket').annotate(
+        count=Count('id'),
+    ).order_by('bucket')
+    revenue = Payment.objects.filter(
+        status='completed', created_date__gte=since,
+    ).annotate(bucket=trunc('created_date')).values('bucket').annotate(
+        total=Sum('amount'),
+    ).order_by('bucket')
+
+    booking_map = {row['bucket']: row['count'] for row in bookings}
+    revenue_map = {row['bucket']: row['total'] for row in revenue}
+    keys = sorted(set(booking_map) | set(revenue_map))
+    return [
+        {
+            'period': k.date().isoformat() if k else None,
+            'bookings': booking_map.get(k, 0),
+            'revenue': revenue_map.get(k, 0) or 0,
+        }
+        for k in keys
+    ]
 
 
 class StatsView(generics.GenericAPIView):
