@@ -3,7 +3,9 @@ from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.db.models import Sum, F, Avg, Count, FloatField, Value
-from django.db.models.functions import Coalesce
+from django.db.models.functions import Coalesce, TruncDay, TruncWeek, TruncMonth
+from django.utils import timezone
+from datetime import timedelta
 
 from .models import (
     User, FoodCategory, Menu, Dish,
@@ -101,18 +103,33 @@ class DishViewSet(viewsets.ModelViewSet):
             avg_rating=Coalesce(Avg('reviews__rating'), Value(0.0), output_field=FloatField()),
             review_count=Count('reviews', distinct=True),
         )
+        params = self.request.query_params
         # loc theo category_id neu co truyen
-        cat_id = self.request.query_params.get('category_id')
+        cat_id = params.get('category_id')
         if cat_id:
             qs = qs.filter(category_id=cat_id)
-        menu_id = self.request.query_params.get('menu_id')
+        menu_id = params.get('menu_id')
         if menu_id:
             qs = qs.filter(menu_id=menu_id)
+        # loc theo khoang gia
+        price_min = params.get('price_min')
+        if price_min:
+            qs = qs.filter(price__gte=price_min)
+        price_max = params.get('price_max')
+        if price_max:
+            qs = qs.filter(price__lte=price_max)
+        # loc theo thoi gian chuan bi (phut)
+        prep_min = params.get('prep_min')
+        if prep_min:
+            qs = qs.filter(preparation_time__gte=prep_min)
+        prep_max = params.get('prep_max')
+        if prep_max:
+            qs = qs.filter(preparation_time__lte=prep_max)
         # neu la chef dang dang nhap, chi hien mon cua chef do
         if (self.request.user.is_authenticated
                 and self.request.user.role == 'chef'
                 and self.action == 'list'
-                and self.request.query_params.get('my') == 'true'):
+                and params.get('my') == 'true'):
             qs = qs.filter(chef=self.request.user)
         return qs
 
@@ -134,6 +151,26 @@ class DishViewSet(viewsets.ModelViewSet):
         id_list = [int(i) for i in ids.split(',') if i.isdigit()]
         dishes = self.get_queryset().filter(id__in=id_list)
         return Response(DishSerializer(dishes, many=True).data)
+
+    @action(detail=False, methods=['get'], url_path='my-reviews',
+            permission_classes=[IsChef])
+    def my_reviews(self, request):
+        # Tat ca review cho cac mon do chef hien tai phu trach.
+        reviews = Review.objects.filter(
+            dish__chef=request.user
+        ).select_related('customer', 'dish').order_by('-created_date')
+        p = ReviewPaginator()
+        page = p.paginate_queryset(reviews, request)
+        data = ReviewSerializer(page if page is not None else reviews, many=True).data
+        # bo sung ten mon vao moi review de FE hien thi
+        review_map = {r.id: r for r in (page if page is not None else reviews)}
+        for item in data:
+            review = review_map.get(item['id'])
+            if review:
+                item['dish_name'] = review.dish.name
+        if page is not None:
+            return p.get_paginated_response(data)
+        return Response(data)
 
 
 class TableBookingViewSet(viewsets.ModelViewSet):
@@ -274,6 +311,11 @@ class StatsView(generics.GenericAPIView):
         user = request.user
         data = {}
 
+        period = _parse_period(request)
+        # mac dinh nhin lai 90 ngay (du de xem theo ngay/tuan/thang)
+        days = int(request.query_params.get('days') or 90)
+        since = timezone.now() - timedelta(days=days)
+
         if user.role == 'chef' and user.is_verified:
             dishes = Dish.objects.filter(chef=user)
             order_details = OrderDetail.objects.filter(dish__chef=user)
@@ -282,6 +324,16 @@ class StatsView(generics.GenericAPIView):
                 total=Sum('quantity'))['total'] or 0
             data['revenue'] = order_details.aggregate(
                 total=Sum(F('unit_price') * F('quantity')))['total'] or 0
+            # doanh thu va so suat theo tung mon
+            data['by_dish'] = list(
+                order_details.values('dish_id', 'dish__name').annotate(
+                    orders=Sum('quantity'),
+                    revenue=Sum(F('unit_price') * F('quantity')),
+                ).order_by('-revenue')
+            )
+            # bieu do theo ngay/tuan/thang
+            data['series'] = _series_for_chef(user, period, since)
+            data['period'] = period
 
         if user.is_staff:
             data['total_dishes'] = Dish.objects.count()
@@ -291,5 +343,7 @@ class StatsView(generics.GenericAPIView):
                 status='completed'
             ).aggregate(total=Sum('amount'))['total'] or 0
             data['total_users'] = User.objects.count()
+            data['series'] = _series_for_admin(period, since)
+            data['period'] = period
 
         return Response(data)

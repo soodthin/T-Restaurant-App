@@ -1,40 +1,131 @@
 {% extends 'admin/base_site.html' %}
-{% block content %}
-<h1>THỐNG KÊ MÓN ĂN THEO DANH MỤC</h1>
-<ul>
-    {% for c in stats %}
-    <li><strong>{{ c.name }}</strong> có {{ c.count }} món.</li>
-    {% endfor %}
-</ul>
 
-<div style="width:50%">
-    <canvas id="dishChart"></canvas>
+{% block content %}
+<style>
+    .stats-toolbar { margin: 12px 0 24px; padding: 12px; background: #f4f4f4; border-radius: 6px; }
+    .stats-toolbar label { margin-right: 8px; font-weight: 600; }
+    .stats-toolbar select { margin-right: 18px; padding: 4px 8px; }
+    .totals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
+    .totals-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px; }
+    .totals-card .label { font-size: 12px; text-transform: uppercase; color: #666; }
+    .totals-card .value { font-size: 22px; font-weight: 700; color: #222; margin-top: 4px; }
+    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
+    .chart-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; }
+    .chart-card h3 { margin-top: 0; font-size: 14px; color: #444; }
+    .top-dishes { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; margin-bottom: 28px; }
+    .top-dishes table { width: 100%; border-collapse: collapse; }
+    .top-dishes th, .top-dishes td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
+    .top-dishes th { font-size: 12px; text-transform: uppercase; color: #666; }
+    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+</style>
+
+<h1>Bao cao tong quan he thong</h1>
+
+<form method="get" class="stats-toolbar">
+    <label>Don vi</label>
+    <select name="period">
+        {% for value, label in period_options %}
+        <option value="{{ value }}" {% if value == period %}selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+    </select>
+
+    <label>Khoang thoi gian</label>
+    <select name="days">
+        {% for d in days_options %}
+        <option value="{{ d }}" {% if d == days %}selected{% endif %}>{{ d }} ngay gan nhat</option>
+        {% endfor %}
+    </select>
+
+    <button type="submit">Cap nhat</button>
+</form>
+
+<div class="totals-grid">
+    <div class="totals-card"><div class="label">Tong mon</div><div class="value">{{ totals.dishes }}</div></div>
+    <div class="totals-card"><div class="label">Tong dat ban</div><div class="value">{{ totals.bookings }}</div></div>
+    <div class="totals-card"><div class="label">Tong don</div><div class="value">{{ totals.orders }}</div></div>
+    <div class="totals-card"><div class="label">Tong nguoi dung</div><div class="value">{{ totals.users }}</div></div>
+    <div class="totals-card"><div class="label">Chef cho duyet</div><div class="value">{{ totals.chefs_pending }}</div></div>
+    <div class="totals-card"><div class="label">Doanh thu (da TT)</div><div class="value">{{ totals.revenue }}</div></div>
+</div>
+
+<div class="charts-grid">
+    <div class="chart-card">
+        <h3>Tan suat dat ban</h3>
+        <canvas id="bookingChart"></canvas>
+    </div>
+    <div class="chart-card">
+        <h3>Doanh thu</h3>
+        <canvas id="revenueChart"></canvas>
+    </div>
+</div>
+
+<div class="top-dishes">
+    <h3>Top 10 mon doanh thu cao nhat ({{ days }} ngay)</h3>
+    <table>
+        <thead>
+            <tr><th>#</th><th>Mon</th><th>Suat ban</th><th>Doanh thu</th></tr>
+        </thead>
+        <tbody>
+            {% for d in top_dishes %}
+            <tr>
+                <td>{{ forloop.counter }}</td>
+                <td>{{ d.dish__name }}</td>
+                <td>{{ d.orders }}</td>
+                <td>{{ d.revenue }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">Chua co du lieu trong khoang thoi gian nay.</td></tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="chart-card">
+    <h3>So mon theo danh muc</h3>
+    <canvas id="categoryChart"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    let labels = [];
-    let data = [];
-    {% for c in stats %}
-    labels.push('{{ c.name }}');
-    data.push({{ c.count }});
-    {% endfor %}
-    window.onload = function () {
-        const ctx = document.getElementById('dishChart');
+    const bookingSeries = {{ booking_series|safe }};
+    const revenueSeries = {{ revenue_series|safe }};
+    const categoryStats = {{ category_stats|safe }};
+
+    const renderLine = (canvasId, dataset, label, color) => {
+        const ctx = document.getElementById(canvasId);
         new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: dataset.map(item => item.label),
+                datasets: [{
+                    label: label,
+                    data: dataset.map(item => item.value),
+                    borderColor: color,
+                    backgroundColor: color + '33',
+                    fill: true,
+                    tension: 0.25,
+                }],
+            },
+            options: { scales: { y: { beginAtZero: true } } },
+        });
+    };
+
+    window.onload = function () {
+        renderLine('bookingChart', bookingSeries, 'Luot dat ban', '#1976d2');
+        renderLine('revenueChart', revenueSeries, 'Doanh thu', '#2e7d32');
+
+        new Chart(document.getElementById('categoryChart'), {
             type: 'bar',
             data: {
-                labels: labels,
+                labels: categoryStats.map(c => c.name),
                 datasets: [{
-                    label: 'So mon theo danh muc',
-                    data: data,
-                    borderWidth: 1
-                }]
+                    label: 'So mon',
+                    data: categoryStats.map(c => c.count),
+                    backgroundColor: '#ed6c02',
+                }],
             },
-            options: {
-                scales: {y: {beginAtZero: true}}
-            }
+            options: { scales: { y: { beginAtZero: true } } },
         });
-    }
+    };
 </script>
 {% endblock %}
