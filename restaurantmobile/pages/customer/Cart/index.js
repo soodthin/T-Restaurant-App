@@ -13,7 +13,7 @@ import { FadeInUp, FadeIn } from '@utils/animations';
 import { useCart } from '@contexts/CartContext';
 import Colors from '@styles/colors';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
-import { authFetch, endpoints, clearSession, getApiErrorMessage, getStoredUser } from '@configs';
+import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
 import styles from './styles';
 
 const paymentOptions = [
@@ -23,7 +23,8 @@ const paymentOptions = [
     { key: 'paypal', label: 'PayPal', icon: 'paypal' },
 ];
 
-const Cart = ({ navigation }) => {
+const Cart = ({ navigation, route }) => {
+    const isGuest = route.params?.isGuest || false;
     const tabBarHeight = useBottomTabBarHeight();
     const {
         items,
@@ -50,8 +51,7 @@ const Cart = ({ navigation }) => {
             showToast('Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng');
             return;
         }
-        const user = await getStoredUser();
-        if (!user) {
+        if (isGuest) {
             showToast('Vui l\u00f2ng \u0111\u0103ng nh\u1eadp \u0111\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng');
             return;
         }
@@ -234,53 +234,86 @@ const Cart = ({ navigation }) => {
             />
 
             <View style={[styles.bottomSheet, { bottom: tabBarHeight }]}>
-                <Text style={styles.sheetTitle}>{`Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n`}</Text>
-                <View style={styles.paymentRow}>
-                    {paymentOptions.map((option) => (
-                        <Chip
-                            key={option.key}
-                            icon={option.icon}
-                            selected={paymentMethod === option.key}
-                            showSelectedOverlay
-                            mode="flat"
-                            onPress={() => setPaymentMethod(option.key)}
-                            style={[
-                                styles.chip,
-                                paymentMethod === option.key && { backgroundColor: Colors.primary },
-                            ]}
-                            textStyle={[
-                                styles.chipText,
-                                paymentMethod === option.key && { color: Colors.onPrimary },
-                            ]}
-                            selectedColor={paymentMethod === option.key ? Colors.onPrimary : Colors.text}
-                        >
-                            {option.label}
-                        </Chip>
-                    ))}
-                </View>
+                {!isGuest ? (
+                    <>
+                        <Text style={styles.sheetTitle}>{'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n'}</Text>
+                        <View style={styles.paymentRow}>
+                            {paymentOptions.map((option) => (
+                                <Chip
+                                    key={option.key}
+                                    icon={option.icon}
+                                    selected={paymentMethod === option.key}
+                                    showSelectedOverlay
+                                    mode="flat"
+                                    onPress={() => setPaymentMethod(option.key)}
+                                    style={[
+                                        styles.chip,
+                                        paymentMethod === option.key && { backgroundColor: Colors.primary },
+                                    ]}
+                                    textStyle={[
+                                        styles.chipText,
+                                        paymentMethod === option.key && { color: Colors.onPrimary },
+                                    ]}
+                                    selectedColor={paymentMethod === option.key ? Colors.onPrimary : Colors.text}
+                                >
+                                    {option.label}
+                                </Chip>
+                            ))}
+                        </View>
 
-                <View style={styles.summaryBlock}>
-                    <View style={styles.summaryRow}>
-                        <Text style={styles.summaryLabel}>{`T\u1ed5ng thanh to\u00e1n`}</Text>
-                        <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{`\u0111`}</Text>
+                        <View style={styles.summaryBlock}>
+                            <View style={styles.summaryRow}>
+                                <Text style={styles.summaryLabel}>{'T\u1ed5ng thanh to\u00e1n'}</Text>
+                                <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{'\u0111'}</Text>
+                            </View>
+                        </View>
+
+                        {submitting ?
+                            <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 10 }} /> :
+                            <Button
+                                mode="contained"
+                                icon="check-circle-outline"
+                                onPress={checkout}
+                                buttonColor={Colors.primary}
+                                textColor={Colors.onPrimary}
+                                labelStyle={{ fontWeight: '800', fontSize: 16 }}
+                                style={{ marginTop: 14, borderRadius: 20 }}
+                                contentStyle={{ paddingVertical: 8 }}
+                            >
+                                {'T\u1ea1o \u0111\u01a1n h\u00e0ng'}
+                            </Button>
+                        }
+                    </>
+                ) : (
+                    <View style={styles.guestPrompt}>
+                        <View style={styles.guestPromptIcon}>
+                            <MaterialCommunityIcons name="account-lock-outline" size={26} color={Colors.primary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.guestPromptTitle}>{'\u0110\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u1eb7t m\u00f3n'}</Text>
+                            <Text style={styles.guestPromptText}>
+                                {'B\u1ea1n c\u1ea7n t\u00e0i kho\u1ea3n kh\u00e1ch h\u00e0ng \u0111\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng v\u00e0 theo d\u00f5i tr\u1ea1ng th\u00e1i m\u00f3n.'}
+                            </Text>
+                        </View>
+                        <View style={styles.summaryBlock}>
+                            <View style={styles.summaryRow}>
+                                <Text style={styles.summaryLabel}>{'T\u1ed5ng t\u1ea1m t\u00ednh'}</Text>
+                                <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{'\u0111'}</Text>
+                            </View>
+                        </View>
+                        <Button
+                            mode="contained"
+                            icon="login"
+                            onPress={() => navigation.navigate('Login')}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            labelStyle={{ fontWeight: '800', fontSize: 16 }}
+                            style={{ marginTop: 14, borderRadius: 20 }}
+                            contentStyle={{ paddingVertical: 8 }}>
+                            {'\u0110\u0103ng nh\u1eadp ngay'}
+                        </Button>
                     </View>
-                </View>
-
-                {submitting ?
-                    <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 10 }} /> :
-                    <Button
-                        mode="contained"
-                        icon="check-circle-outline"
-                        onPress={checkout}
-                        buttonColor={Colors.primary}
-                        textColor={Colors.onPrimary}
-                        labelStyle={{ fontWeight: '800', fontSize: 16 }}
-                        style={{ marginTop: 14, borderRadius: 20 }}
-                        contentStyle={{ paddingVertical: 8 }}
-                    >
-                        {`T\u1ea1o \u0111\u01a1n h\u00e0ng`}
-                    </Button>
-                }
+                )}
             </View>
 
             <ConfirmDialog

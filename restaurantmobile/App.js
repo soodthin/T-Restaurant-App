@@ -8,11 +8,11 @@ import { View } from 'react-native';
 
 import Login from '@pages/auth/Login';
 import Register from '@pages/auth/Register';
-import Home from '@pages/customer/Home';
-import DishDetail from '@pages/customer/DishDetail';
+import Home from '@pages/public/Home';
+import DishDetail from '@pages/public/DishDetail';
+import CompareDishes from '@pages/public/CompareDishes';
 import Booking from '@pages/customer/Booking';
 import Cart from '@pages/customer/Cart';
-import CompareDishes from '@pages/customer/CompareDishes';
 import Orders from '@pages/customer/Orders';
 import Profile from '@pages/shared/Profile';
 import ChefHome from '@pages/chef/ChefHome';
@@ -157,6 +157,7 @@ const GuestTab = () => {
             <Tab.Screen
                 name="Cart"
                 component={Cart}
+                initialParams={{ isGuest: true }}
                 options={{
                     title: 'Giỏ hàng',
                     tabBarBadge: totalItems > 0 ? totalItems : undefined,
@@ -269,7 +270,10 @@ const App = () => (
                     <Stack.Screen
                         name="CreateDish"
                         component={CreateDish}
-                        options={{ title: 'Tạo món mới', ...stackScreenOptions }}
+                        options={({ route }) => ({
+                            title: route.params?.dish ? 'Chỉnh sửa món' : 'Tạo món mới',
+                            ...stackScreenOptions,
+                        })}
                     />
                 </Stack.Navigator>
             </NavigationContainer>

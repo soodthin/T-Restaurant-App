@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FadeInDown, FadeInUp } from '@utils/animations';
 import { Toast } from '@components/CustomDialog';
 import PasswordInput from '@components/PasswordInput';
-import { Apis, authApis, endpoints, CLIENT_ID, CLIENT_SECRET } from '@configs';
+import { Apis, authApis, endpoints, CLIENT_ID, CLIENT_SECRET, clearSession } from '@configs';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import styles from './styles';
@@ -150,7 +150,10 @@ const Login = ({ navigation }) => {
                     <TouchableOpacity
                         style={styles.guestLink}
                         activeOpacity={0.85}
-                        onPress={() => navigation.reset({ index: 0, routes: [{ name: 'Main', params: { role: 'guest' } }] })}>
+                        onPress={async () => {
+                            await clearSession();
+                            navigation.reset({ index: 0, routes: [{ name: 'Main', params: { role: 'guest' } }] });
+                        }}>
                         <View style={styles.guestIconWrap}>
                             <MaterialCommunityIcons name="compass-outline" size={20} color={Colors.primary} />
                         </View>

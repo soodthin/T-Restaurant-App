@@ -85,4 +85,26 @@ export default StyleSheet.create({
     },
     emptyTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
     emptyText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+    guestPrompt: { paddingTop: 4 },
+    guestPromptIcon: {
+        width: 56,
+        height: 56,
+        borderRadius: 18,
+        backgroundColor: Colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        marginBottom: 12,
+    },
+    guestPromptTitle: {
+        fontSize: 17,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    guestPromptText: {
+        fontSize: 13,
+        color: Colors.textSecondary,
+        marginTop: 6,
+        lineHeight: 19,
+    },
 });

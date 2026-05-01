@@ -5,6 +5,7 @@ import {
     FlatList,
     TouchableOpacity,
     Image,
+    RefreshControl,
 } from 'react-native';
 import { Searchbar, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -34,10 +35,15 @@ const Home = ({ navigation }) => {
     const [menus, setMenus] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
+    const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
     const [catId, setCatId] = useState(null);
     const [menuId, setMenuId] = useState(null);
     const [ordering, setOrdering] = useState('');
+    const [priceMin, setPriceMin] = useState(null);
+    const [priceMax, setPriceMax] = useState(null);
+    const [prepMin, setPrepMin] = useState(null);
+    const [prepMax, setPrepMax] = useState(null);
     const [page, setPage] = useState(1);
     const [hasNext, setHasNext] = useState(true);
     const [error, setError] = useState('');
@@ -50,21 +56,26 @@ const Home = ({ navigation }) => {
         setToast({ visible: true, message, type });
     };
 
-    const buildUrl = (p, q, cat, menu, order) => {
+    const buildUrl = (p, q, cat, menu, order, ranges = null) => {
+        const r = ranges || { pMin: priceMin, pMax: priceMax, tMin: prepMin, tMax: prepMax };
         const params = [`page=${p}`];
         if (q) params.push(`search=${encodeURIComponent(q.trim())}`);
         if (cat) params.push(`category_id=${cat}`);
         if (menu) params.push(`menu_id=${menu}`);
         if (order) params.push(`ordering=${order}`);
+        if (r.pMin) params.push(`price_min=${r.pMin}`);
+        if (r.pMax) params.push(`price_max=${r.pMax}`);
+        if (r.tMin) params.push(`prep_min=${r.tMin}`);
+        if (r.tMax) params.push(`prep_max=${r.tMax}`);
         return `${endpoints['dishes']}?${params.join('&')}`;
     };
 
-    const loadDishes = async (p = 1, q = search, cat = catId, menu = menuId, order = ordering) => {
+    const loadDishes = async (p = 1, q = search, cat = catId, menu = menuId, order = ordering, ranges = null) => {
         if (p === 1) setLoading(true);
         else setLoadingMore(true);
 
         try {
-            const res = await Apis.get(buildUrl(p, q, cat, menu, order));
+            const res = await Apis.get(buildUrl(p, q, cat, menu, order, ranges));
             if (!res.ok) {
                 throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch m\u00f3n \u0103n'));
             }
@@ -115,14 +126,27 @@ const Home = ({ navigation }) => {
         const nextCategory = next.catId ?? catId;
         const nextMenu = next.menuId ?? menuId;
         const nextOrdering = next.ordering ?? ordering;
+        const nextPriceMin = next.priceMin === undefined ? priceMin : next.priceMin;
+        const nextPriceMax = next.priceMax === undefined ? priceMax : next.priceMax;
+        const nextPrepMin = next.prepMin === undefined ? prepMin : next.prepMin;
+        const nextPrepMax = next.prepMax === undefined ? prepMax : next.prepMax;
 
         if (next.search !== undefined) setSearch(next.search);
         if (next.catId !== undefined) setCatId(next.catId);
         if (next.menuId !== undefined) setMenuId(next.menuId);
         if (next.ordering !== undefined) setOrdering(next.ordering);
+        if (next.priceMin !== undefined) setPriceMin(next.priceMin);
+        if (next.priceMax !== undefined) setPriceMax(next.priceMax);
+        if (next.prepMin !== undefined) setPrepMin(next.prepMin);
+        if (next.prepMax !== undefined) setPrepMax(next.prepMax);
 
         setPage(1);
-        loadDishes(1, nextSearch, nextCategory, nextMenu, nextOrdering);
+        loadDishes(1, nextSearch, nextCategory, nextMenu, nextOrdering, {
+            pMin: nextPriceMin,
+            pMax: nextPriceMax,
+            tMin: nextPrepMin,
+            tMax: nextPrepMax,
+        });
     };
 
     const loadMore = () => {
@@ -130,6 +154,50 @@ const Home = ({ navigation }) => {
         const nextPage = page + 1;
         setPage(nextPage);
         loadDishes(nextPage);
+    };
+
+    const onRefresh = async () => {
+        setRefreshing(true);
+
+        try {
+            const [dishRes, categoryRes, menuRes] = await Promise.all([
+                Apis.get(buildUrl(1, '', null, null, '')),
+                Apis.get(endpoints['categories']),
+                Apis.get(endpoints['menus']),
+            ]);
+
+            // Cập nhật state TẤT CẢ cùng 1 lượt sau khi API trả về,
+            // để UI (compare FAB, filter, search...) reset đồng bộ với data mới.
+            setSearch('');
+            setCatId(null);
+            setMenuId(null);
+            setOrdering('');
+            setPriceMin(null);
+            setPriceMax(null);
+            setPrepMin(null);
+            setPrepMax(null);
+            setSelectedCompareIds([]);
+            setError('');
+            setPage(1);
+
+            if (dishRes.ok) {
+                const data = dishRes.data;
+                setDishes(data.results || []);
+                setHasNext(Boolean(data.next));
+            }
+            if (categoryRes.ok) {
+                const categoryData = categoryRes.data;
+                setCategories(Array.isArray(categoryData) ? categoryData : categoryData.results || []);
+            }
+            if (menuRes.ok) {
+                const menuData = menuRes.data;
+                setMenus(Array.isArray(menuData) ? menuData : menuData.results || []);
+            }
+        } catch (err) {
+            // Silent — không che màn hình lỗi khi pull-to-refresh.
+        } finally {
+            setRefreshing(false);
+        }
     };
 
     const toggleCompare = (dishId) => {
@@ -261,6 +329,14 @@ const Home = ({ navigation }) => {
                     ListHeaderComponent={ListHeader}
                     ListFooterComponent={loadingMore ? <ActivityIndicator color={Colors.primary} style={{ marginTop: 12 }} /> : null}
                     contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
+                    refreshControl={
+                        <RefreshControl
+                            refreshing={refreshing}
+                            onRefresh={onRefresh}
+                            tintColor={Colors.primary}
+                            colors={[Colors.primary]}
+                        />
+                    }
                     ListEmptyComponent={
                         <View style={styles.empty}>
                             <MaterialCommunityIcons name="food-off" size={50} color={Colors.textSecondary} />
@@ -272,10 +348,22 @@ const Home = ({ navigation }) => {
             }
 
             {selectedCompareIds.length >= 2 &&
-                <TouchableOpacity style={[styles.compareFab, { bottom: tabBarHeight + 16 }]} activeOpacity={0.9} onPress={goToCompare}>
-                    <MaterialCommunityIcons name="compare" size={20} color={Colors.onPrimary} />
-                    <Text style={styles.compareFabText}>{`So s\u00e1nh (${selectedCompareIds.length})`}</Text>
-                </TouchableOpacity>
+                <View style={[styles.compareFab, { bottom: tabBarHeight + 16 }]}>
+                    <TouchableOpacity
+                        style={styles.compareFabClear}
+                        activeOpacity={0.7}
+                        onPress={() => setSelectedCompareIds([])}>
+                        <MaterialCommunityIcons name="close" size={18} color={Colors.onPrimary} />
+                    </TouchableOpacity>
+                    <View style={styles.compareFabDivider} />
+                    <TouchableOpacity
+                        style={styles.compareFabAction}
+                        activeOpacity={0.85}
+                        onPress={goToCompare}>
+                        <MaterialCommunityIcons name="compare" size={20} color={Colors.onPrimary} />
+                        <Text style={styles.compareFabText}>{`So s\u00e1nh (${selectedCompareIds.length})`}</Text>
+                    </TouchableOpacity>
+                </View>
             }
 
             <FilterSheet
@@ -287,7 +375,15 @@ const Home = ({ navigation }) => {
                 menuId={menuId}
                 catId={catId}
                 ordering={ordering}
+                priceMin={priceMin}
+                priceMax={priceMax}
+                prepMin={prepMin}
+                prepMax={prepMax}
                 onSelect={(selection) => refresh(selection)}
+                onApplyRange={(range) => {
+                    refresh(range);
+                    setShowFilters(false);
+                }}
             />
 
             <Toast
