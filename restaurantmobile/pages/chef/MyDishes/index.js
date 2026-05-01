@@ -7,7 +7,7 @@ import {
     Image,
     RefreshControl,
 } from 'react-native';
-import { ActivityIndicator, Button, Searchbar } from 'react-native-paper';
+import { ActivityIndicator, Button, IconButton, Searchbar } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
@@ -21,6 +21,7 @@ import {
 import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import { formatCurrency, formatDate } from '@utils/format';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import styles from './styles';
 
 const MyDishes = ({ navigation }) => {
@@ -31,6 +32,38 @@ const MyDishes = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
+    const [deleteTarget, setDeleteTarget] = useState(null);
+    const [deleting, setDeleting] = useState(false);
+    const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+    const showToast = (message, type = 'success') => {
+        setToast({ visible: true, message, type });
+    };
+
+    const doDelete = async () => {
+        if (!deleteTarget) return;
+        setDeleting(true);
+        try {
+            const res = await authFetch(endpoints['dish-detail'](deleteTarget.id), {
+                method: 'DELETE',
+            });
+            if (res.status === 401) {
+                await resetToLogin();
+                return;
+            }
+            if (res.status === 204 || res.ok) {
+                setDishes((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+                showToast(`Đã xóa món "${deleteTarget.name}"`, 'success');
+            } else {
+                showToast(getApiErrorMessage(res, 'Không thể xóa món'), 'error');
+            }
+        } catch (err) {
+            showToast('Không thể kết nối tới máy chủ', 'error');
+        } finally {
+            setDeleting(false);
+            setDeleteTarget(null);
+        }
+    };
 
     const resetToLogin = useCallback(async () => {
         await clearSession();
@@ -146,6 +179,27 @@ const MyDishes = ({ navigation }) => {
                         Cập nhật {formatDate(item.updated_date)}
                     </Text>
                 </View>
+
+                {user?.is_verified ? (
+                    <View style={styles.actionRow}>
+                        <IconButton
+                            icon="pencil-outline"
+                            mode="contained-tonal"
+                            size={18}
+                            onPress={() => navigation.navigate('CreateDish', { dish: item })}
+                            containerColor={Colors.surfaceContainerLow}
+                            iconColor={Colors.primary}
+                        />
+                        <IconButton
+                            icon="trash-can-outline"
+                            mode="contained-tonal"
+                            size={18}
+                            onPress={() => setDeleteTarget(item)}
+                            containerColor={Colors.surfaceContainerLow}
+                            iconColor={Colors.primary}
+                        />
+                    </View>
+                ) : null}
             </View>
         </TouchableOpacity>
     );
@@ -254,6 +308,25 @@ const MyDishes = ({ navigation }) => {
                         </Button>
                     </View>
                 }
+            />
+
+            <ConfirmDialog
+                visible={Boolean(deleteTarget)}
+                type="warning"
+                title="Xóa món ăn"
+                message={deleteTarget
+                    ? `Bạn chắc chắn muốn xóa món "${deleteTarget.name}"? Hành động này không thể hoàn tác.`
+                    : ''}
+                confirmText="Xóa"
+                onCancel={() => !deleting && setDeleteTarget(null)}
+                onConfirm={doDelete}
+            />
+
+            <Toast
+                visible={toast.visible}
+                message={toast.message}
+                type={toast.type}
+                onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
             />
         </View>
     );

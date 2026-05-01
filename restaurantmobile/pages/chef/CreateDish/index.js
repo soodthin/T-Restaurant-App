@@ -40,13 +40,22 @@ const initialDish = {
     preparation_time: '',
 };
 
-const CreateDish = ({ navigation }) => {
-    const [dish, setDish] = useState(initialDish);
+const CreateDish = ({ navigation, route }) => {
+    const editingDish = route?.params?.dish || null;
+    const isEditing = Boolean(editingDish);
+
+    const [dish, setDish] = useState(() => editingDish ? {
+        name: editingDish.name || '',
+        description: editingDish.description || '',
+        price: editingDish.price ? String(editingDish.price) : '',
+        ingredients: editingDish.ingredients || '',
+        preparation_time: editingDish.preparation_time ? String(editingDish.preparation_time) : '',
+    } : initialDish);
     const [image, setImage] = useState(null);
     const [menus, setMenus] = useState([]);
     const [categories, setCategories] = useState([]);
-    const [selectedMenu, setSelectedMenu] = useState(null);
-    const [selectedCategory, setSelectedCategory] = useState(null);
+    const [selectedMenu, setSelectedMenu] = useState(editingDish?.menu || null);
+    const [selectedCategory, setSelectedCategory] = useState(editingDish?.category || null);
     const [user, setUser] = useState(null);
     const [loadingData, setLoadingData] = useState(true);
     const [submitting, setSubmitting] = useState(false);
@@ -193,22 +202,23 @@ const CreateDish = ({ navigation }) => {
                 });
             }
 
-            const res = await authFetch(endpoints['dishes'], {
-                method: 'POST',
-                body: form,
-            });
+            const url = isEditing
+                ? endpoints['dish-detail'](editingDish.id)
+                : endpoints['dishes'];
+            const method = isEditing ? 'PATCH' : 'POST';
+            const res = await authFetch(url, { method, body: form });
 
             if (res.status === 401) {
                 await resetToLogin();
                 return;
             }
 
-            if (res.status === 201) {
+            if (res.status === 201 || res.status === 200) {
                 setSuccessDialog(true);
                 return;
             }
 
-            showToast(getApiErrorMessage(res, 'Không thể tạo món ăn'));
+            showToast(getApiErrorMessage(res, isEditing ? 'Không thể cập nhật món ăn' : 'Không thể tạo món ăn'));
         } catch (err) {
             showToast(err.message || 'Không thể kết nối tới máy chủ');
         } finally {
@@ -276,8 +286,12 @@ const CreateDish = ({ navigation }) => {
                 contentContainerStyle={styles.container}
                 keyboardShouldPersistTaps="handled">
                 <FadeInDown duration={500} style={styles.hero}>
-                    <Text style={styles.heroEyebrow}>Tạo món mới</Text>
-                    <Text style={styles.heroTitle}>Chuẩn hóa thông tin món trước khi đưa lên menu</Text>
+                    <Text style={styles.heroEyebrow}>{isEditing ? 'Cập nhật món' : 'Tạo món mới'}</Text>
+                    <Text style={styles.heroTitle}>
+                        {isEditing
+                            ? 'Chỉnh sửa thông tin món, giữ nội dung luôn cập nhật.'
+                            : 'Chuẩn hóa thông tin món trước khi đưa lên menu'}
+                    </Text>
                     <Text style={styles.heroSubtitle}>
                         Điền tên món, giá, thời gian chuẩn bị và phân loại rõ ràng để khách xem được đúng nội dung.
                     </Text>
@@ -293,11 +307,13 @@ const CreateDish = ({ navigation }) => {
                 <TouchableOpacity style={styles.imagePicker} activeOpacity={0.8} onPress={pickImage}>
                     {image ?
                         <Image source={{ uri: image.uri }} style={styles.imagePreview} /> :
-                        <View style={styles.imagePlaceholder}>
-                            <MaterialCommunityIcons name="camera-plus" size={34} color={Colors.textSecondary} />
-                            <Text style={styles.imageTitle}>Tải ảnh món ăn</Text>
-                            <Text style={styles.imageSubtitle}>Ảnh rõ và đúng món sẽ giúp giao diện chuyên nghiệp hơn.</Text>
-                        </View>}
+                        editingDish?.image ?
+                            <Image source={{ uri: editingDish.image }} style={styles.imagePreview} /> :
+                            <View style={styles.imagePlaceholder}>
+                                <MaterialCommunityIcons name="camera-plus" size={34} color={Colors.textSecondary} />
+                                <Text style={styles.imageTitle}>Tải ảnh món ăn</Text>
+                                <Text style={styles.imageSubtitle}>Ảnh rõ và đúng món sẽ giúp giao diện chuyên nghiệp hơn.</Text>
+                            </View>}
                 </TouchableOpacity>
 
                 <FadeInDown duration={500} style={styles.sectionCard}>
@@ -465,15 +481,17 @@ const CreateDish = ({ navigation }) => {
                     disabled={submitting}
                     loading={submitting}
                     onPress={submit}>
-                    Xác nhận tạo món
+                    {isEditing ? 'Lưu thay đổi' : 'Xác nhận tạo món'}
                 </Button>
             </ScrollView>
 
             <ConfirmDialog
                 visible={confirm}
                 type="confirm"
-                title="Xác nhận tạo món"
-                message={`Tạo món "${dish.name.trim()}" với giá ${formatCurrency(dish.price)}?`}
+                title={isEditing ? 'Xác nhận lưu thay đổi' : 'Xác nhận tạo món'}
+                message={isEditing
+                    ? `Cập nhật thông tin món "${dish.name.trim()}"?`
+                    : `Tạo món "${dish.name.trim()}" với giá ${formatCurrency(dish.price)}?`}
                 onCancel={() => setConfirm(false)}
                 onConfirm={doCreate}
             />
@@ -481,8 +499,10 @@ const CreateDish = ({ navigation }) => {
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title="Tạo món thành công"
-                message="Món ăn đã được thêm vào hệ thống. Bạn có thể kiểm tra lại tại màn hình Món của tôi."
+                title={isEditing ? 'Cập nhật thành công' : 'Tạo món thành công'}
+                message={isEditing
+                    ? 'Thông tin món đã được cập nhật.'
+                    : 'Món ăn đã được thêm vào hệ thống. Bạn có thể kiểm tra lại tại màn hình Món của tôi.'}
                 confirmText="Quay lại"
                 onConfirm={() => {
                     setSuccessDialog(false);

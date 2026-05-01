@@ -197,4 +197,9 @@ export default StyleSheet.create({
     emptyAction: {
         marginTop: 18,
     },
+    actionRow: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 8,
+    },
 });

@@ -43,6 +43,11 @@ const styles = StyleSheet.create({
     },
     radioActive: { borderColor: Colors.primary },
     radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary },
+    rangeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
+    rangeInput: { flex: 1, backgroundColor: Colors.surfaceContainerLowest, height: 48 },
+    rangeOutline: { borderRadius: 14, borderColor: Colors.outline, borderWidth: 1.5 },
+    rangeSeparator: { marginHorizontal: 10, color: Colors.textSecondary, fontWeight: '700' },
+    rangeActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
 });
 
 export default styles;
