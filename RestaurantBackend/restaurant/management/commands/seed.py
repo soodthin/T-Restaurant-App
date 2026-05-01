@@ -6,126 +6,171 @@ class Command(BaseCommand):
     help = 'Seed sample data for restaurant app'
 
     def handle(self, *args, **options):
+        # Migration: đổi tên record cũ (không dấu) sang tên mới (có dấu) nếu tồn tại.
+        category_renames = {
+            'Khai vi': 'Khai vị',
+            'Mon chinh': 'Món chính',
+            'Mon nuoc': 'Món nước',
+            'Trang mieng': 'Tráng miệng',
+            'Do uong': 'Đồ uống',
+        }
+        for old, new in category_renames.items():
+            FoodCategory.objects.filter(name=old).update(name=new)
+
+        menu_renames = {
+            'Thuc don chinh': 'Thực đơn chính',
+            'Do uong & Trang mieng': 'Đồ uống & Tráng miệng',
+        }
+        for old, new in menu_renames.items():
+            Menu.objects.filter(name=old).update(name=new)
+
+        dish_renames = {
+            'Pho Bo Sai Gon': 'Phở Bò Sài Gòn',
+            'Com Tam Suon Bi Cha': 'Cơm Tấm Sườn Bì Chả',
+            'Bun Cha Ha Noi': 'Bún Chả Hà Nội',
+            'Goi Cuon Tom Thit': 'Gỏi Cuốn Tôm Thịt',
+            'Banh Xeo Mien Nam': 'Bánh Xèo Miền Nam',
+            'Bo Luc Lac': 'Bò Lúc Lắc',
+            'Canh Chua Ca Loc': 'Canh Chua Cá Lóc',
+            'Che Ba Mau': 'Chè Ba Màu',
+            'Ca Phe Sua Da': 'Cà Phê Sữa Đá',
+            'Nuoc Chanh Muoi': 'Nước Chanh Muối',
+        }
+        for old, new in dish_renames.items():
+            Dish.objects.filter(name=old).update(name=new)
+
         # Chef
         chef, created = User.objects.get_or_create(
             username='chef_minh',
             defaults={
                 'first_name': 'Minh',
-                'last_name': 'Nguyen',
+                'last_name': 'Nguyễn',
                 'email': 'minh@saigonsavory.vn',
                 'role': 'chef',
                 'is_verified': True,
                 'phone': '0901234567',
-                'address': '371 Nguyen Kiem, Go Vap',
+                'address': '371 Nguyễn Kiệm, Gò Vấp',
             },
         )
+        # Cập nhật chef đã tồn tại (last_name + address có thể đang lưu không dấu).
+        if not created:
+            User.objects.filter(username='chef_minh').update(
+                last_name='Nguyễn',
+                address='371 Nguyễn Kiệm, Gò Vấp',
+            )
         if created:
             chef.set_password('chef123456')
             chef.save()
             self.stdout.write(self.style.SUCCESS('Created chef: chef_minh'))
 
         # Categories
-        cat_names = ['Khai vi', 'Mon chinh', 'Mon nuoc', 'Trang mieng', 'Do uong']
+        cat_names = ['Khai vị', 'Món chính', 'Món nước', 'Tráng miệng', 'Đồ uống']
         cats = {}
         for name in cat_names:
             obj, _ = FoodCategory.objects.get_or_create(name=name)
             cats[name] = obj
 
         # Menus
-        menu_main, _ = Menu.objects.get_or_create(name='Thuc don chinh', defaults={'description': 'Cac mon an chinh cua nha hang'})
-        menu_drink, _ = Menu.objects.get_or_create(name='Do uong & Trang mieng', defaults={'description': 'Nuoc uong va mon trang mieng'})
+        menu_main, _ = Menu.objects.get_or_create(
+            name='Thực đơn chính',
+            defaults={'description': 'Các món ăn chính của nhà hàng'},
+        )
+        menu_drink, _ = Menu.objects.get_or_create(
+            name='Đồ uống & Tráng miệng',
+            defaults={'description': 'Nước uống và món tráng miệng'},
+        )
 
         # Dishes
         dishes_data = [
             {
-                'name': 'Pho Bo Sai Gon',
-                'description': 'Pho bo truyen thong voi nuoc dung ham xuong 12 gio, banh pho tuoi, thit bo tai chin mem.',
+                'name': 'Phở Bò Sài Gòn',
+                'description': 'Phở bò truyền thống với nước dùng hầm xương 12 giờ, bánh phở tươi, thịt bò tái chín mềm.',
                 'price': 65000,
-                'ingredients': 'Banh pho, bo tai, bo chin, hanh la, ngo gai, hung que, gia do',
+                'ingredients': 'Bánh phở, bò tái, bò chín, hành lá, ngò gai, húng quế, giá đỗ',
                 'preparation_time': 15,
                 'menu': menu_main,
-                'category': cats['Mon nuoc'],
+                'category': cats['Món nước'],
             },
             {
-                'name': 'Com Tam Suon Bi Cha',
-                'description': 'Com tam dat biet voi suon nuong than hoa, bi heo, cha trung, mo hanh va nuoc mam pha.',
+                'name': 'Cơm Tấm Sườn Bì Chả',
+                'description': 'Cơm tấm đặc biệt với sườn nướng than hoa, bì heo, chả trứng, mỡ hành và nước mắm pha.',
                 'price': 55000,
-                'ingredients': 'Com tam, suon heo, bi, trung, mo hanh, do chua, nuoc mam',
+                'ingredients': 'Cơm tấm, sườn heo, bì, trứng, mỡ hành, đồ chua, nước mắm',
                 'preparation_time': 20,
                 'menu': menu_main,
-                'category': cats['Mon chinh'],
+                'category': cats['Món chính'],
             },
             {
-                'name': 'Bun Cha Ha Noi',
-                'description': 'Bun cha kieu Ha Noi voi cha mieng nuong va cha vien, nuoc cham chua ngot dac trung.',
+                'name': 'Bún Chả Hà Nội',
+                'description': 'Bún chả kiểu Hà Nội với chả miếng nướng và chả viên, nước chấm chua ngọt đặc trưng.',
                 'price': 55000,
-                'ingredients': 'Bun, thit heo nuong, cha vien, rau song, nuoc cham',
+                'ingredients': 'Bún, thịt heo nướng, chả viên, rau sống, nước chấm',
                 'preparation_time': 18,
                 'menu': menu_main,
-                'category': cats['Mon chinh'],
+                'category': cats['Món chính'],
             },
             {
-                'name': 'Goi Cuon Tom Thit',
-                'description': 'Goi cuon tuoi voi tom, thit heo luoc, bun, rau song cuon banh trang, cham tuong dau phong.',
+                'name': 'Gỏi Cuốn Tôm Thịt',
+                'description': 'Gỏi cuốn tươi với tôm, thịt heo luộc, bún, rau sống cuốn bánh tráng, chấm tương đậu phộng.',
                 'price': 40000,
-                'ingredients': 'Banh trang, tom, thit heo, bun, xa lach, rau thom, tuong dau phong',
+                'ingredients': 'Bánh tráng, tôm, thịt heo, bún, xà lách, rau thơm, tương đậu phộng',
                 'preparation_time': 10,
                 'menu': menu_main,
-                'category': cats['Khai vi'],
+                'category': cats['Khai vị'],
             },
             {
-                'name': 'Banh Xeo Mien Nam',
-                'description': 'Banh xeo gion rum nhan tom, thit, gia do. An kem rau song va nuoc mam chua ngot.',
+                'name': 'Bánh Xèo Miền Nam',
+                'description': 'Bánh xèo giòn rụm nhân tôm, thịt, giá đỗ. Ăn kèm rau sống và nước mắm chua ngọt.',
                 'price': 50000,
-                'ingredients': 'Bot gao, tom, thit heo, gia do, hanh la, rau song',
+                'ingredients': 'Bột gạo, tôm, thịt heo, giá đỗ, hành lá, rau sống',
                 'preparation_time': 15,
                 'menu': menu_main,
-                'category': cats['Mon chinh'],
+                'category': cats['Món chính'],
             },
             {
-                'name': 'Bo Luc Lac',
-                'description': 'Thit bo Uc xao voi toi, hanh tay, ot chuong tren lua lon. An kem com trang hoac banh mi.',
+                'name': 'Bò Lúc Lắc',
+                'description': 'Thịt bò Úc xào với tỏi, hành tây, ớt chuông trên lửa lớn. Ăn kèm cơm trắng hoặc bánh mì.',
                 'price': 85000,
-                'ingredients': 'Thit bo, toi, hanh tay, ot chuong, nuoc tuong, tieu',
+                'ingredients': 'Thịt bò, tỏi, hành tây, ớt chuông, nước tương, tiêu',
                 'preparation_time': 12,
                 'menu': menu_main,
-                'category': cats['Mon chinh'],
+                'category': cats['Món chính'],
             },
             {
-                'name': 'Canh Chua Ca Loc',
-                'description': 'Canh chua mien Nam nau voi ca loc tuoi, me, thom, ca chua, gia do, rau ngo om.',
+                'name': 'Canh Chua Cá Lóc',
+                'description': 'Canh chua miền Nam nấu với cá lóc tươi, me, thơm, cà chua, giá đỗ, rau ngổ ôm.',
                 'price': 60000,
-                'ingredients': 'Ca loc, me, thom, ca chua, gia do, bac ha, ngo om',
+                'ingredients': 'Cá lóc, me, thơm, cà chua, giá đỗ, bạc hà, ngổ ôm',
                 'preparation_time': 25,
                 'menu': menu_main,
-                'category': cats['Mon nuoc'],
+                'category': cats['Món nước'],
             },
             {
-                'name': 'Che Ba Mau',
-                'description': 'Che ba mau truyen thong voi dau do, dau xanh, rau cau, nuoc cot dua va da bao.',
+                'name': 'Chè Ba Màu',
+                'description': 'Chè ba màu truyền thống với đậu đỏ, đậu xanh, rau câu, nước cốt dừa và đá bào.',
                 'price': 25000,
-                'ingredients': 'Dau do, dau xanh, rau cau, nuoc cot dua, duong',
+                'ingredients': 'Đậu đỏ, đậu xanh, rau câu, nước cốt dừa, đường',
                 'preparation_time': 5,
                 'menu': menu_drink,
-                'category': cats['Trang mieng'],
+                'category': cats['Tráng miệng'],
             },
             {
-                'name': 'Ca Phe Sua Da',
-                'description': 'Ca phe phin truyen thong pha voi sua dac, da vien. Dam da va thom nong.',
+                'name': 'Cà Phê Sữa Đá',
+                'description': 'Cà phê phin truyền thống pha với sữa đặc, đá viên. Đậm đà và thơm nồng.',
                 'price': 29000,
-                'ingredients': 'Ca phe rang xay, sua dac, da',
+                'ingredients': 'Cà phê rang xay, sữa đặc, đá',
                 'preparation_time': 5,
                 'menu': menu_drink,
-                'category': cats['Do uong'],
+                'category': cats['Đồ uống'],
             },
             {
-                'name': 'Nuoc Chanh Muoi',
-                'description': 'Chanh muoi ngam lau, pha voi duong va da. Giai nhiet tot cho ngay nong Sai Gon.',
+                'name': 'Nước Chanh Muối',
+                'description': 'Chanh muối ngâm lâu, pha với đường và đá. Giải nhiệt tốt cho ngày nóng Sài Gòn.',
                 'price': 22000,
-                'ingredients': 'Chanh muoi, duong, da, nuoc loc',
+                'ingredients': 'Chanh muối, đường, đá, nước lọc',
                 'preparation_time': 3,
                 'menu': menu_drink,
-                'category': cats['Do uong'],
+                'category': cats['Đồ uống'],
             },
         ]
 
