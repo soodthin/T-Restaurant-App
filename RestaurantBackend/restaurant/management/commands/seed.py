@@ -176,7 +176,7 @@ class Command(BaseCommand):
 
         count = 0
         for data in dishes_data:
-            _, created = Dish.objects.get_or_create(
+            _, created = Dish.objects.update_or_create(
                 name=data['name'],
                 defaults={**data, 'chef': chef},
             )
