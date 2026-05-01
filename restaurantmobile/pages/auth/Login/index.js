@@ -6,7 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FadeInDown, FadeInUp } from '@utils/animations';
 import { Toast } from '@components/CustomDialog';
 import PasswordInput from '@components/PasswordInput';
-import BASE_URL, { endpoints, CLIENT_ID, CLIENT_SECRET } from '@configs';
+import { Apis, authApis, endpoints, CLIENT_ID, CLIENT_SECRET } from '@configs';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import styles from './styles';
@@ -30,37 +30,32 @@ const Login = ({ navigation }) => {
         }
 
         setLoading(true);
-        const controller = new AbortController();
-        const timeout = setTimeout(() => controller.abort(), 15000);
         try {
-            const url = `${BASE_URL}${endpoints['login']}`;
-            const res = await fetch(url, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: `grant_type=password&username=${encodeURIComponent(username)}&password=${encodeURIComponent(password)}&client_id=${encodeURIComponent(CLIENT_ID)}&client_secret=${encodeURIComponent(CLIENT_SECRET)}`,
-                signal: controller.signal,
-            });
-            const data = await res.json();
+            const params = new URLSearchParams();
+            params.append('grant_type', 'password');
+            params.append('username', username);
+            params.append('password', password);
+            params.append('client_id', CLIENT_ID);
+            params.append('client_secret', CLIENT_SECRET);
+            const res = await Apis.post(endpoints['login'], params);
+            const data = res.data;
 
             if (data.access_token) {
                 await AsyncStorage.setItem('token', data.access_token);
-                const userRes = await fetch(`${BASE_URL}${endpoints['current-user']}`, {
-                    headers: { Authorization: `Bearer ${data.access_token}` },
-                });
-                const userData = await userRes.json();
+                const userRes = await authApis(data.access_token).get(endpoints['current-user']);
+                const userData = userRes.data;
                 await AsyncStorage.setItem('user', JSON.stringify(userData));
                 navigation.reset({ index: 0, routes: [{ name: 'Main', params: { role: userData.role } }] });
             } else {
                 showToast('Sai tài khoản hoặc mật khẩu');
             }
         } catch (err) {
-            if (err.name === 'AbortError') {
+            if (err.code === 'ECONNABORTED') {
                 showToast('Quá thời gian kết nối. Kiểm tra lại mạng.');
             } else {
                 showToast(err.message || 'Không thể kết nối server');
             }
         } finally {
-            clearTimeout(timeout);
             setLoading(false);
         }
     };

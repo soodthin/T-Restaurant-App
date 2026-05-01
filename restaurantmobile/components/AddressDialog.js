@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import axios from 'axios';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 
@@ -43,9 +44,8 @@ const AddressDialog = ({ visible, onClose, onConfirm }) => {
         if (provinces.length > 0) return;
         setLoading(true);
         try {
-            const res = await fetch(API);
-            const json = await res.json();
-            if (json.success) setProvinces(json.data);
+            const res = await axios.get(API);
+            if (res.data.success) setProvinces(res.data.data);
         } catch {
             setProvinces([]);
         } finally {

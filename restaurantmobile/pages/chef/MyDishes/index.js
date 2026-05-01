@@ -11,12 +11,13 @@ import { ActivityIndicator, Button, Searchbar } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
-import authFetch, {
+import {
+    authFetch,
+    endpoints,
     clearSession,
     getApiErrorMessage,
     storeUser,
-} from '@utils/api';
-import { endpoints } from '@configs';
+} from '@configs';
 import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import { formatCurrency, formatDate } from '@utils/format';
@@ -47,19 +48,19 @@ const MyDishes = ({ navigation }) => {
                 return;
             }
             if (!userRes.ok) {
-                throw new Error(await getApiErrorMessage(userRes, 'Không thể tải tài khoản đầu bếp'));
+                throw new Error(getApiErrorMessage(userRes, 'Không thể tải tài khoản đầu bếp'));
             }
 
-            const userData = await userRes.json();
+            const userData = userRes.data;
             setUser(userData);
             await storeUser(userData);
 
             const dishRes = await authFetch(`${endpoints['dishes']}?my=true`);
             if (!dishRes.ok) {
-                throw new Error(await getApiErrorMessage(dishRes, 'Không thể tải danh sách món ăn'));
+                throw new Error(getApiErrorMessage(dishRes, 'Không thể tải danh sách món ăn'));
             }
 
-            const dishData = await dishRes.json();
+            const dishData = dishRes.data;
             setDishes(dishData.results || []);
             setError('');
         } catch (err) {

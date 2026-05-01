@@ -10,7 +10,7 @@ module.exports = function (api) {
                     '@utils': './utils',
                     '@styles': './styles',
                     '@contexts': './contexts',
-                    '@configs': './configs',
+                    '@configs': './configs/Apis',
                 },
             }],
         ],

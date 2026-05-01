@@ -12,12 +12,14 @@ import { ActivityIndicator, Button, Chip, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
-import authFetch, {
+import {
+    Apis,
+    authFetch,
+    endpoints,
     clearSession,
     getApiErrorMessage,
     storeUser,
-} from '@utils/api';
-import BASE_URL, { endpoints } from '@configs';
+} from '@configs';
 import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import {
@@ -69,8 +71,8 @@ const CreateDish = ({ navigation }) => {
         try {
             const [userRes, menuRes, categoryRes] = await Promise.all([
                 authFetch(endpoints['current-user']),
-                fetch(`${BASE_URL}${endpoints['menus']}`),
-                fetch(`${BASE_URL}${endpoints['categories']}`),
+                Apis.get(endpoints['menus']),
+                Apis.get(endpoints['categories']),
             ]);
 
             if (userRes.status === 401) {
@@ -79,7 +81,7 @@ const CreateDish = ({ navigation }) => {
             }
 
             if (!userRes.ok) {
-                throw new Error(await getApiErrorMessage(userRes, 'Không thể tải thông tin đầu bếp'));
+                throw new Error(getApiErrorMessage(userRes, 'Không thể tải thông tin đầu bếp'));
             }
             if (!menuRes.ok) {
                 throw new Error('Không thể tải danh sách menu');
@@ -88,11 +90,9 @@ const CreateDish = ({ navigation }) => {
                 throw new Error('Không thể tải danh sách loại món');
             }
 
-            const [userData, menuData, categoryData] = await Promise.all([
-                userRes.json(),
-                menuRes.json(),
-                categoryRes.json(),
-            ]);
+            const userData = userRes.data;
+            const menuData = menuRes.data;
+            const categoryData = categoryRes.data;
 
             setUser(userData);
             await storeUser(userData);
@@ -208,7 +208,7 @@ const CreateDish = ({ navigation }) => {
                 return;
             }
 
-            showToast(await getApiErrorMessage(res, 'Không thể tạo món ăn'));
+            showToast(getApiErrorMessage(res, 'Không thể tạo món ăn'));
         } catch (err) {
             showToast(err.message || 'Không thể kết nối tới máy chủ');
         } finally {

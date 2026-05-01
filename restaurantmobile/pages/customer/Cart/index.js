@@ -13,8 +13,7 @@ import { FadeInUp, FadeIn } from '@utils/animations';
 import { useCart } from '@contexts/CartContext';
 import Colors from '@styles/colors';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
-import authFetch, { clearSession, getApiErrorMessage, getStoredUser } from '@utils/api';
-import { endpoints } from '@configs';
+import { authFetch, endpoints, clearSession, getApiErrorMessage, getStoredUser } from '@configs';
 import styles from './styles';
 
 const paymentOptions = [
@@ -75,11 +74,11 @@ const Cart = ({ navigation }) => {
             }
 
             if (!orderRes.ok) {
-                showToast(await getApiErrorMessage(orderRes, 'Kh\u00f4ng th\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng'));
+                showToast(getApiErrorMessage(orderRes, 'Kh\u00f4ng th\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng'));
                 return;
             }
 
-            let order = await orderRes.json();
+            let order = orderRes.data;
             for (const item of items) {
                 const detailRes = await authFetch(endpoints['order-add-detail'](order.id), {
                     method: 'POST',
@@ -97,11 +96,11 @@ const Cart = ({ navigation }) => {
                 }
 
                 if (!detailRes.ok) {
-                    showToast(await getApiErrorMessage(detailRes, 'Kh\u00f4ng th\u1ec3 th\u00eam m\u00f3n v\u00e0o \u0111\u01a1n h\u00e0ng'));
+                    showToast(getApiErrorMessage(detailRes, 'Kh\u00f4ng th\u1ec3 th\u00eam m\u00f3n v\u00e0o \u0111\u01a1n h\u00e0ng'));
                     return;
                 }
 
-                order = await detailRes.json();
+                order = detailRes.data;
             }
 
             const paymentRes = await authFetch(endpoints['payments'], {
@@ -287,19 +286,19 @@ const Cart = ({ navigation }) => {
             <ConfirmDialog
                 visible={confirmCheckout}
                 type="confirm"
-                title="X\u00e1c nh\u1eadn t\u1ea1o \u0111\u01a1n"
+                title={"X\u00e1c nh\u1eadn t\u1ea1o \u0111\u01a1n"}
                 message={`${totalItems} m\u00f3n v\u1edbi t\u1ed5ng gi\u00e1 tr\u1ecb ${totalAmount.toLocaleString()}\u0111 s\u1ebd \u0111\u01b0\u1ee3c t\u1ea1o th\u00e0nh \u0111\u01a1n h\u00e0ng m\u1edbi.`}
                 onCancel={() => setConfirmCheckout(false)}
                 onConfirm={doCheckout}
-                confirmText="T\u1ea1o \u0111\u01a1n"
+                confirmText={"T\u1ea1o \u0111\u01a1n"}
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title="\u0110\u1eb7t m\u00f3n th\u00e0nh c\u00f4ng"
+                title={"\u0110\u1eb7t m\u00f3n th\u00e0nh c\u00f4ng"}
                 message={successMessage}
-                confirmText="Xem \u0111\u01a1n h\u00e0ng"
+                confirmText={"Xem \u0111\u01a1n h\u00e0ng"}
                 onConfirm={() => {
                     setSuccessDialog(false);
                     navigation.navigate('Orders');

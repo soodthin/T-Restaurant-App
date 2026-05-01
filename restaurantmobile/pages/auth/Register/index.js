@@ -7,7 +7,7 @@ import { FadeInDown, FadeInUp } from '@utils/animations';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import PasswordInput from '@components/PasswordInput';
 import AddressDialog from '@components/AddressDialog';
-import BASE_URL, { endpoints } from '@configs';
+import { Apis, endpoints } from '@configs';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import styles from './styles';
@@ -109,15 +109,12 @@ const Register = ({ navigation, route }) => {
                 });
             }
 
-            const res = await fetch(`${BASE_URL}${endpoints['register']}`, {
-                method: 'POST',
-                body: form,
-            });
+            const res = await Apis.post(endpoints['register'], form);
 
             if (res.status === 201) {
                 setSuccessDialog(true);
             } else {
-                const data = await res.json();
+                const data = res.data;
                 showToast(Object.values(data).flat().join('\n'));
             }
         } catch (err) {

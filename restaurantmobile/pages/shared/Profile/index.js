@@ -15,12 +15,8 @@ import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import ChefVerificationBanner from '@components/ChefVerificationBanner';
-import authFetch, {
-    clearSession,
-    getApiErrorMessage,
-    storeUser,
-} from '@utils/api';
-import { endpoints } from '@configs';
+import AddressDialog from '@components/AddressDialog';
+import { authFetch, endpoints, clearSession, getApiErrorMessage, storeUser } from '@configs';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import { getDisplayName, getInitialLetter } from '@utils/format';
@@ -42,6 +38,7 @@ const Profile = ({ navigation }) => {
     const [saving, setSaving] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [logoutConfirm, setLogoutConfirm] = useState(false);
+    const [showAddress, setShowAddress] = useState(false);
 
     const showToast = useCallback((message, type = 'error') => {
         setToast({ visible: true, message, type });
@@ -60,11 +57,11 @@ const Profile = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Không thể tải thông tin cá nhân'));
+                showToast(getApiErrorMessage(res, 'Không thể tải thông tin cá nhân'));
                 return;
             }
 
-            const data = await res.json();
+            const data = res.data;
             setUser(data);
             await storeUser(data);
         } catch (err) {
@@ -176,11 +173,11 @@ const Profile = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Không thể cập nhật thông tin'));
+                showToast(getApiErrorMessage(res, 'Không thể cập nhật thông tin'));
                 return;
             }
 
-            const data = await res.json();
+            const data = res.data;
             setUser(data);
             await storeUser(data);
             setEditing(false);
@@ -390,20 +387,14 @@ const Profile = ({ navigation }) => {
                             textColor={Colors.text}
                         />
 
-                        <TextInput
-                            mode="outlined"
-                            label="ĐỊA CHỈ LIÊN HỆ"
-                            value={editData.address}
-                            onChangeText={(value) => setEditData((prev) => ({ ...prev, address: value }))}
-                            placeholder="371 Nguyễn Kiệm, Q. Gò Vấp"
-                            placeholderTextColor={Colors.placeholder}
-                            multiline
-                            left={<TextInput.Icon icon="map-marker-outline" />}
-                            outlineStyle={styles.inputOutline}
-                            style={[styles.input, { minHeight: 80 }]}
-                            activeOutlineColor={Colors.primary}
-                            textColor={Colors.text}
-                        />
+                        <Text style={styles.addressLabel}>ĐỊA CHỈ LIÊN HỆ</Text>
+                        <TouchableOpacity style={styles.addressBtn} onPress={() => setShowAddress(true)} activeOpacity={0.7}>
+                            <MaterialCommunityIcons name="map-marker-outline" size={22} color={editData.address ? Colors.primary : Colors.placeholder} />
+                            <Text style={[styles.addressText, !editData.address && styles.addressPlaceholder]} numberOfLines={2}>
+                                {editData.address || 'Bấm để chọn địa chỉ'}
+                            </Text>
+                            <MaterialCommunityIcons name="chevron-right" size={20} color={Colors.textSecondary} />
+                        </TouchableOpacity>
 
                         <View style={styles.actionRow}>
                             <Button
@@ -438,6 +429,15 @@ const Profile = ({ navigation }) => {
                 onCancel={() => setLogoutConfirm(false)}
                 onConfirm={doLogout}
                 confirmText="Đăng xuất"
+            />
+
+            <AddressDialog
+                visible={showAddress}
+                onClose={() => setShowAddress(false)}
+                onConfirm={(addr) => {
+                    setEditData((prev) => ({ ...prev, address: addr }));
+                    setShowAddress(false);
+                }}
             />
 
             <Toast

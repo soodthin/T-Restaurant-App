@@ -10,8 +10,7 @@ import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
-import authFetch, { clearSession, getApiErrorMessage } from '@utils/api';
-import { endpoints } from '@configs';
+import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
 import Colors from '@styles/colors';
 import { Toast } from '@components/CustomDialog';
 import styles from './styles';
@@ -64,10 +63,10 @@ const Orders = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng'));
+                throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i \u0111\u01a1n h\u00e0ng'));
             }
 
-            const data = await res.json();
+            const data = res.data;
             setOrders(data.results || []);
             setError('');
         } catch (err) {

@@ -114,6 +114,19 @@ const styles = StyleSheet.create({
     editSubtitle: { marginBottom: 16, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
     inputOutline: { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 },
     input: { backgroundColor: Colors.surfaceContainerLow, marginBottom: 14 },
+    addressLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
+    addressBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 16,
+        padding: 14,
+        marginBottom: 14,
+        borderWidth: 1.5,
+        borderColor: Colors.outline,
+    },
+    addressText: { flex: 1, marginLeft: 12, fontSize: 15, color: Colors.text, fontWeight: '600', lineHeight: 21 },
+    addressPlaceholder: { color: Colors.placeholder, fontWeight: '400' },
     actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
 });
 

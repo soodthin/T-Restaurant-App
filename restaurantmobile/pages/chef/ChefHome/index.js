@@ -10,12 +10,13 @@ import { ActivityIndicator, Button } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import authFetch, {
+import {
+    authFetch,
+    endpoints,
     clearSession,
     getApiErrorMessage,
     storeUser,
-} from '@utils/api';
-import { endpoints } from '@configs';
+} from '@configs';
 import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import { formatCurrency, getDisplayName } from '@utils/format';
@@ -56,13 +57,14 @@ const ChefHome = ({ navigation }) => {
             }
 
             if (!userRes.ok) {
-                throw new Error(await getApiErrorMessage(userRes, 'Không thể tải thông tin đầu bếp'));
+                throw new Error(getApiErrorMessage(userRes, 'Không thể tải thông tin đầu bếp'));
             }
             if (!statsRes.ok) {
-                throw new Error(await getApiErrorMessage(statsRes, 'Không thể tải bảng điều khiển bếp'));
+                throw new Error(getApiErrorMessage(statsRes, 'Không thể tải bảng điều khiển bếp'));
             }
 
-            const [userData, statsData] = await Promise.all([userRes.json(), statsRes.json()]);
+            const userData = userRes.data;
+            const statsData = statsRes.data;
             setUser(userData);
             await storeUser(userData);
             setStats({ ...defaultStats, ...statsData });

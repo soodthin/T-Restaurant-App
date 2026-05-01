@@ -11,13 +11,7 @@ import {
 import { TextInput, Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeIn, FadeInUp } from '@utils/animations';
-import authFetch, {
-    buildApiUrl,
-    clearSession,
-    getApiErrorMessage,
-    getStoredUser,
-} from '@utils/api';
-import { endpoints } from '@configs';
+import { Apis, authFetch, endpoints, clearSession, getApiErrorMessage, getStoredUser } from '@configs';
 import Colors from '@styles/colors';
 import { Toast } from '@components/CustomDialog';
 import { useCart } from '@contexts/CartContext';
@@ -48,18 +42,19 @@ const DishDetail = ({ route, navigation }) => {
             setCurrentUser(storedUser);
 
             const [dishRes, reviewRes] = await Promise.all([
-                fetch(buildApiUrl(endpoints['dish-detail'](id))),
-                fetch(buildApiUrl(endpoints['dish-reviews'](id))),
+                Apis.get(endpoints['dish-detail'](id)),
+                Apis.get(endpoints['dish-reviews'](id)),
             ]);
 
             if (!dishRes.ok) {
-                throw new Error(await getApiErrorMessage(dishRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c chi ti\u1ebft m\u00f3n \u0103n'));
+                throw new Error(getApiErrorMessage(dishRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c chi ti\u1ebft m\u00f3n \u0103n'));
             }
             if (!reviewRes.ok) {
-                throw new Error(await getApiErrorMessage(reviewRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch \u0111\u00e1nh gi\u00e1'));
+                throw new Error(getApiErrorMessage(reviewRes, 'Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch \u0111\u00e1nh gi\u00e1'));
             }
 
-            const [dishData, reviewData] = await Promise.all([dishRes.json(), reviewRes.json()]);
+            const dishData = dishRes.data;
+            const reviewData = reviewRes.data;
             setDish(dishData);
             setReviews(reviewData);
 
@@ -121,11 +116,11 @@ const DishDetail = ({ route, navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1'));
+                showToast(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 g\u1eedi \u0111\u00e1nh gi\u00e1'));
                 return;
             }
 
-            const savedReview = await res.json();
+            const savedReview = res.data;
             setReviews((prev) => {
                 if (myReview) {
                     return prev.map((review) => review.id === savedReview.id ? savedReview : review);
@@ -274,7 +269,7 @@ const DishDetail = ({ route, navigation }) => {
 
                             <TextInput
                                 mode="outlined"
-                                placeholder="Chia s\u1ebb c\u1ea3m nh\u1eadn c\u1ee7a b\u1ea1n v\u1ec1 m\u00f3n n\u00e0y..."
+                                placeholder={"Chia s\u1ebb c\u1ea3m nh\u1eadn c\u1ee7a b\u1ea1n v\u1ec1 m\u00f3n n\u00e0y..."}
                                 placeholderTextColor={Colors.placeholder}
                                 value={comment}
                                 onChangeText={setComment}

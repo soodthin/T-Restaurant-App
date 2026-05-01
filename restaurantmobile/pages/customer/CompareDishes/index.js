@@ -10,8 +10,7 @@ import { ActivityIndicator, Button, Chip } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInRight } from '@utils/animations';
 import Colors from '@styles/colors';
-import { endpoints } from '@configs';
-import { buildApiUrl, getApiErrorMessage } from '@utils/api';
+import { Apis, endpoints, getApiErrorMessage } from '@configs';
 import { useCart } from '@contexts/CartContext';
 import { Toast } from '@components/CustomDialog';
 import styles from './styles';
@@ -28,11 +27,11 @@ const CompareDishes = ({ route, navigation }) => {
         const loadDishes = async () => {
             setLoading(true);
             try {
-                const res = await fetch(buildApiUrl(`${endpoints['dish-compare']}?ids=${ids.join(',')}`));
+                const res = await Apis.get(`${endpoints['dish-compare']}?ids=${ids.join(',')}`);
                 if (!res.ok) {
-                    throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u so s\u00e1nh'));
+                    throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i d\u1eef li\u1ec7u so s\u00e1nh'));
                 }
-                const data = await res.json();
+                const data = res.data;
                 setDishes(data);
                 setError('');
             } catch (err) {

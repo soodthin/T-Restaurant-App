@@ -10,11 +10,10 @@ import { Searchbar, Button, ActivityIndicator, IconButton } from 'react-native-p
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
-import BASE_URL, { endpoints } from '@configs';
+import { Apis, endpoints, getApiErrorMessage } from '@configs';
 import Colors from '@styles/colors';
 import { useCart } from '@contexts/CartContext';
 import { Toast } from '@components/CustomDialog';
-import { getApiErrorMessage } from '@utils/api';
 import DishCard from '@components/DishCard';
 import FilterSheet from '@components/FilterSheet';
 import styles from './styles';
@@ -57,7 +56,7 @@ const Home = ({ navigation }) => {
         if (cat) params.push(`category_id=${cat}`);
         if (menu) params.push(`menu_id=${menu}`);
         if (order) params.push(`ordering=${order}`);
-        return `${BASE_URL}${endpoints['dishes']}?${params.join('&')}`;
+        return `${endpoints['dishes']}?${params.join('&')}`;
     };
 
     const loadDishes = async (p = 1, q = search, cat = catId, menu = menuId, order = ordering) => {
@@ -65,12 +64,12 @@ const Home = ({ navigation }) => {
         else setLoadingMore(true);
 
         try {
-            const res = await fetch(buildUrl(p, q, cat, menu, order));
+            const res = await Apis.get(buildUrl(p, q, cat, menu, order));
             if (!res.ok) {
-                throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch m\u00f3n \u0103n'));
+                throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch m\u00f3n \u0103n'));
             }
 
-            const data = await res.json();
+            const data = res.data;
             const results = data.results || [];
             setDishes((prev) => p === 1 ? results : [...prev, ...results]);
             setHasNext(Boolean(data.next));
@@ -87,17 +86,17 @@ const Home = ({ navigation }) => {
     const loadFilters = async () => {
         try {
             const [categoryRes, menuRes] = await Promise.all([
-                fetch(`${BASE_URL}${endpoints['categories']}`),
-                fetch(`${BASE_URL}${endpoints['menus']}`),
+                Apis.get(endpoints['categories']),
+                Apis.get(endpoints['menus']),
             ]);
 
             if (categoryRes.ok) {
-                const categoryData = await categoryRes.json();
+                const categoryData = categoryRes.data;
                 setCategories(Array.isArray(categoryData) ? categoryData : categoryData.results || []);
             }
 
             if (menuRes.ok) {
-                const menuData = await menuRes.json();
+                const menuData = menuRes.data;
                 setMenus(Array.isArray(menuData) ? menuData : menuData.results || []);
             }
         } catch (err) {
@@ -191,7 +190,7 @@ const Home = ({ navigation }) => {
 
             <FadeIn delay={200} duration={400} style={styles.searchRow}>
                 <Searchbar
-                    placeholder="T\u00ecm m\u00f3n \u0103n, \u0111\u1ea7u b\u1ebfp ho\u1eb7c th\u1ef1c \u0111\u01a1n..."
+                    placeholder={"T\u00ecm m\u00f3n \u0103n, \u0111\u1ea7u b\u1ebfp ho\u1eb7c th\u1ef1c \u0111\u01a1n..."}
                     value={search}
                     onChangeText={setSearch}
                     onFocus={() => setSearchFocused(true)}

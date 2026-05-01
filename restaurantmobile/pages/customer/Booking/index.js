@@ -15,8 +15,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
-import authFetch, { clearSession, getApiErrorMessage } from '@utils/api';
-import { endpoints } from '@configs';
+import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
 import Colors from '@styles/colors';
 import styles from './styles';
 
@@ -72,9 +71,9 @@ const Booking = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                throw new Error(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n'));
+                throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n'));
             }
-            const data = await res.json();
+            const data = res.data;
             setBookings(data.results || []);
         } catch (err) {
             setBookings([]);
@@ -148,7 +147,7 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 \u0111\u1eb7t b\u00e0n'));
+                showToast(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 \u0111\u1eb7t b\u00e0n'));
                 return;
             }
 
@@ -180,7 +179,7 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(await getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n'));
+                showToast(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n'));
                 return;
             }
 
@@ -343,7 +342,7 @@ const Booking = ({ navigation }) => {
                                 <Text style={styles.label}>{`GHI CH\u00da`}</Text>
                                 <TextInput
                                     mode="outlined"
-                                    placeholder="Y\u00eau c\u1ea7u \u0111\u1eb7c bi\u1ec7t, d\u1ecb \u1ee9ng, gh\u1ebf tr\u1ebb em..."
+                                    placeholder={"Y\u00eau c\u1ea7u \u0111\u1eb7c bi\u1ec7t, d\u1ecb \u1ee9ng, gh\u1ebf tr\u1ebb em..."}
                                     placeholderTextColor={Colors.placeholder}
                                     value={note}
                                     onChangeText={setNote}
@@ -406,29 +405,29 @@ const Booking = ({ navigation }) => {
             <ConfirmDialog
                 visible={confirm}
                 type="confirm"
-                title="X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n"
+                title={"X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n"}
                 message={`${guests} kh\u00e1ch v\u00e0o ${fmt(date)} l\u00fac ${fmtTime(date)}`}
                 onCancel={() => setConfirm(false)}
                 onConfirm={doBook}
-                confirmText="\u0110\u1eb7t b\u00e0n"
+                confirmText={"\u0110\u1eb7t b\u00e0n"}
             />
 
             <ConfirmDialog
                 visible={Boolean(cancelBookingId)}
                 type="warning"
-                title="H\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n"
-                message="B\u1ea1n ch\u1eafc ch\u1eafn mu\u1ed1n h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n n\u00e0y?"
+                title={"H\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n"}
+                message={"B\u1ea1n ch\u1eafc ch\u1eafn mu\u1ed1n h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n n\u00e0y?"}
                 onCancel={() => setCancelBookingId(null)}
                 onConfirm={cancelBooking}
-                confirmText="H\u1ee7y l\u1ecbch"
+                confirmText={"H\u1ee7y l\u1ecbch"}
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title="\u0110\u1eb7t b\u00e0n th\u00e0nh c\u00f4ng"
-                message="Nh\u00e0 h\u00e0ng s\u1ebd x\u00e1c nh\u1eadn l\u1ecbch \u0111\u1eb7t b\u00e0n c\u1ee7a b\u1ea1n trong th\u1eddi gian s\u1edbm nh\u1ea5t."
-                confirmText="Xem l\u1ecbch s\u1eed"
+                title={"\u0110\u1eb7t b\u00e0n th\u00e0nh c\u00f4ng"}
+                message={"Nh\u00e0 h\u00e0ng s\u1ebd x\u00e1c nh\u1eadn l\u1ecbch \u0111\u1eb7t b\u00e0n c\u1ee7a b\u1ea1n trong th\u1eddi gian s\u1edbm nh\u1ea5t."}
+                confirmText={"Xem l\u1ecbch s\u1eed"}
                 onConfirm={() => {
                     setSuccessDialog(false);
                     setTab('history');
