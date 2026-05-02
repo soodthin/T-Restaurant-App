@@ -2,7 +2,7 @@ from rest_framework import viewsets, generics, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
-from django.db.models import Sum, F, Avg, Count, FloatField, Value
+from django.db.models import Sum, F, Avg, Count, FloatField, Value, DecimalField
 from django.db.models.functions import Coalesce, TruncDay, TruncWeek, TruncMonth
 from django.utils import timezone
 from datetime import timedelta
@@ -298,7 +298,9 @@ def _series_for_chef(user, period, since):
         order__created_date__gte=since,
     ).annotate(bucket=trunc('order__created_date')).values('bucket').annotate(
         orders=Sum('quantity'),
-        revenue=Sum(F('unit_price') * F('quantity')),
+        # output_field bat buoc khi nhan F-expression Decimal x Integer tren MySQL,
+        # neu khong Django se raise FieldError luc evaluate aggregate.
+        revenue=Sum(F('unit_price') * F('quantity'), output_field=DecimalField(max_digits=14, decimal_places=2)),
     ).order_by('bucket')
     return [
         {
@@ -351,16 +353,23 @@ class StatsView(generics.GenericAPIView):
         if user.role == 'chef' and user.is_verified:
             dishes = Dish.objects.filter(chef=user)
             order_details = OrderDetail.objects.filter(dish__chef=user)
+            # Khai bao output_field cho phep nhan Decimal*Int de tranh FieldError tren MySQL.
+            revenue_expr = Sum(
+                F('unit_price') * F('quantity'),
+                output_field=DecimalField(max_digits=14, decimal_places=2),
+            )
             data['total_dishes'] = dishes.count()
             data['total_orders'] = order_details.aggregate(
                 total=Sum('quantity'))['total'] or 0
-            data['revenue'] = order_details.aggregate(
-                total=Sum(F('unit_price') * F('quantity')))['total'] or 0
+            data['revenue'] = order_details.aggregate(total=revenue_expr)['total'] or 0
             # doanh thu va so suat theo tung mon
             data['by_dish'] = list(
                 order_details.values('dish_id', 'dish__name').annotate(
                     orders=Sum('quantity'),
-                    revenue=Sum(F('unit_price') * F('quantity')),
+                    revenue=Sum(
+                        F('unit_price') * F('quantity'),
+                        output_field=DecimalField(max_digits=14, decimal_places=2),
+                    ),
                 ).order_by('-revenue')
             )
             # bieu do theo ngay/tuan/thang

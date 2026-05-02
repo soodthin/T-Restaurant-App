@@ -135,11 +135,9 @@ class Review(models.Model):
 
 class Payment(models.Model):
     PAYMENT_METHODS = [
-        ('cash', 'Cash'),
-        ('paypal', 'PayPal'),
-        ('stripe', 'Stripe'),
+        ('cash', 'Tiền mặt khi nhận'),
         ('momo', 'MoMo'),
-        ('zalopay', 'ZaloPay'),
+        ('stripe', 'Stripe'),
     ]
 
     PAYMENT_STATUSES = [
