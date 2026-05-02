@@ -159,6 +159,14 @@ class DishViewSet(viewsets.ModelViewSet):
         reviews = Review.objects.filter(
             dish__chef=request.user
         ).select_related('customer', 'dish').order_by('-created_date')
+        # loc theo so sao chinh xac (1..5)
+        rating = request.query_params.get('rating')
+        if rating and rating.isdigit():
+            reviews = reviews.filter(rating=int(rating))
+        # loc theo mon cu the cua chef
+        dish_id = request.query_params.get('dish')
+        if dish_id and dish_id.isdigit():
+            reviews = reviews.filter(dish_id=int(dish_id))
         p = ReviewPaginator()
         page = p.paginate_queryset(reviews, request)
         data = ReviewSerializer(page if page is not None else reviews, many=True).data
@@ -230,6 +238,30 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.action in ['update', 'partial_update', 'destroy']:
             return [permissions.IsAuthenticated(), IsOwner()]
         return [permissions.IsAuthenticated()]
+
+    @action(detail=False, methods=['get'], url_path='mine',
+            permission_classes=[permissions.IsAuthenticated])
+    def mine(self, request):
+        # Tat ca review do user hien tai da viet, kem ten + anh mon de FE hien thi.
+        reviews = Review.objects.filter(
+            customer=request.user
+        ).select_related('dish').order_by('-created_date')
+        p = ReviewPaginator()
+        page = p.paginate_queryset(reviews, request)
+        items = page if page is not None else reviews
+        data = ReviewSerializer(items, many=True).data
+        review_map = {r.id: r for r in items}
+        for item in data:
+            review = review_map.get(item['id'])
+            if review and review.dish:
+                item['dish_name'] = review.dish.name
+                if review.dish.image:
+                    item['dish_image'] = request.build_absolute_uri(review.dish.image.url)
+                else:
+                    item['dish_image'] = None
+        if page is not None:
+            return p.get_paginated_response(data)
+        return Response(data)
 
 
 class PaymentViewSet(viewsets.ModelViewSet):

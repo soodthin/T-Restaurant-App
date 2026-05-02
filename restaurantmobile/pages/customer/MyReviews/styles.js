@@ -1,0 +1,190 @@
+import { StyleSheet } from 'react-native';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+
+export default StyleSheet.create({
+    container: {
+        flex: 1,
+        backgroundColor: Colors.surface,
+    },
+    content: {
+        padding: 20,
+        paddingBottom: 40,
+    },
+    loading: {
+        flex: 1,
+        backgroundColor: Colors.surface,
+    },
+    hero: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 24,
+        padding: 20,
+        marginBottom: 16,
+        ...editorialShadow,
+    },
+    title: {
+        fontSize: 26,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    subtitle: {
+        marginTop: 8,
+        fontSize: 14,
+        lineHeight: 22,
+        color: Colors.textSecondary,
+    },
+    errorBox: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 16,
+        padding: 12,
+        marginTop: 14,
+    },
+    errorText: {
+        flex: 1,
+        marginHorizontal: 10,
+        fontSize: 13,
+        color: Colors.text,
+    },
+    card: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 20,
+        padding: 16,
+        marginBottom: 12,
+        ...editorialShadow,
+    },
+    cardTop: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+    },
+    thumb: {
+        width: 56,
+        height: 56,
+        borderRadius: 14,
+        backgroundColor: Colors.surfaceContainerLow,
+    },
+    thumbPlaceholder: {
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    dishName: {
+        fontSize: 15,
+        fontWeight: '800',
+        color: Colors.text,
+        lineHeight: 20,
+    },
+    metaRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 6,
+    },
+    starInline: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 1,
+    },
+    metaDot: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        marginHorizontal: 2,
+    },
+    dateText: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        flexShrink: 1,
+    },
+    comment: {
+        marginTop: 12,
+        fontSize: 14,
+        lineHeight: 20,
+        color: Colors.text,
+        backgroundColor: Colors.surfaceContainerLow,
+        padding: 12,
+        borderRadius: 14,
+    },
+    commentEmpty: {
+        marginTop: 12,
+        fontSize: 13,
+        color: Colors.textSecondary,
+        fontStyle: 'italic',
+        backgroundColor: Colors.surfaceContainerLow,
+        padding: 12,
+        borderRadius: 14,
+    },
+    actions: {
+        flexDirection: 'row',
+        gap: 8,
+        marginTop: 12,
+        paddingTop: 12,
+        borderTopWidth: 1,
+        borderTopColor: Colors.outlineVariant + '40',
+    },
+    actionBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        paddingHorizontal: 12,
+        paddingVertical: 8,
+        borderRadius: 12,
+        backgroundColor: Colors.surfaceContainerLow,
+    },
+    actionText: {
+        fontSize: 13,
+        fontWeight: '700',
+    },
+    empty: {
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 24,
+        paddingHorizontal: 24,
+        paddingVertical: 32,
+        ...editorialShadow,
+    },
+    emptyTitle: {
+        marginTop: 14,
+        fontSize: 18,
+        fontWeight: '800',
+        color: Colors.text,
+        textAlign: 'center',
+    },
+    emptyText: {
+        marginTop: 8,
+        fontSize: 14,
+        lineHeight: 22,
+        color: Colors.textSecondary,
+        textAlign: 'center',
+    },
+    dialog: {
+        backgroundColor: Colors.card,
+        borderRadius: 24,
+    },
+    dialogTitle: {
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    dialogDish: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+        marginBottom: 14,
+    },
+    dialogLabel: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 0.6,
+        marginTop: 12,
+        marginBottom: 8,
+    },
+    starRow: {
+        flexDirection: 'row',
+        gap: 2,
+    },
+    starBtn: {
+        padding: 4,
+    },
+});

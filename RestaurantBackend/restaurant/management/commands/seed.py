@@ -1,5 +1,5 @@
 from django.core.management.base import BaseCommand
-from restaurant.models import User, FoodCategory, Menu, Dish
+from restaurant.models import User, FoodCategory, Menu, Dish, Review
 
 
 class Command(BaseCommand):
@@ -183,4 +183,79 @@ class Command(BaseCommand):
             if created:
                 count += 1
 
-        self.stdout.write(self.style.SUCCESS(f'Seed done: {count} new dishes, {len(cats)} categories, 2 menus'))
+        # Sample customers de tao review.
+        sample_customers = [
+            {
+                'username': 'customer_an',
+                'first_name': 'An',
+                'last_name': 'Trần',
+                'email': 'an.tran@example.com',
+                'phone': '0911111111',
+                'address': '12 Lê Lợi, Quận 1',
+            },
+            {
+                'username': 'customer_binh',
+                'first_name': 'Bình',
+                'last_name': 'Phạm',
+                'email': 'binh.pham@example.com',
+                'phone': '0922222222',
+                'address': '45 Hai Bà Trưng, Quận 3',
+            },
+            {
+                'username': 'customer_chi',
+                'first_name': 'Chi',
+                'last_name': 'Lê',
+                'email': 'chi.le@example.com',
+                'phone': '0933333333',
+                'address': '78 Nguyễn Huệ, Quận 1',
+            },
+        ]
+        customers = []
+        for data in sample_customers:
+            user, created = User.objects.get_or_create(
+                username=data['username'],
+                defaults={**data, 'role': 'customer'},
+            )
+            if created:
+                user.set_password('customer123')
+                user.save()
+            customers.append(user)
+
+        # Reviews mau: moi customer danh gia mot vai mon.
+        reviews_data = [
+            ('customer_an',   'Phở Bò Sài Gòn',         5, 'Nước dùng đậm đà, bánh phở dai. Đúng vị Sài Gòn xưa.'),
+            ('customer_an',   'Cơm Tấm Sườn Bì Chả',     5, 'Sườn nướng cháy cạnh thơm phức, cơm tấm dẻo. Quá ngon!'),
+            ('customer_an',   'Bún Chả Hà Nội',          4, 'Chả nướng vừa miệng, nước chấm chuẩn. Sẽ quay lại.'),
+            ('customer_an',   'Cà Phê Sữa Đá',           5, 'Cà phê đậm đà, sữa béo vừa phải. Ly cà phê hoàn hảo cho buổi sáng.'),
+
+            ('customer_binh', 'Phở Bò Sài Gòn',          4, 'Phở ngon nhưng phần thịt hơi ít. Nước dùng vẫn rất chuẩn.'),
+            ('customer_binh', 'Bánh Xèo Miền Nam',       5, 'Bánh xèo giòn rụm, nhân tôm thịt đầy đặn. Rau sống tươi.'),
+            ('customer_binh', 'Bò Lúc Lắc',              4, 'Thịt bò mềm ngọt, sốt vừa miệng. Hơi ít rau ăn kèm.'),
+            ('customer_binh', 'Chè Ba Màu',              5, 'Chè đúng kiểu Sài Gòn, nước cốt dừa béo ngậy.'),
+            ('customer_binh', 'Nước Chanh Muối',         3, 'Hơi mặn so với khẩu vị mình, nhưng giải nhiệt tốt.'),
+
+            ('customer_chi',  'Gỏi Cuốn Tôm Thịt',       5, 'Gỏi cuốn tươi, rau thơm thật và tương đậu phộng đúng chuẩn.'),
+            ('customer_chi',  'Canh Chua Cá Lóc',        5, 'Canh chua đậm vị quê, cá lóc tươi mềm. Nhớ vị nhà ngoại.'),
+            ('customer_chi',  'Cơm Tấm Sườn Bì Chả',     4, 'Cơm tấm ngon, sườn thấm gia vị. Phần ăn hơi ít với mình.'),
+            ('customer_chi',  'Cà Phê Sữa Đá',           4, 'Cà phê thơm, đá hơi nhanh tan.'),
+        ]
+
+        review_count = 0
+        for username, dish_name, rating, comment in reviews_data:
+            try:
+                customer = next(c for c in customers if c.username == username)
+                dish = Dish.objects.get(name=dish_name)
+            except (StopIteration, Dish.DoesNotExist):
+                continue
+            _, created = Review.objects.update_or_create(
+                customer=customer,
+                dish=dish,
+                defaults={'rating': rating, 'comment': comment},
+            )
+            if created:
+                review_count += 1
+
+        self.stdout.write(self.style.SUCCESS(
+            f'Seed done: {count} new dishes, {len(cats)} categories, 2 menus, '
+            f'{len(customers)} customers, {review_count} new reviews'
+        ))

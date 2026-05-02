@@ -54,7 +54,9 @@ const DishDetail = ({ route, navigation }) => {
             }
 
             const dishData = dishRes.data;
-            const reviewData = reviewRes.data;
+            const reviewData = Array.isArray(reviewRes.data)
+                ? reviewRes.data
+                : (reviewRes.data?.results || []);
             setDish(dishData);
             setReviews(reviewData);
 

@@ -11,9 +11,11 @@ import Register from '@pages/auth/Register';
 import Home from '@pages/public/Home';
 import DishDetail from '@pages/public/DishDetail';
 import CompareDishes from '@pages/public/CompareDishes';
+import RestaurantDetail from '@pages/public/RestaurantDetail';
 import Booking from '@pages/customer/Booking';
 import Cart from '@pages/customer/Cart';
 import Orders from '@pages/customer/Orders';
+import MyReviews from '@pages/customer/MyReviews';
 import Profile from '@pages/shared/Profile';
 import ChefHome from '@pages/chef/ChefHome';
 import MyDishes from '@pages/chef/MyDishes';
@@ -189,6 +191,7 @@ const ChefTab = () => (
             component={ChefHome}
             options={{
                 title: 'Tổng quan',
+                headerShown: false,
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="view-dashboard-outline" size={size} color={color} />
                 ),
@@ -274,6 +277,11 @@ const App = () => (
                         options={{ title: 'Chi tiết món ăn', ...stackScreenOptions }}
                     />
                     <Stack.Screen
+                        name="RestaurantDetail"
+                        component={RestaurantDetail}
+                        options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
                         name="CompareDishes"
                         component={CompareDishes}
                         options={{ title: 'So sánh món', ...stackScreenOptions }}
@@ -285,6 +293,11 @@ const App = () => (
                             title: route.params?.dish ? 'Chỉnh sửa món' : 'Tạo món mới',
                             ...stackScreenOptions,
                         })}
+                    />
+                    <Stack.Screen
+                        name="MyReviews"
+                        component={MyReviews}
+                        options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
                     />
                 </Stack.Navigator>
             </NavigationContainer>

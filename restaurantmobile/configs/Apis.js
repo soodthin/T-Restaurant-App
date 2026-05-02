@@ -19,6 +19,8 @@ export const endpoints = {
     'dish-reviews': (id) => `/api/dishes/${id}/reviews/`,
     'dish-compare': '/api/dishes/compare/',
     'my-dish-reviews': '/api/dishes/my-reviews/',
+    'my-reviews': '/api/reviews/mine/',
+    'review-detail': (id) => `/api/reviews/${id}/`,
     'bookings': '/api/bookings/',
     'orders': '/api/orders/',
     'order-add-detail': (id) => `/api/orders/${id}/add-detail/`,
