@@ -309,11 +309,16 @@ class OrderSerializer(ModelSerializer):
 
     def validate(self, attrs):
         # Chi cho phep chuyen trang thai theo huong xuoi.
+        # paid/payment_failed la trang thai do webhook tu chuyen, khong nen cho
+        # client transition truc tiep — nhung cho phep tu paid/payment_failed →
+        # cancelled (admin/customer huy don) va paid → preparing (chef accept).
         if self.instance and 'status' in attrs:
             current = self.instance.status
             new = attrs['status']
             allowed = {
                 'pending': {'preparing', 'cancelled'},
+                'paid': {'preparing', 'cancelled'},
+                'payment_failed': {'cancelled'},
                 'preparing': {'served', 'cancelled'},
                 'served': set(),
                 'cancelled': set(),

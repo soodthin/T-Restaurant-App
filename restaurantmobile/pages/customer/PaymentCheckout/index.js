@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, ActivityIndicator, Linking } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -88,6 +88,23 @@ const PaymentCheckout = ({ route, navigation }) => {
         }
     };
 
+    // MoMo (va mot so cong khac) co the redirect sang custom scheme (momo://, momoapp://)
+    // de mo app native, hoac sang App Store/Play Store neu app chua cai. WebView khong
+    // tu xu ly duoc — phai chan o day va ban giao cho he dieu hanh qua Linking.
+    const onShouldStartLoadWithRequest = (request) => {
+        const url = request.url || '';
+        const isHttp = url.startsWith('http://') || url.startsWith('https://');
+        const isStorePage = url.includes('apps.apple.com') || url.includes('play.google.com');
+
+        if (!isHttp || isStorePage) {
+            Linking.openURL(url).catch(() => {
+                showToast('Không mở được ứng dụng. Hãy cài đặt trước rồi thử lại.', 'error');
+            });
+            return false;
+        }
+        return true;
+    };
+
     return (
         <View style={[styles.container, { paddingTop: insets.top }]}>
             <View style={styles.header}>
@@ -110,6 +127,7 @@ const PaymentCheckout = ({ route, navigation }) => {
                 <WebView
                     source={{ uri: payUrl }}
                     onNavigationStateChange={onNavigationStateChange}
+                    onShouldStartLoadWithRequest={onShouldStartLoadWithRequest}
                     startInLoadingState
                     renderLoading={() => (
                         <View style={styles.loadingOverlay}>

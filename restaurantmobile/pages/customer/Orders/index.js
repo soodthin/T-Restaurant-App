@@ -10,6 +10,7 @@ import {
     LayoutAnimation,
     Platform,
     UIManager,
+    ScrollView,
 } from 'react-native';
 import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -27,10 +28,24 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const statusConfig = {
     pending: { label: 'Chờ xử lý', color: Colors.star, icon: 'clock-outline' },
+    paid: { label: 'Đã thanh toán', color: Colors.success, icon: 'cash-check' },
+    payment_failed: { label: 'Lỗi thanh toán', color: Colors.primary, icon: 'cash-remove' },
     preparing: { label: 'Đang chuẩn bị', color: Colors.tertiary, icon: 'chef-hat' },
     served: { label: 'Đã phục vụ', color: Colors.success, icon: 'check-circle-outline' },
     cancelled: { label: 'Đã hủy', color: Colors.primary, icon: 'close-circle-outline' },
 };
+
+// Filter chip ordering follow workflow: tat ca → cho xu ly → da thanh toan →
+// dang chuan bi → da phuc vu → loi thanh toan → da huy.
+const filterOptions = [
+    { key: 'all', label: 'Tất cả' },
+    { key: 'pending', label: 'Chờ xử lý' },
+    { key: 'paid', label: 'Đã thanh toán' },
+    { key: 'preparing', label: 'Đang chuẩn bị' },
+    { key: 'served', label: 'Đã phục vụ' },
+    { key: 'payment_failed', label: 'Lỗi thanh toán' },
+    { key: 'cancelled', label: 'Đã hủy' },
+];
 
 const paymentMethodConfig = {
     cash: { label: 'Tiền mặt khi nhận', icon: 'cash' },
@@ -56,7 +71,7 @@ const OrderCard = ({ item, index }) => {
     const status = statusConfig[item.status] || { label: item.status, color: Colors.textSecondary, icon: 'help-circle-outline' };
     const payment = paymentMethodConfig[item.payment_method] || { label: 'Chưa chọn', icon: 'credit-card-outline' };
     const payStatus = paymentStatusConfig[item.payment_status] || { label: 'Chưa ghi nhận', color: Colors.textSecondary };
-    const isCancelled = item.status === 'cancelled';
+    const isCancelled = item.status === 'cancelled' || item.status === 'payment_failed';
     const detailCount = item.details?.length || 0;
 
     const toggleExpand = () => {
@@ -159,6 +174,7 @@ const Orders = ({ navigation }) => {
     const [refreshing, setRefreshing] = useState(false);
     const [error, setError] = useState('');
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const [statusFilter, setStatusFilter] = useState('all');
     const spinValue = useRef(new Animated.Value(0)).current;
     const spinAnim = useRef(null);
 
@@ -225,6 +241,10 @@ const Orders = ({ navigation }) => {
         outputRange: ['0deg', '360deg'],
     });
 
+    const filteredOrders = statusFilter === 'all'
+        ? orders
+        : orders.filter((o) => o.status === statusFilter);
+
     const renderOrder = ({ item, index }) => <OrderCard item={item} index={index} />;
 
     if (loading) {
@@ -245,7 +265,7 @@ const Orders = ({ navigation }) => {
             }
 
             <FlatList
-                data={orders}
+                data={filteredOrders}
                 renderItem={renderOrder}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={{ paddingBottom: tabBarHeight + 24 }}
@@ -276,6 +296,26 @@ const Orders = ({ navigation }) => {
                                 </Animated.View>
                             </TouchableOpacity>
                         </View>
+
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.filterScroll}>
+                            {filterOptions.map((opt) => {
+                                const active = statusFilter === opt.key;
+                                return (
+                                    <TouchableOpacity
+                                        key={opt.key}
+                                        activeOpacity={0.7}
+                                        onPress={() => setStatusFilter(opt.key)}
+                                        style={[styles.filterChip, active && styles.filterChipActive]}>
+                                        <Text style={[styles.filterChipText, active && styles.filterChipTextActive]}>
+                                            {opt.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
                     </FadeIn>
                 }
                 ListEmptyComponent={
@@ -283,13 +323,19 @@ const Orders = ({ navigation }) => {
                         <View style={styles.emptyIconCircle}>
                             <MaterialCommunityIcons name="receipt" size={36} color={Colors.primary} />
                         </View>
-                        <Text style={styles.emptyTitle}>{`Chưa có đơn hàng nào`}</Text>
-                        <Text style={styles.emptyText}>
-                            {`Sau khi tạo đơn từ giỏ hàng, lịch sử đơn sẽ xuất hiện tại đây.`}
+                        <Text style={styles.emptyTitle}>
+                            {statusFilter === 'all' ? `Chưa có đơn hàng nào` : `Không có đơn ở trạng thái này`}
                         </Text>
-                        <Button mode="contained" onPress={() => navigation.navigate('Home')} style={{ marginTop: 18, borderRadius: 20 }}>
-                            {`Đi chọn món`}
-                        </Button>
+                        <Text style={styles.emptyText}>
+                            {statusFilter === 'all'
+                                ? `Sau khi tạo đơn từ giỏ hàng, lịch sử đơn sẽ xuất hiện tại đây.`
+                                : `Thử chọn bộ lọc khác hoặc xem "Tất cả".`}
+                        </Text>
+                        {statusFilter === 'all' && (
+                            <Button mode="contained" onPress={() => navigation.navigate('Home')} style={{ marginTop: 18, borderRadius: 20 }}>
+                                {`Đi chọn món`}
+                            </Button>
+                        )}
                     </View>
                 }
             />

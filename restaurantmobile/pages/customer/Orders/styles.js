@@ -16,6 +16,31 @@ export default StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
     },
+    filterScroll: {
+        gap: 8,
+        paddingTop: 14,
+        paddingRight: 4,
+    },
+    filterChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 9999,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    filterChipActive: {
+        backgroundColor: Colors.primaryLight,
+        borderColor: Colors.primary,
+    },
+    filterChipText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+    },
+    filterChipTextActive: {
+        color: Colors.primary,
+    },
     errorCard: {
         marginHorizontal: 16,
         marginTop: 16,

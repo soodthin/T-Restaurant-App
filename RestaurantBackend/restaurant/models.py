@@ -94,6 +94,11 @@ class TableBooking(ModelBase):
 class Order(ModelBase):
     ORDER_STATUSES = [
         ('pending', 'Pending'),
+        # Online payment thanh cong → webhook tu chuyen pending → paid.
+        # Cash khong qua trang thai nay (chef accept truc tiep tu pending).
+        ('paid', 'Paid'),
+        # Online payment that bai → webhook tu chuyen pending → payment_failed.
+        ('payment_failed', 'Payment Failed'),
         ('preparing', 'Preparing'),
         ('served', 'Served'),
         ('cancelled', 'Cancelled'),

@@ -410,8 +410,30 @@ def momo_ipn(request):
     else:
         payment.status = 'failed'
     payment.save()
+    _sync_order_status_from_payment(payment)
 
     return Response(status=204)
+
+
+def _sync_order_status_from_payment(payment):
+    """Chuyen order.status theo ket qua payment online.
+
+    Chi auto-transition tu trang thai 'pending' (don moi tao, chua co ai dong vao):
+    - completed → paid
+    - failed → payment_failed
+    Cac trang thai khac (preparing/served/cancelled) khong dong vao de tranh
+    ghi de logic chef/admin.
+    """
+    order = payment.order
+    if order.status != 'pending':
+        return
+    if payment.status == 'completed':
+        order.status = 'paid'
+    elif payment.status == 'failed':
+        order.status = 'payment_failed'
+    else:
+        return
+    order.save()
 
 
 def momo_redirect(request):
@@ -468,6 +490,7 @@ def stripe_webhook(request):
     elif event_type in ('checkout.session.expired', 'checkout.session.async_payment_failed'):
         payment.status = 'failed'
     payment.save()
+    _sync_order_status_from_payment(payment)
 
     return Response(status=200)
 
