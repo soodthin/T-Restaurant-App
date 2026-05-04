@@ -257,8 +257,12 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderDetailSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save(order=order)
+        # Khong dung order.details.all() vi get_queryset co prefetch_related('details__dish'),
+        # cache details rong tu luc get_object() — detail vua save khong vao cache → sum = 0.
+        # Truy van truc tiep de bypass cache.
         order.total_amount = sum(
-            d.unit_price * d.quantity for d in order.details.all()
+            d.unit_price * d.quantity
+            for d in OrderDetail.objects.filter(order=order)
         )
         order.save()
         return Response(OrderSerializer(order, context={'request': request}).data)
