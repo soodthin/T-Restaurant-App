@@ -8,6 +8,7 @@ import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import PasswordInput from '@components/PasswordInput';
 import AddressDialog from '@components/AddressDialog';
 import { Apis, endpoints } from '@configs';
+import { appendImageAsset } from '@utils/upload';
 import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import styles from './styles';
@@ -102,11 +103,7 @@ const Register = ({ navigation, route }) => {
                 form.append(key, user[key]);
             }
             if (avatar) {
-                form.append('avatar', {
-                    uri: avatar.uri,
-                    name: avatar.fileName || 'avatar.jpg',
-                    type: avatar.mimeType || 'image/jpeg',
-                });
+                await appendImageAsset(form, 'avatar', avatar, 'avatar.jpg');
             }
 
             const res = await Apis.post(endpoints['register'], form);

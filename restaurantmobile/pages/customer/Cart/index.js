@@ -119,6 +119,20 @@ const Cart = ({ navigation, route }) => {
             }
 
             const paymentSaved = paymentRes.ok;
+
+            // Online gateway (momo/stripe): BE tra ve pay_url → mo WebView de user thanh toan.
+            // Khong show success dialog o day, PaymentCheckout se xu ly tiep.
+            const isOnlineGateway = ['momo', 'stripe'].includes(paymentMethod);
+            if (paymentSaved && isOnlineGateway && paymentRes.data?.pay_url) {
+                clearCart();
+                navigation.navigate('PaymentCheckout', {
+                    payUrl: paymentRes.data.pay_url,
+                    paymentId: paymentRes.data.id,
+                    method: paymentMethod,
+                });
+                return;
+            }
+
             clearCart();
             setSuccessMessage(paymentSaved
                 ? 'Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.'

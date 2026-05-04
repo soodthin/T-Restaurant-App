@@ -26,6 +26,7 @@ import {
 } from '@configs';
 import Colors from '@styles/colors';
 import { getDisplayName, getInitialLetter } from '@utils/format';
+import { appendImageAsset } from '@utils/upload';
 import styles from './styles';
 
 const roleConfig = {
@@ -157,11 +158,7 @@ const Profile = ({ navigation }) => {
             form.append('phone', editData.phone.trim());
             form.append('address', editData.address.trim());
             if (newAvatar) {
-                form.append('avatar', {
-                    uri: newAvatar.uri,
-                    name: newAvatar.fileName || 'avatar.jpg',
-                    type: newAvatar.mimeType || 'image/jpeg',
-                });
+                await appendImageAsset(form, 'avatar', newAvatar, 'avatar.jpg');
             }
             const res = await authFetch(endpoints['current-user'], {
                 method: 'PATCH',

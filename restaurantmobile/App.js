@@ -16,6 +16,7 @@ import Booking from '@pages/customer/Booking';
 import Cart from '@pages/customer/Cart';
 import Orders from '@pages/customer/Orders';
 import MyReviews from '@pages/customer/MyReviews';
+import PaymentCheckout from '@pages/customer/PaymentCheckout';
 import Profile from '@pages/shared/Profile';
 import ChefHome from '@pages/chef/ChefHome';
 import MyDishes from '@pages/chef/MyDishes';
@@ -298,6 +299,11 @@ const App = () => (
                         name="MyReviews"
                         component={MyReviews}
                         options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="PaymentCheckout"
+                        component={PaymentCheckout}
+                        options={{ headerShown: false }}
                     />
                 </Stack.Navigator>
             </NavigationContainer>

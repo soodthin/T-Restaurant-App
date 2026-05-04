@@ -12,6 +12,7 @@ export const endpoints = {
     'login': '/o/token/',
     'current-user': '/api/users/current-user/',
     'register': '/api/users/',
+    'chefs': '/api/users/chefs/',
     'categories': '/api/categories/',
     'menus': '/api/menus/',
     'dishes': '/api/dishes/',
@@ -26,6 +27,7 @@ export const endpoints = {
     'order-add-detail': (id) => `/api/orders/${id}/add-detail/`,
     'reviews': '/api/reviews/',
     'payments': '/api/payments/',
+    'payment-detail': (id) => `/api/payments/${id}/`,
     'stats': '/api/stats/',
 };
 
@@ -33,9 +35,10 @@ export const endpoints = {
 const SESSION_STORAGE_KEYS = ['token', 'user', 'customer_cart_items'];
 
 // Cấu hình chung: không throw theo HTTP status để call site tự kiểm tra res.status / res.ok.
+// Timeout 45s đủ chịu Render free tier cold start (~30-50s wake up sau khi sleep).
 const baseConfig = {
     baseURL: BASE_URL,
-    timeout: 15000,
+    timeout: 45000,
     validateStatus: () => true,
 };
 
@@ -134,7 +137,7 @@ export const authFetch = async (url, options = {}) => {
         headers,
         data,
         baseURL: BASE_URL,
-        timeout: 15000,
+        timeout: 45000,
         validateStatus: () => true,
     });
 

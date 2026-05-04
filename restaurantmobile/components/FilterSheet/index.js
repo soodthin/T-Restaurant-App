@@ -13,8 +13,10 @@ const FilterSheet = ({
     sortOptions,
     menus,
     categories,
+    chefs = [],
     menuId,
     catId,
+    chefId = null,
     ordering,
     priceMin,
     priceMax,
@@ -23,6 +25,12 @@ const FilterSheet = ({
     onSelect,
     onApplyRange,
 }) => {
+
+    const formatChefName = (chef) => {
+        const full = `${chef.first_name || ''} ${chef.last_name || ''}`.trim();
+        return full || chef.username;
+    };
+
     const [localPriceMin, setLocalPriceMin] = useState(toStr(priceMin));
     const [localPriceMax, setLocalPriceMax] = useState(toStr(priceMax));
     const [localPrepMin, setLocalPrepMin] = useState(toStr(prepMin));
@@ -197,6 +205,29 @@ const FilterSheet = ({
                                 return (
                                     <TouchableOpacity key={category.id} style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ catId: category.id })}>
                                         <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{category.name}</Text>
+                                        <View style={[styles.radio, active && styles.radioActive]}>
+                                            {active && <View style={styles.radioDot} />}
+                                        </View>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </View>
+                    )}
+
+                    {chefs.length > 0 && (
+                        <View style={styles.sheetSection}>
+                            <Text style={styles.sheetSectionTitle}>Đầu bếp phụ trách</Text>
+                            <TouchableOpacity style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ chefId: null })}>
+                                <Text style={[styles.sheetRowText, chefId === null && styles.sheetRowTextActive]}>Tất cả</Text>
+                                <View style={[styles.radio, chefId === null && styles.radioActive]}>
+                                    {chefId === null && <View style={styles.radioDot} />}
+                                </View>
+                            </TouchableOpacity>
+                            {chefs.map((chef) => {
+                                const active = chefId === chef.id;
+                                return (
+                                    <TouchableOpacity key={chef.id} style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ chefId: chef.id })}>
+                                        <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{formatChefName(chef)}</Text>
                                         <View style={[styles.radio, active && styles.radioActive]}>
                                             {active && <View style={styles.radioDot} />}
                                         </View>

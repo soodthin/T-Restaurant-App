@@ -28,6 +28,7 @@ import {
     sanitizeNumberInput,
     stripHtml,
 } from '@utils/format';
+import { appendImageAsset } from '@utils/upload';
 import styles from './styles';
 
 const outlineStyle = { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 };
@@ -67,6 +68,8 @@ const CreateDish = ({ navigation, route }) => {
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [confirm, setConfirm] = useState(false);
     const [successDialog, setSuccessDialog] = useState(false);
+    // Ô nhập tạm cho chip nguyên liệu (chưa add vào dish.ingredients).
+    const [ingredientInput, setIngredientInput] = useState('');
 
     const showToast = useCallback((message, type = 'error') => {
         setToast({ visible: true, message, type });
@@ -125,6 +128,32 @@ const CreateDish = ({ navigation, route }) => {
     const changeField = (field, value) => {
         setDish((prev) => ({ ...prev, [field]: value }));
         setFieldErrors((prev) => ({ ...prev, [field]: '' }));
+    };
+
+    // Backend luu ingredients dang CSV "bot banh mi, bo sua, ..." - giu nguyen format,
+    // chi doi UX nhap tu textarea sang chip de tranh user go sai.
+    const parseIngredients = (raw) => (raw || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+    const addIngredient = () => {
+        const v = ingredientInput.trim();
+        if (!v) return;
+        // Cho phep paste "a, b, c" → tach thanh nhieu chip cung luc.
+        const newItems = v.split(',').map((s) => s.trim()).filter(Boolean);
+        const list = parseIngredients(dish.ingredients);
+        for (const item of newItems) {
+            if (!list.includes(item)) list.push(item);
+        }
+        changeField('ingredients', list.join(', '));
+        setIngredientInput('');
+    };
+
+    const removeIngredient = (idx) => {
+        const list = parseIngredients(dish.ingredients);
+        list.splice(idx, 1);
+        changeField('ingredients', list.join(', '));
     };
 
     const validate = () => {
@@ -196,11 +225,7 @@ const CreateDish = ({ navigation, route }) => {
             form.append('category', String(selectedCategory));
 
             if (image) {
-                form.append('image', {
-                    uri: image.uri,
-                    name: image.fileName || 'dish.jpg',
-                    type: image.mimeType || 'image/jpeg',
-                });
+                await appendImageAsset(form, 'image', image, 'dish.jpg');
             }
 
             const url = isEditing
@@ -416,19 +441,47 @@ const CreateDish = ({ navigation, route }) => {
                     <Text style={styles.sectionTitle}>Nguyên liệu & Phân loại</Text>
 
                     <Text style={styles.label}>NGUYÊN LIỆU</Text>
+                    {parseIngredients(dish.ingredients).length > 0 && (
+                        <View style={styles.ingredientChipsWrap}>
+                            {parseIngredients(dish.ingredients).map((ing, idx) => (
+                                <View key={`${ing}-${idx}`} style={styles.ingredientChip}>
+                                    <MaterialCommunityIcons name="leaf" size={11} color={Colors.success} />
+                                    <Text style={styles.ingredientChipText}>{ing}</Text>
+                                    <TouchableOpacity
+                                        activeOpacity={0.6}
+                                        onPress={() => removeIngredient(idx)}
+                                        hitSlop={6}
+                                    >
+                                        <MaterialCommunityIcons name="close-circle" size={15} color={Colors.textSecondary} />
+                                    </TouchableOpacity>
+                                </View>
+                            ))}
+                        </View>
+                    )}
                     <TextInput
                         mode="outlined"
-                        placeholder="Liệt kê các thành phần chính, cách sơ chế hoặc lưu ý dị ứng nếu có."
+                        placeholder="Ví dụ: bột bánh mì"
                         placeholderTextColor={Colors.placeholder}
-                        value={dish.ingredients}
-                        onChangeText={(value) => changeField('ingredients', value)}
-                        multiline
-                        numberOfLines={3}
+                        value={ingredientInput}
+                        onChangeText={setIngredientInput}
+                        onSubmitEditing={addIngredient}
+                        returnKeyType="done"
+                        blurOnSubmit={false}
                         outlineStyle={outlineStyle}
-                        style={[inputStyle, styles.formInput, styles.multilineInput]}
+                        style={[inputStyle, styles.formInput]}
                         activeOutlineColor={Colors.primary}
                         textColor={Colors.text}
+                        right={
+                            <TextInput.Icon
+                                icon="plus-circle"
+                                color={ingredientInput.trim() ? Colors.primary : Colors.placeholder}
+                                onPress={addIngredient}
+                            />
+                        }
                     />
+                    <Text style={styles.ingredientHint}>
+                        Nhập từng nguyên liệu rồi bấm dấu <Text style={{ fontWeight: '800' }}>+</Text> hoặc Enter để thêm.
+                    </Text>
 
                     <Text style={styles.label}>CHỌN MENU</Text>
                     <ScrollView

@@ -33,12 +33,14 @@ const Home = ({ navigation }) => {
     const [dishes, setDishes] = useState([]);
     const [categories, setCategories] = useState([]);
     const [menus, setMenus] = useState([]);
+    const [chefs, setChefs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const [refreshing, setRefreshing] = useState(false);
     const [search, setSearch] = useState('');
     const [catId, setCatId] = useState(null);
     const [menuId, setMenuId] = useState(null);
+    const [chefId, setChefId] = useState(null);
     const [ordering, setOrdering] = useState('');
     const [priceMin, setPriceMin] = useState(null);
     const [priceMax, setPriceMax] = useState(null);
@@ -56,12 +58,13 @@ const Home = ({ navigation }) => {
         setToast({ visible: true, message, type });
     };
 
-    const buildUrl = (p, q, cat, menu, order, ranges = null) => {
+    const buildUrl = (p, q, cat, menu, order, ranges = null, chef = chefId) => {
         const r = ranges || { pMin: priceMin, pMax: priceMax, tMin: prepMin, tMax: prepMax };
         const params = [`page=${p}`];
         if (q) params.push(`search=${encodeURIComponent(q.trim())}`);
         if (cat) params.push(`category_id=${cat}`);
         if (menu) params.push(`menu_id=${menu}`);
+        if (chef) params.push(`chef_id=${chef}`);
         if (order) params.push(`ordering=${order}`);
         if (r.pMin) params.push(`price_min=${r.pMin}`);
         if (r.pMax) params.push(`price_max=${r.pMax}`);
@@ -70,12 +73,12 @@ const Home = ({ navigation }) => {
         return `${endpoints['dishes']}?${params.join('&')}`;
     };
 
-    const loadDishes = async (p = 1, q = search, cat = catId, menu = menuId, order = ordering, ranges = null) => {
+    const loadDishes = async (p = 1, q = search, cat = catId, menu = menuId, order = ordering, ranges = null, chef = chefId) => {
         if (p === 1) setLoading(true);
         else setLoadingMore(true);
 
         try {
-            const res = await Apis.get(buildUrl(p, q, cat, menu, order, ranges));
+            const res = await Apis.get(buildUrl(p, q, cat, menu, order, ranges, chef));
             if (!res.ok) {
                 throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i danh s\u00e1ch m\u00f3n \u0103n'));
             }
@@ -96,9 +99,10 @@ const Home = ({ navigation }) => {
 
     const loadFilters = async () => {
         try {
-            const [categoryRes, menuRes] = await Promise.all([
+            const [categoryRes, menuRes, chefRes] = await Promise.all([
                 Apis.get(endpoints['categories']),
                 Apis.get(endpoints['menus']),
+                Apis.get(endpoints['chefs']),
             ]);
 
             if (categoryRes.ok) {
@@ -110,9 +114,15 @@ const Home = ({ navigation }) => {
                 const menuData = menuRes.data;
                 setMenus(Array.isArray(menuData) ? menuData : menuData.results || []);
             }
+
+            if (chefRes.ok) {
+                const chefData = chefRes.data;
+                setChefs(Array.isArray(chefData) ? chefData : chefData.results || []);
+            }
         } catch (err) {
             setCategories([]);
             setMenus([]);
+            setChefs([]);
         }
     };
 
@@ -138,6 +148,7 @@ const Home = ({ navigation }) => {
         const nextSearch = next.search ?? search;
         const nextCategory = next.catId ?? catId;
         const nextMenu = next.menuId ?? menuId;
+        const nextChef = next.chefId === undefined ? chefId : next.chefId;
         const nextOrdering = next.ordering ?? ordering;
         const nextPriceMin = next.priceMin === undefined ? priceMin : next.priceMin;
         const nextPriceMax = next.priceMax === undefined ? priceMax : next.priceMax;
@@ -147,6 +158,7 @@ const Home = ({ navigation }) => {
         if (next.search !== undefined) setSearch(next.search);
         if (next.catId !== undefined) setCatId(next.catId);
         if (next.menuId !== undefined) setMenuId(next.menuId);
+        if (next.chefId !== undefined) setChefId(next.chefId);
         if (next.ordering !== undefined) setOrdering(next.ordering);
         if (next.priceMin !== undefined) setPriceMin(next.priceMin);
         if (next.priceMax !== undefined) setPriceMax(next.priceMax);
@@ -159,7 +171,7 @@ const Home = ({ navigation }) => {
             pMax: nextPriceMax,
             tMin: nextPrepMin,
             tMax: nextPrepMax,
-        });
+        }, nextChef);
     };
 
     const loadMore = () => {
@@ -173,10 +185,11 @@ const Home = ({ navigation }) => {
         setRefreshing(true);
 
         try {
-            const [dishRes, categoryRes, menuRes] = await Promise.all([
-                Apis.get(buildUrl(1, '', null, null, '')),
+            const [dishRes, categoryRes, menuRes, chefRes] = await Promise.all([
+                Apis.get(buildUrl(1, '', null, null, '', null, null)),
                 Apis.get(endpoints['categories']),
                 Apis.get(endpoints['menus']),
+                Apis.get(endpoints['chefs']),
             ]);
 
             // Cập nhật state TẤT CẢ cùng 1 lượt sau khi API trả về,
@@ -185,6 +198,7 @@ const Home = ({ navigation }) => {
             setSearch('');
             setCatId(null);
             setMenuId(null);
+            setChefId(null);
             setOrdering('');
             setPriceMin(null);
             setPriceMax(null);
@@ -206,6 +220,10 @@ const Home = ({ navigation }) => {
             if (menuRes.ok) {
                 const menuData = menuRes.data;
                 setMenus(Array.isArray(menuData) ? menuData : menuData.results || []);
+            }
+            if (chefRes.ok) {
+                const chefData = chefRes.data;
+                setChefs(Array.isArray(chefData) ? chefData : chefData.results || []);
             }
         } catch (err) {
             // Silent — không che màn hình lỗi khi pull-to-refresh.
@@ -392,8 +410,10 @@ const Home = ({ navigation }) => {
                 sortOptions={sortOptions}
                 menus={menus}
                 categories={categories}
+                chefs={chefs}
                 menuId={menuId}
                 catId={catId}
+                chefId={chefId}
                 ordering={ordering}
                 priceMin={priceMin}
                 priceMax={priceMax}

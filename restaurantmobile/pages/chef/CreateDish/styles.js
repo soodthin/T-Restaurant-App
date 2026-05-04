@@ -208,6 +208,40 @@ export default StyleSheet.create({
         flex: 1,
     },
 
+    // Ingredient chips (list nguyen lieu)
+    ingredientChipsWrap: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 6,
+        marginBottom: 8,
+    },
+    ingredientChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: Colors.success + '14',
+        borderWidth: 1,
+        borderColor: Colors.success + '33',
+        paddingLeft: 9,
+        paddingRight: 6,
+        paddingVertical: 5,
+        borderRadius: 999,
+    },
+    ingredientChipText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: Colors.text,
+    },
+    ingredientHint: {
+        marginTop: -2,
+        marginBottom: 8,
+        marginLeft: 4,
+        fontSize: 11,
+        lineHeight: 16,
+        color: Colors.textSecondary,
+        fontStyle: 'italic',
+    },
+
     // Chip selection (menu / category)
     chipRow: {
         paddingVertical: 4,
