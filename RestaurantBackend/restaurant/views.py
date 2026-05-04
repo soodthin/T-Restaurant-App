@@ -45,6 +45,24 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
             return Response(serializer.data)
         return Response(UserSerializer(request.user).data)
 
+    @action(detail=False, methods=['get'], url_path='chefs',
+            permission_classes=[permissions.AllowAny])
+    def chefs(self, request):
+        # Danh sach dau bep da duyet, de FE lam filter "dau bep phu trach"
+        # tren trang kham pha. Tra it field cho nhe payload.
+        qs = User.objects.filter(role='chef', is_verified=True, is_active=True).order_by('first_name', 'last_name', 'username')
+        data = [
+            {
+                'id': u.id,
+                'username': u.username,
+                'first_name': u.first_name,
+                'last_name': u.last_name,
+                'avatar': request.build_absolute_uri(u.avatar.url) if u.avatar else None,
+            }
+            for u in qs
+        ]
+        return Response(data)
+
     @action(detail=True, methods=['patch'], url_path='verify-chef')
     def verify_chef(self, request, pk=None):
         if not request.user.is_staff:
@@ -137,6 +155,10 @@ class DishViewSet(viewsets.ModelViewSet):
         prep_max = params.get('prep_max')
         if prep_max:
             qs = qs.filter(preparation_time__lte=prep_max)
+        # loc theo dau bep phu trach (de tai yeu cau)
+        chef_id = params.get('chef_id')
+        if chef_id:
+            qs = qs.filter(chef_id=chef_id)
         # neu la chef dang dang nhap, chi hien mon cua chef do
         if (self.request.user.is_authenticated
                 and self.request.user.role == 'chef'
