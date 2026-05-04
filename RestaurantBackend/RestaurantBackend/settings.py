@@ -123,3 +123,42 @@ REST_FRAMEWORK = {
         'oauth2_provider.contrib.rest_framework.OAuth2Authentication',
     ),
 }
+
+# === MoMo (sandbox / test mode) ===
+# Public test creds san co tren doc MoMo (xem .env.example) — dat qua env de
+# tranh hardcode key vao source. Production thi dang ky business.momo.vn.
+MOMO_PARTNER_CODE = os.environ.get('MOMO_PARTNER_CODE', '')
+MOMO_ACCESS_KEY = os.environ.get('MOMO_ACCESS_KEY', '')
+MOMO_SECRET_KEY = os.environ.get('MOMO_SECRET_KEY', '')
+MOMO_CREATE_URL = os.environ.get(
+    'MOMO_CREATE_URL', 'https://test-payment.momo.vn/v2/gateway/api/create'
+)
+# IPN URL phai la URL public — MoMo se POST callback ve day khi user thanh toan xong.
+# Default tro ve BE Render; co the override bang env neu chay tunnel local (ngrok).
+MOMO_IPN_URL = os.environ.get(
+    'MOMO_IPN_URL', 'https://t-restaurant.onrender.com/api/momo/ipn/'
+)
+# Sau khi user thanh toan xong, MoMo redirect WebView ve URL nay. FE detect URL
+# nay → dong WebView → poll status payment.
+MOMO_REDIRECT_URL = os.environ.get(
+    'MOMO_REDIRECT_URL', 'https://t-restaurant.onrender.com/api/momo/redirect/'
+)
+
+# === Stripe (test mode) ===
+# Stripe khong co "public test creds dung chung" — moi project tu dang ky tai khoan
+# test mien phi tai dashboard.stripe.com va dat key qua env. Mac dinh de rong de
+# tranh leak key, neu rong thi endpoint Stripe se tra 502.
+STRIPE_SECRET_KEY = os.environ.get('STRIPE_SECRET_KEY', '')
+STRIPE_WEBHOOK_SECRET = os.environ.get('STRIPE_WEBHOOK_SECRET', '')
+# VND la zero-decimal currency tren Stripe → truyen thang amount, khong nhan 100.
+STRIPE_CURRENCY = os.environ.get('STRIPE_CURRENCY', 'vnd')
+# URL Stripe redirect ve sau khi user thanh toan xong / huy. FE WebView phat hien
+# URL nay → dong webview → poll /payments/{id}/.
+STRIPE_SUCCESS_URL = os.environ.get(
+    'STRIPE_SUCCESS_URL',
+    'https://t-restaurant.onrender.com/api/stripe/return/?status=success&session_id={CHECKOUT_SESSION_ID}'
+)
+STRIPE_CANCEL_URL = os.environ.get(
+    'STRIPE_CANCEL_URL',
+    'https://t-restaurant.onrender.com/api/stripe/return/?status=cancel'
+)

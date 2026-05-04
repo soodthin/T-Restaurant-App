@@ -1,11 +1,14 @@
 from rest_framework import viewsets, generics, permissions, status, filters
-from rest_framework.decorators import action
+from rest_framework.decorators import action, api_view, permission_classes
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.db.models import Sum, F, Avg, Count, FloatField, Value, DecimalField
 from django.db.models.functions import Coalesce, TruncDay, TruncWeek, TruncMonth
+from django.http import HttpResponse
 from django.utils import timezone
+from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
+import json
 
 from .models import (
     User, FoodCategory, Menu, Dish,
@@ -309,6 +312,172 @@ class PaymentViewSet(viewsets.ModelViewSet):
         if user.is_staff:
             return Payment.objects.all()
         return Payment.objects.filter(order__customer=user)
+
+    def create(self, request, *args, **kwargs):
+        # Tao payment qua serializer (validate order, set amount tu order.total_amount).
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        payment = serializer.save()
+
+        # Dispatcher theo cong thanh toan. Cash khong can goi gateway, danh dau pending
+        # cho nha hang xac nhan. Online gateway tao session/payUrl roi tra ve cho FE.
+        if payment.method == 'momo':
+            from .momo import create_momo_payment
+            try:
+                result = create_momo_payment(
+                    order_id=payment.order_id,
+                    amount=int(payment.amount),
+                    order_info=f'Thanh toan don hang #{payment.order_id}',
+                )
+                payment.pay_url = result['pay_url']
+                payment.transaction_id = result['request_id']
+                payment.save()
+            except Exception as e:
+                payment.status = 'failed'
+                payment.save()
+                return Response(
+                    {'detail': f'Khong tao duoc giao dich MoMo: {e}'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+        elif payment.method == 'stripe':
+            from .stripe_gw import create_stripe_checkout
+            try:
+                result = create_stripe_checkout(
+                    order_id=payment.order_id,
+                    amount=int(payment.amount),
+                    order_info=f'Thanh toan don hang #{payment.order_id}',
+                )
+                payment.pay_url = result['pay_url']
+                # Luu session_id de webhook tra cuu Payment (Stripe khong gui
+                # Payment.id ve, chi gui session.id va metadata).
+                payment.transaction_id = result['session_id']
+                payment.save()
+            except Exception as e:
+                payment.status = 'failed'
+                payment.save()
+                return Response(
+                    {'detail': f'Khong tao duoc giao dich Stripe: {e}'},
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+        return Response(
+            self.get_serializer(payment).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def momo_ipn(request):
+    """Webhook MoMo callback ve sau khi user thanh toan xong tren cong MoMo.
+
+    Verify chu ky → cap nhat Payment.status va transaction_id. Khong tra payload
+    cho FE, MoMo chi can HTTP 204.
+    """
+    from .momo import verify_ipn_signature
+
+    try:
+        data = request.data if isinstance(request.data, dict) else json.loads(request.body)
+    except Exception:
+        return Response({'detail': 'Invalid payload'}, status=400)
+
+    if not verify_ipn_signature(data):
+        return Response({'detail': 'Invalid signature'}, status=400)
+
+    request_id = data.get('requestId')
+    if not request_id:
+        return Response({'detail': 'Missing requestId'}, status=400)
+
+    try:
+        payment = Payment.objects.get(transaction_id=request_id, method='momo')
+    except Payment.DoesNotExist:
+        return Response({'detail': 'Payment not found'}, status=404)
+
+    result_code = data.get('resultCode')
+    if result_code == 0:
+        payment.status = 'completed'
+        # Luu transId thuc te tu MoMo de tra cuu doi soat sau nay.
+        trans_id = data.get('transId')
+        if trans_id:
+            payment.transaction_id = str(trans_id)
+    else:
+        payment.status = 'failed'
+    payment.save()
+
+    return Response(status=204)
+
+
+def momo_redirect(request):
+    """Trang HTML toi gian MoMo redirect ve sau khi user thanh toan.
+
+    FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
+    """
+    return HttpResponse(
+        '<html><body style="font-family:sans-serif;text-align:center;padding:40px">'
+        '<h2>Dang xu ly thanh toan...</h2>'
+        '<p>Ban co the dong cua so nay neu khong tu dong chuyen.</p>'
+        '</body></html>'
+    )
+
+
+@csrf_exempt
+@api_view(['POST'])
+@permission_classes([permissions.AllowAny])
+def stripe_webhook(request):
+    """Webhook Stripe gui ve khi co event tren Checkout Session.
+
+    Verify signature qua header `Stripe-Signature` → cap nhat Payment.status
+    dua tren event type. Lang nghe `checkout.session.completed` (success) va
+    `checkout.session.expired` (timeout/cancel).
+    """
+    from .stripe_gw import construct_webhook_event
+
+    sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
+    try:
+        event = construct_webhook_event(request.body, sig_header)
+    except Exception as e:
+        # Stripe se retry neu nhan 400 → giup phuc hoi neu transient.
+        return Response({'detail': f'Invalid webhook: {e}'}, status=400)
+
+    event_type = event.get('type')
+    session = event.get('data', {}).get('object', {})
+    session_id = session.get('id')
+    if not session_id:
+        return Response({'detail': 'Missing session id'}, status=400)
+
+    try:
+        payment = Payment.objects.get(transaction_id=session_id, method='stripe')
+    except Payment.DoesNotExist:
+        # Stripe co the gui webhook truoc khi session.id kip luu vao DB —
+        # tra 200 de Stripe khong retry vo han, va vi day la edge case hiem.
+        return Response(status=200)
+
+    if event_type == 'checkout.session.completed' and session.get('payment_status') == 'paid':
+        payment.status = 'completed'
+        # Luu payment_intent thuc te de doi soat sau nay.
+        intent = session.get('payment_intent')
+        if intent:
+            payment.transaction_id = str(intent)
+    elif event_type in ('checkout.session.expired', 'checkout.session.async_payment_failed'):
+        payment.status = 'failed'
+    payment.save()
+
+    return Response(status=200)
+
+
+def stripe_return(request):
+    """Trang HTML Stripe redirect ve sau khi user hoan tat (hoac huy) thanh toan.
+
+    FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
+    Stripe gui them query `status=success|cancel` (xem STRIPE_SUCCESS_URL/CANCEL_URL).
+    """
+    return HttpResponse(
+        '<html><body style="font-family:sans-serif;text-align:center;padding:40px">'
+        '<h2>Dang xu ly thanh toan...</h2>'
+        '<p>Ban co the dong cua so nay neu khong tu dong chuyen.</p>'
+        '</body></html>'
+    )
 
 
 PERIOD_TRUNC = {
