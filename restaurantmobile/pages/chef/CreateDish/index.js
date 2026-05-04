@@ -8,8 +8,9 @@ import {
     KeyboardAvoidingView,
     Platform,
 } from 'react-native';
-import { ActivityIndicator, Button, Chip, TextInput } from 'react-native-paper';
+import { ActivityIndicator, Button, TextInput } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import {
@@ -24,8 +25,8 @@ import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import {
     formatCurrency,
-    getDisplayName,
     sanitizeNumberInput,
+    stripHtml,
 } from '@utils/format';
 import styles from './styles';
 
@@ -41,14 +42,16 @@ const initialDish = {
 };
 
 const CreateDish = ({ navigation, route }) => {
+    const insets = useSafeAreaInsets();
     const editingDish = route?.params?.dish || null;
     const isEditing = Boolean(editingDish);
 
     const [dish, setDish] = useState(() => editingDish ? {
         name: editingDish.name || '',
-        description: editingDish.description || '',
+        // Strip HTML tu RichTextField de form khong hien tag/entity tho.
+        description: stripHtml(editingDish.description),
         price: editingDish.price ? String(editingDish.price) : '',
-        ingredients: editingDish.ingredients || '',
+        ingredients: stripHtml(editingDish.ingredients),
         preparation_time: editingDish.preparation_time ? String(editingDish.preparation_time) : '',
     } : initialDish);
     const [image, setImage] = useState(null);
@@ -126,7 +129,6 @@ const CreateDish = ({ navigation, route }) => {
 
     const validate = () => {
         const nextErrors = {};
-
         if (dish.name.trim().length < 3) {
             nextErrors.name = 'Tên món cần có ít nhất 3 ký tự.';
         }
@@ -142,7 +144,6 @@ const CreateDish = ({ navigation, route }) => {
         if (!selectedCategory) {
             nextErrors.category = 'Hãy chọn loại món để khách dễ tìm kiếm.';
         }
-
         return nextErrors;
     };
 
@@ -274,8 +275,7 @@ const CreateDish = ({ navigation, route }) => {
         );
     }
 
-    const selectedMenuLabel = menus.find((item) => item.id === selectedMenu)?.name || 'Chưa chọn menu';
-    const selectedCategoryLabel = categories.find((item) => item.id === selectedCategory)?.name || 'Chưa chọn loại món';
+    const previewImageUri = image?.uri || editingDish?.image || null;
 
     return (
         <KeyboardAvoidingView
@@ -283,17 +283,27 @@ const CreateDish = ({ navigation, route }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <ScrollView
                 style={styles.scroll}
-                contentContainerStyle={styles.container}
-                keyboardShouldPersistTaps="handled">
+                contentContainerStyle={[styles.container, { paddingBottom: 120 + insets.bottom }]}
+                keyboardShouldPersistTaps="handled"
+                showsVerticalScrollIndicator={false}>
+
+                {/* Hero card */}
                 <FadeInDown duration={500} style={styles.hero}>
-                    <Text style={styles.heroEyebrow}>{isEditing ? 'Cập nhật món' : 'Tạo món mới'}</Text>
-                    <Text style={styles.heroTitle}>
-                        {isEditing
-                            ? 'Chỉnh sửa thông tin món, giữ nội dung luôn cập nhật.'
-                            : 'Chuẩn hóa thông tin món trước khi đưa lên menu'}
-                    </Text>
+                    <View style={styles.heroRow}>
+                        <View style={{ flex: 1 }}>
+                            <Text style={styles.heroEyebrow}>
+                                {isEditing ? 'Chỉnh sửa món' : 'Tạo món mới'}
+                            </Text>
+                            <Text style={styles.heroTitle}>
+                                {isEditing ? 'Cập nhật món' : 'Chuẩn hóa món'}
+                            </Text>
+                        </View>
+                        <View style={styles.heroIconWrap}>
+                            <MaterialCommunityIcons name="silverware-fork-knife" size={22} color={Colors.primary} />
+                        </View>
+                    </View>
                     <Text style={styles.heroSubtitle}>
-                        Điền tên món, giá, thời gian chuẩn bị và phân loại rõ ràng để khách xem được đúng nội dung.
+                        Điền tên món, giá, thời gian chuẩn bị và phân loại rõ ràng để lên menu.
                     </Text>
                 </FadeInDown>
 
@@ -304,24 +314,32 @@ const CreateDish = ({ navigation, route }) => {
                     </View> :
                     null}
 
-                <TouchableOpacity style={styles.imagePicker} activeOpacity={0.8} onPress={pickImage}>
-                    {image ?
-                        <Image source={{ uri: image.uri }} style={styles.imagePreview} /> :
-                        editingDish?.image ?
-                            <Image source={{ uri: editingDish.image }} style={styles.imagePreview} /> :
-                            <View style={styles.imagePlaceholder}>
-                                <MaterialCommunityIcons name="camera-plus" size={34} color={Colors.textSecondary} />
-                                <Text style={styles.imageTitle}>Tải ảnh món ăn</Text>
-                                <Text style={styles.imageSubtitle}>Ảnh rõ và đúng món sẽ giúp giao diện chuyên nghiệp hơn.</Text>
-                            </View>}
+                {/* Section: Hình ảnh */}
+                <Text style={styles.sectionLabel}>Hình ảnh minh họa</Text>
+                <TouchableOpacity
+                    style={[styles.imagePicker, !previewImageUri && styles.imagePickerDashed]}
+                    activeOpacity={0.85}
+                    onPress={pickImage}
+                >
+                    {previewImageUri ?
+                        <Image source={{ uri: previewImageUri }} style={styles.imagePreview} /> :
+                        <View style={styles.imagePlaceholder}>
+                            <View style={styles.cameraCircle}>
+                                <MaterialCommunityIcons name="camera-plus-outline" size={26} color={Colors.primary} />
+                            </View>
+                            <Text style={styles.imageTitle}>Tải ảnh món ăn</Text>
+                            <Text style={styles.imageSubtitle}>Nhấn vào đây để chọn ảnh từ thư viện.</Text>
+                        </View>
+                    }
                 </TouchableOpacity>
 
-                <FadeInDown duration={500} style={styles.sectionCard}>
+                {/* Section card: Thông tin chính */}
+                <View style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Thông tin chính</Text>
 
+                    <Text style={styles.label}>TÊN MÓN</Text>
                     <TextInput
                         mode="outlined"
-                        label="TÊN MÓN"
                         placeholder="Ví dụ: Cơm chiên hải sản"
                         placeholderTextColor={Colors.placeholder}
                         value={dish.name}
@@ -331,12 +349,13 @@ const CreateDish = ({ navigation, route }) => {
                         style={[inputStyle, styles.formInput]}
                         activeOutlineColor={Colors.primary}
                         textColor={Colors.text}
+                        right={<TextInput.Icon icon="silverware-fork-knife" color={Colors.textSecondary} />}
                     />
                     {fieldErrors.name ? <Text style={styles.errorText}>{fieldErrors.name}</Text> : null}
 
+                    <Text style={styles.label}>MÔ TẢ NGẮN</Text>
                     <TextInput
                         mode="outlined"
-                        label="MÔ TẢ NGẮN"
                         placeholder="Mô tả hương vị, điểm nổi bật hoặc cách phục vụ món."
                         placeholderTextColor={Colors.placeholder}
                         value={dish.description}
@@ -351,9 +370,9 @@ const CreateDish = ({ navigation, route }) => {
 
                     <View style={styles.row}>
                         <View style={styles.halfField}>
+                            <Text style={styles.label}>GIÁ BÁN (VNĐ)</Text>
                             <TextInput
                                 mode="outlined"
-                                label="GIÁ BÁN (VNĐ)"
                                 placeholder="65000"
                                 placeholderTextColor={Colors.placeholder}
                                 value={dish.price}
@@ -364,14 +383,15 @@ const CreateDish = ({ navigation, route }) => {
                                 style={[inputStyle, styles.formInput]}
                                 activeOutlineColor={Colors.primary}
                                 textColor={Colors.text}
+                                right={<TextInput.Icon icon="cash" color={Colors.textSecondary} />}
                             />
                             {fieldErrors.price ? <Text style={styles.errorText}>{fieldErrors.price}</Text> : null}
                         </View>
 
                         <View style={styles.halfField}>
+                            <Text style={styles.label}>T.GIAN (PHÚT)</Text>
                             <TextInput
                                 mode="outlined"
-                                label="CHUẨN BỊ (PHÚT)"
                                 placeholder="20"
                                 placeholderTextColor={Colors.placeholder}
                                 value={dish.preparation_time}
@@ -382,108 +402,140 @@ const CreateDish = ({ navigation, route }) => {
                                 style={[inputStyle, styles.formInput]}
                                 activeOutlineColor={Colors.primary}
                                 textColor={Colors.text}
+                                right={<TextInput.Icon icon="clock-outline" color={Colors.textSecondary} />}
                             />
                             {fieldErrors.preparation_time ?
                                 <Text style={styles.errorText}>{fieldErrors.preparation_time}</Text> :
                                 null}
                         </View>
                     </View>
-                </FadeInDown>
+                </View>
 
-                <FadeInDown duration={500} style={styles.sectionCard}>
-                    <Text style={styles.sectionTitle}>Nguyên liệu và phân loại</Text>
+                {/* Section card: Nguyên liệu & Phân loại */}
+                <View style={styles.sectionCard}>
+                    <Text style={styles.sectionTitle}>Nguyên liệu & Phân loại</Text>
 
+                    <Text style={styles.label}>NGUYÊN LIỆU</Text>
                     <TextInput
                         mode="outlined"
-                        label="NGUYÊN LIỆU"
                         placeholder="Liệt kê các thành phần chính, cách sơ chế hoặc lưu ý dị ứng nếu có."
                         placeholderTextColor={Colors.placeholder}
                         value={dish.ingredients}
                         onChangeText={(value) => changeField('ingredients', value)}
                         multiline
-                        numberOfLines={4}
+                        numberOfLines={3}
                         outlineStyle={outlineStyle}
                         style={[inputStyle, styles.formInput, styles.multilineInput]}
                         activeOutlineColor={Colors.primary}
                         textColor={Colors.text}
                     />
 
-                    <Text style={styles.label}>MENU</Text>
-                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-                        {menus.map((menu) => (
-                            <Chip
-                                key={menu.id}
-                                mode="flat"
-                                selected={selectedMenu === menu.id}
-                                onPress={() => {
-                                    setSelectedMenu(menu.id);
-                                    setFieldErrors((prev) => ({ ...prev, menu: '' }));
-                                }}
-                                style={styles.selectionChip}>
-                                {menu.name}
-                            </Chip>
-                        ))}
+                    <Text style={styles.label}>CHỌN MENU</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.chipRow}
+                    >
+                        {menus.map((menu) => {
+                            const active = selectedMenu === menu.id;
+                            return (
+                                <TouchableOpacity
+                                    key={menu.id}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        setSelectedMenu(menu.id);
+                                        setFieldErrors((prev) => ({ ...prev, menu: '' }));
+                                    }}
+                                    style={[styles.chip, active && styles.chipActive]}
+                                >
+                                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                                        {menu.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </ScrollView>
                     {fieldErrors.menu ? <Text style={styles.errorText}>{fieldErrors.menu}</Text> : null}
 
-                    <Text style={styles.label}>LOẠI MÓN</Text>
-                    <ScrollView horizontal={true} showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
-                        {categories.map((category) => (
-                            <Chip
-                                key={category.id}
-                                mode="flat"
-                                selected={selectedCategory === category.id}
-                                onPress={() => {
-                                    setSelectedCategory(category.id);
-                                    setFieldErrors((prev) => ({ ...prev, category: '' }));
-                                }}
-                                style={styles.selectionChip}>
-                                {category.name}
-                            </Chip>
-                        ))}
+                    <Text style={[styles.label, { marginTop: 12 }]}>CHỌN LOẠI MÓN</Text>
+                    <ScrollView
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.chipRow}
+                    >
+                        {categories.map((category) => {
+                            const active = selectedCategory === category.id;
+                            return (
+                                <TouchableOpacity
+                                    key={category.id}
+                                    activeOpacity={0.8}
+                                    onPress={() => {
+                                        setSelectedCategory(category.id);
+                                        setFieldErrors((prev) => ({ ...prev, category: '' }));
+                                    }}
+                                    style={[styles.chip, active && styles.chipActive]}
+                                >
+                                    <Text style={[styles.chipText, active && styles.chipTextActive]}>
+                                        {category.name}
+                                    </Text>
+                                </TouchableOpacity>
+                            );
+                        })}
                     </ScrollView>
                     {fieldErrors.category ? <Text style={styles.errorText}>{fieldErrors.category}</Text> : null}
-                </FadeInDown>
+                </View>
 
-                <FadeInDown duration={500} style={styles.previewCard}>
-                    <Text style={styles.previewEyebrow}>Bản xem trước</Text>
-                    <Text style={styles.previewName}>{dish.name.trim() || 'Tên món sẽ hiển thị ở đây'}</Text>
-                    <Text style={styles.previewSubtitle}>
-                        {dish.description.trim() || 'Thêm mô tả ngắn để khách hiểu nhanh về món.'}
-                    </Text>
-
-                    <View style={styles.previewMetaRow}>
-                        <View style={styles.previewMetaCard}>
-                            <Text style={styles.previewMetaLabel}>Giá</Text>
-                            <Text style={styles.previewMetaValue}>
-                                {dish.price ? formatCurrency(dish.price) : 'Chưa nhập'}
+                {/* Preview compact */}
+                <Text style={[styles.sectionLabel, { marginTop: 24 }]}>Thẻ hiển thị trên app</Text>
+                <View style={styles.previewCompact}>
+                    <View style={styles.previewThumb}>
+                        {previewImageUri ?
+                            <Image source={{ uri: previewImageUri }} style={styles.previewThumbImg} /> :
+                            <MaterialCommunityIcons name="image-off-outline" size={28} color={Colors.placeholder} />
+                        }
+                    </View>
+                    <View style={styles.previewBody}>
+                        <Text style={styles.previewName} numberOfLines={1}>
+                            {dish.name.trim() || 'Tên món ăn'}
+                        </Text>
+                        <Text style={styles.previewDesc} numberOfLines={2}>
+                            {dish.description.trim() || 'Mô tả ngắn gọn về món ăn của bạn sẽ hiển thị ở đây.'}
+                        </Text>
+                        <View style={styles.previewFooter}>
+                            <Text style={styles.previewPrice}>
+                                {dish.price ? formatCurrency(dish.price) : '0đ'}
                             </Text>
-                        </View>
-                        <View style={styles.previewMetaCard}>
-                            <Text style={styles.previewMetaLabel}>Thời gian</Text>
-                            <Text style={styles.previewMetaValue}>
-                                {dish.preparation_time ? `${dish.preparation_time} phút` : 'Chưa nhập'}
-                            </Text>
+                            <View style={styles.previewTimePill}>
+                                <MaterialCommunityIcons name="clock-outline" size={11} color={Colors.textSecondary} />
+                                <Text style={styles.previewTimeText}>
+                                    {dish.preparation_time || '--'} phút
+                                </Text>
+                            </View>
                         </View>
                     </View>
-
-                    <Text style={styles.previewInfo}>Menu: {selectedMenuLabel}</Text>
-                    <Text style={styles.previewInfo}>Loại món: {selectedCategoryLabel}</Text>
-                    <Text style={styles.previewInfo}>Phụ trách: {getDisplayName(user, 'Đầu bếp')}</Text>
-                </FadeInDown>
-
-                <Button
-                    mode="contained"
-                    icon="content-save-outline"
-                    buttonColor={Colors.primary}
-                    textColor={Colors.onPrimary}
-                    style={styles.submitAction}
-                    disabled={submitting}
-                    loading={submitting}
-                    onPress={submit}>
-                    {isEditing ? 'Lưu thay đổi' : 'Xác nhận tạo món'}
-                </Button>
+                </View>
             </ScrollView>
+
+            {/* Sticky footer CTA */}
+            <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
+                <TouchableOpacity
+                    activeOpacity={0.85}
+                    onPress={submit}
+                    disabled={submitting}
+                    style={[styles.submitBtn, submitting && styles.submitBtnDisabled]}
+                >
+                    {submitting ? (
+                        <ActivityIndicator size="small" color={Colors.onPrimary} />
+                    ) : (
+                        <>
+                            <MaterialCommunityIcons name="content-save-outline" size={20} color={Colors.onPrimary} />
+                            <Text style={styles.submitBtnText}>
+                                {isEditing ? 'Lưu thay đổi' : 'Tạo món mới'}
+                            </Text>
+                        </>
+                    )}
+                </TouchableOpacity>
+            </View>
 
             <ConfirmDialog
                 visible={confirm}
@@ -499,10 +551,10 @@ const CreateDish = ({ navigation, route }) => {
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title={isEditing ? 'Cập nhật thành công' : 'Tạo món thành công'}
+                title={isEditing ? 'Cập nhật thành công' : 'Đã gửi món chờ duyệt'}
                 message={isEditing
                     ? 'Thông tin món đã được cập nhật.'
-                    : 'Món ăn đã được thêm vào hệ thống. Bạn có thể kiểm tra lại tại màn hình Món của tôi.'}
+                    : 'Món ăn đã được gửi và đang chờ Admin duyệt. Khi được duyệt, món sẽ hiển thị công khai cho khách.'}
                 confirmText="Quay lại"
                 onConfirm={() => {
                     setSuccessDialog(false);

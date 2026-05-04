@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -70,7 +70,15 @@ const MyDishes = ({ navigation }) => {
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     }, [navigation]);
 
-    const loadData = useCallback(async (showLoader = true) => {
+    // Server-side search như Home: dùng `?search=` của DRF SearchFilter (search_fields:
+    // name, chef__*, category__name, menu__name) để tận dụng collation DB cho dấu Việt.
+    const buildDishUrl = (q) => {
+        const params = ['my=true'];
+        if (q && q.trim()) params.push(`search=${encodeURIComponent(q.trim())}`);
+        return `${endpoints['dishes']}?${params.join('&')}`;
+    };
+
+    const loadData = useCallback(async (showLoader = true, q = search) => {
         if (showLoader) setLoading(true);
         else setRefreshing(true);
 
@@ -88,7 +96,7 @@ const MyDishes = ({ navigation }) => {
             setUser(userData);
             await storeUser(userData);
 
-            const dishRes = await authFetch(`${endpoints['dishes']}?my=true`);
+            const dishRes = await authFetch(buildDishUrl(q));
             if (!dishRes.ok) {
                 throw new Error(getApiErrorMessage(dishRes, 'Không thể tải danh sách món ăn'));
             }
@@ -103,26 +111,28 @@ const MyDishes = ({ navigation }) => {
             setLoading(false);
             setRefreshing(false);
         }
-    }, [resetToLogin]);
+    }, [resetToLogin, search]);
 
+    // Chỉ show ActivityIndicator full-screen ở lần load đầu tiên. Lần focus sau
+    // (vd vuốt back từ DishDetail), reload silently bằng refreshing để giữ list,
+    // tránh chớp loading gây giật giao diện.
+    const hasLoadedRef = useRef(false);
     useFocusEffect(useCallback(() => {
-        loadData(true);
-    }, [loadData]));
+        loadData(!hasLoadedRef.current, search);
+        hasLoadedRef.current = true;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []));
 
-    const filteredDishes = useMemo(() => {
-        const keyword = search.trim().toLowerCase();
-        if (!keyword) return dishes;
-
-        return dishes.filter((dish) => {
-            const haystack = [
-                dish.name,
-                dish.description,
-                dish.menu_name,
-                dish.category_name,
-            ].join(' ').toLowerCase();
-            return haystack.includes(keyword);
-        });
-    }, [dishes, search]);
+    // Debounce search 350ms (giống Home).
+    const lastSearchedRef = useRef('');
+    useEffect(() => {
+        if (search === lastSearchedRef.current) return;
+        const timer = setTimeout(() => {
+            lastSearchedRef.current = search;
+            loadData(false, search);
+        }, 350);
+        return () => clearTimeout(timer);
+    }, [search]);
 
     const summaryCards = useMemo(() => {
         const totalMenus = new Set(dishes.map((dish) => dish.menu_name).filter(Boolean)).size;
@@ -142,64 +152,66 @@ const MyDishes = ({ navigation }) => {
     const renderDish = ({ item }) => (
         <TouchableOpacity
             style={styles.card}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
             onPress={() => navigation.navigate('DishDetail', { id: item.id })}>
             {item.image ?
                 <Image source={{ uri: item.image }} style={styles.dishImg} /> :
                 <View style={[styles.dishImg, styles.placeholder]}>
-                    <MaterialCommunityIcons name="food-variant" size={30} color={Colors.textSecondary} />
+                    <MaterialCommunityIcons name="food-variant" size={28} color={Colors.textSecondary} />
                 </View>}
 
             <View style={styles.cardBody}>
-                <View style={styles.cardTop}>
-                    <Text style={styles.dishName} numberOfLines={2}>{item.name}</Text>
-                    <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
-                </View>
-
-                <Text style={styles.dishDescription} numberOfLines={2}>
-                    {item.description || 'Bổ sung mô tả món ăn để khách dễ quyết định hơn.'}
-                </Text>
-
-                <View style={styles.metaRow}>
-                    <View style={styles.metaChip}>
-                        <MaterialCommunityIcons name="book-open-page-variant-outline" size={14} color={Colors.primary} />
-                        <Text style={styles.metaText}>{item.menu_name || 'Chưa gán menu'}</Text>
+                <View>
+                    <View style={styles.cardTop}>
+                        <Text style={styles.dishName} numberOfLines={1}>{item.name}</Text>
+                        <Text style={styles.dishPrice}>{formatCurrency(item.price)}</Text>
                     </View>
-                    <View style={styles.metaChip}>
-                        <MaterialCommunityIcons name="shape-outline" size={14} color={Colors.primary} />
-                        <Text style={styles.metaText}>{item.category_name || 'Chưa gán loại'}</Text>
+
+                    <View style={styles.metaRow}>
+                        {!item.active && (
+                            <View style={styles.pendingChip}>
+                                <MaterialCommunityIcons name="clock-alert-outline" size={11} color={Colors.star} />
+                                <Text style={styles.pendingText}>Chờ duyệt</Text>
+                            </View>
+                        )}
+                        <View style={styles.metaChip}>
+                            <MaterialCommunityIcons name="book-open-page-variant-outline" size={11} color={Colors.primary} />
+                            <Text style={styles.metaText}>{item.menu_name || 'Chưa gán'}</Text>
+                        </View>
+                        <View style={styles.metaChip}>
+                            <MaterialCommunityIcons name="shape-outline" size={11} color={Colors.primary} />
+                            <Text style={styles.metaText}>{item.category_name || 'Chưa gán'}</Text>
+                        </View>
                     </View>
                 </View>
 
                 <View style={styles.footerRow}>
-                    <Text style={styles.footerText}>
-                        {Number(item.preparation_time) || 0} phút chuẩn bị
+                    <Text style={styles.footerText} numberOfLines={1}>
+                        {Number(item.preparation_time) || 0} phút · Cập nhật {formatDate(item.updated_date)}
                     </Text>
-                    <Text style={styles.footerText}>
-                        Cập nhật {formatDate(item.updated_date)}
-                    </Text>
+                    {user?.is_verified ? (
+                        <View style={styles.actionRow}>
+                            <IconButton
+                                icon="pencil-outline"
+                                mode="contained-tonal"
+                                size={14}
+                                style={styles.iconBtn}
+                                onPress={() => navigation.navigate('CreateDish', { dish: item })}
+                                containerColor={Colors.surfaceContainerLow}
+                                iconColor={Colors.primary}
+                            />
+                            <IconButton
+                                icon="trash-can-outline"
+                                mode="contained-tonal"
+                                size={14}
+                                style={styles.iconBtn}
+                                onPress={() => setDeleteTarget(item)}
+                                containerColor={Colors.surfaceContainerLow}
+                                iconColor={Colors.primary}
+                            />
+                        </View>
+                    ) : null}
                 </View>
-
-                {user?.is_verified ? (
-                    <View style={styles.actionRow}>
-                        <IconButton
-                            icon="pencil-outline"
-                            mode="contained-tonal"
-                            size={18}
-                            onPress={() => navigation.navigate('CreateDish', { dish: item })}
-                            containerColor={Colors.surfaceContainerLow}
-                            iconColor={Colors.primary}
-                        />
-                        <IconButton
-                            icon="trash-can-outline"
-                            mode="contained-tonal"
-                            size={18}
-                            onPress={() => setDeleteTarget(item)}
-                            containerColor={Colors.surfaceContainerLow}
-                            iconColor={Colors.primary}
-                        />
-                    </View>
-                ) : null}
             </View>
         </TouchableOpacity>
     );
@@ -217,14 +229,14 @@ const MyDishes = ({ navigation }) => {
     return (
         <View style={styles.container}>
             <FlatList
-                data={filteredDishes}
+                data={dishes}
                 renderItem={renderDish}
                 keyExtractor={(item) => item.id.toString()}
                 contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 32 }]}
                 refreshControl={
                     <RefreshControl
                         refreshing={refreshing}
-                        onRefresh={() => loadData(false)}
+                        onRefresh={() => loadData(false, search)}
                         tintColor={Colors.primary}
                     />
                 }
@@ -233,18 +245,20 @@ const MyDishes = ({ navigation }) => {
                         <View style={styles.hero}>
                             <View style={styles.heroText}>
                                 <Text style={styles.title}>Món ăn của tôi</Text>
-                                <Text style={styles.subtitle}>
-                                    Theo dõi chất lượng nội dung món, giá bán, menu và thời gian chuẩn bị trong cùng một nơi.
+                                <Text style={styles.subtitle} numberOfLines={1}>
+                                    Quản lý thực đơn của bạn
                                 </Text>
                             </View>
 
                             <Button
                                 mode="contained"
                                 icon="plus"
+                                compact
                                 buttonColor={Colors.primary}
                                 textColor={Colors.onPrimary}
+                                labelStyle={{ fontSize: 12, fontWeight: '700' }}
                                 onPress={() => navigation.navigate(user?.is_verified ? 'CreateDish' : 'Profile')}>
-                                {headerButtonLabel}
+                                {user?.is_verified ? 'Tạo món' : 'Hồ sơ'}
                             </Button>
                         </View>
                         <View style={styles.summaryRow}>
@@ -257,7 +271,7 @@ const MyDishes = ({ navigation }) => {
                         </View>
 
                         <Searchbar
-                            placeholder="Tìm theo tên món, menu hoặc loại món..."
+                            placeholder="Tìm theo tên món..."
                             value={search}
                             onChangeText={setSearch}
                             style={styles.searchbar}
@@ -278,7 +292,7 @@ const MyDishes = ({ navigation }) => {
                                     buttonColor={Colors.surfaceContainerLow}
                                     textColor={Colors.text}
                                     compact
-                                    onPress={() => loadData(true)}>
+                                    onPress={() => loadData(true, search)}>
                                     Thử lại
                                 </Button>
                             </View> :
@@ -317,7 +331,8 @@ const MyDishes = ({ navigation }) => {
                 message={deleteTarget
                     ? `Bạn chắc chắn muốn xóa món "${deleteTarget.name}"? Hành động này không thể hoàn tác.`
                     : ''}
-                confirmText="Xóa"
+                confirmText={deleting ? 'Đang xóa...' : 'Xóa'}
+                loading={deleting}
                 onCancel={() => !deleting && setDeleteTarget(null)}
                 onConfirm={doDelete}
             />

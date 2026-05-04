@@ -105,6 +105,20 @@ export default StyleSheet.create({
         lineHeight: 18,
         color: Colors.text,
     },
+    warningAction: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        alignSelf: 'flex-start',
+        marginTop: 8,
+        paddingVertical: 4,
+    },
+    warningActionText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.primary,
+        letterSpacing: 0.2,
+    },
 
     // Stats grid
     statsRow: {

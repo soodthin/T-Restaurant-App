@@ -4,7 +4,7 @@ import { View, StyleSheet, Animated } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '@styles/colors';
 
-const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmText, cancelText, type }) => {
+const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmText, cancelText, type, loading }) => {
     const iconMap = {
         success: { name: 'check-circle', color: Colors.success },
         error: { name: 'alert-circle', color: Colors.primary },
@@ -15,7 +15,12 @@ const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmTe
 
     return (
         <Portal>
-            <Dialog visible={visible} onDismiss={onCancel || onConfirm} style={styles.dialog}>
+            <Dialog
+                visible={visible}
+                onDismiss={loading ? undefined : (onCancel || onConfirm)}
+                dismissable={!loading}
+                style={styles.dialog}
+            >
                 <Dialog.Content style={styles.dialogContent}>
                     <View style={[styles.iconWrap, { backgroundColor: icon.color + '15' }]}>
                         <MaterialCommunityIcons name={icon.name} size={36} color={icon.color} />
@@ -28,6 +33,7 @@ const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmTe
                         <Button
                             mode="outlined"
                             onPress={onCancel}
+                            disabled={loading}
                             style={styles.cancelBtn}
                             labelStyle={styles.cancelLabel}
                             textColor={Colors.text}>
@@ -37,6 +43,8 @@ const ConfirmDialog = ({ visible, title, message, onCancel, onConfirm, confirmTe
                     <Button
                         mode="contained"
                         onPress={onConfirm}
+                        loading={loading}
+                        disabled={loading}
                         style={[styles.confirmBtn, !onCancel && { flex: 1 }]}
                         labelStyle={styles.confirmLabel}>
                         {confirmText || 'Đồng ý'}

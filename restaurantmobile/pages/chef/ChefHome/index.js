@@ -236,8 +236,8 @@ const ChefHome = ({ navigation }) => {
                     </View> :
                     null}
 
-                {/* Warning banner — chỉ hiện khi đã có user và chưa verified
-                    (tránh hiện sai khi user chưa load được do API stats lỗi). */}
+                {/* Warning banner — chỉ hiện khi đã có user và chưa verified.
+                    Banner kèm action "Mở hồ sơ" để gộp 2 chỗ alert làm 1, tránh trùng lặp. */}
                 {user && !isVerified && (
                     <FadeInDown duration={400} style={styles.warningCard}>
                         <View style={styles.warningStripe} />
@@ -252,6 +252,14 @@ const ChefHome = ({ navigation }) => {
                             <Text style={styles.warningText}>
                                 Tài khoản cần được Admin phê duyệt trước khi có thể tạo và quản lý món ăn mới.
                             </Text>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                onPress={() => navigation.navigate('Profile')}
+                                style={styles.warningAction}
+                            >
+                                <Text style={styles.warningActionText}>Mở hồ sơ</Text>
+                                <MaterialCommunityIcons name="arrow-right" size={14} color={Colors.primary} />
+                            </TouchableOpacity>
                         </View>
                     </FadeInDown>
                 )}
@@ -299,27 +307,25 @@ const ChefHome = ({ navigation }) => {
                     />
                 </FadeInDown>
 
-                {/* Create dish CTA */}
-                <TouchableOpacity
-                    activeOpacity={0.85}
-                    disabled={!isVerified}
-                    onPress={() => navigation.navigate(isVerified ? 'CreateDish' : 'Profile')}
-                    style={[styles.createBtn, !isVerified && styles.createBtnDisabled]}
-                >
-                    <MaterialCommunityIcons
-                        name="plus-circle-outline"
-                        size={28}
-                        color={isVerified ? Colors.onPrimary : Colors.textSecondary}
-                    />
-                    <View style={styles.createBtnContent}>
-                        <Text style={[styles.createBtnTitle, !isVerified && styles.createBtnTitleDisabled]}>
-                            {isVerified ? 'Tạo món mới' : 'Mở hồ sơ để được phê duyệt'}
-                        </Text>
-                        <Text style={[styles.createBtnSub, !isVerified && styles.createBtnSubDisabled]}>
-                            {isVerified ? 'Thêm món ăn mới vào thực đơn.' : 'Cần Admin phê duyệt trước khi tạo món.'}
-                        </Text>
-                    </View>
-                </TouchableOpacity>
+                {/* Create dish CTA — chỉ hiện khi đã verified.
+                    Khi chưa verified, warning banner phía trên đã có link "Mở hồ sơ" rồi. */}
+                {isVerified && (
+                    <TouchableOpacity
+                        activeOpacity={0.85}
+                        onPress={() => navigation.navigate('CreateDish')}
+                        style={styles.createBtn}
+                    >
+                        <MaterialCommunityIcons
+                            name="plus-circle-outline"
+                            size={28}
+                            color={Colors.onPrimary}
+                        />
+                        <View style={styles.createBtnContent}>
+                            <Text style={styles.createBtnTitle}>Tạo món mới</Text>
+                            <Text style={styles.createBtnSub}>Thêm món ăn mới vào thực đơn.</Text>
+                        </View>
+                    </TouchableOpacity>
+                )}
 
                 {/* Chart section */}
                 <Text style={styles.sectionTitle}>Doanh thu theo thời gian</Text>
