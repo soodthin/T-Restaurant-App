@@ -402,6 +402,13 @@ class PaymentSerializer(ModelSerializer):
 
     def create(self, validated_data):
         # Server tu set amount = total_amount cua order de chong gian lan.
+        # refresh_from_db: phong stale cache neu add-detail vua xay ra trong
+        # request truoc — bao dam doc total_amount moi nhat.
         order = validated_data['order']
+        order.refresh_from_db()
+        if order.total_amount <= 0:
+            raise serializers.ValidationError({
+                'order': 'Đơn hàng chưa có món nào hoặc tổng tiền bằng 0.'
+            })
         validated_data['amount'] = order.total_amount
         return super().create(validated_data)

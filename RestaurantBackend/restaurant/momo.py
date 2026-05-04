@@ -30,7 +30,10 @@ def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
     request_id = str(uuid.uuid4())
     momo_order_id = f"order-{order_id}-{uuid.uuid4().hex[:8]}"
     extra_data = ''
-    request_type = 'payWithMethod'
+    # captureWallet la flow API v2 cu nhung tuong thich voi public sandbox creds
+    # (MOMO/F8BBA842ECF85/...). payWithMethod (v3) yeu cau creds prod co whitelist
+    # phuong thuc nen tra 400 voi creds test.
+    request_type = 'captureWallet'
 
     raw_signature = (
         f"accessKey={settings.MOMO_ACCESS_KEY}"
@@ -69,7 +72,10 @@ def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
         headers={'Content-Type': 'application/json'},
         timeout=20,
     )
-    res.raise_for_status()
+    # Khong dung raise_for_status() vi no nuot mat body — can body de biet
+    # MoMo phan nan gi (vd "Invalid signature", "Amount khong hop le").
+    if not res.ok:
+        raise RuntimeError(f'MoMo HTTP {res.status_code}: {res.text[:300]}')
     body = res.json()
 
     if body.get('resultCode') != 0:

@@ -318,6 +318,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         payment = serializer.save()
+        # Log de debug truong hop amount=0 (Stripe se khong show card form).
+        print(f'[payment] id={payment.id} order={payment.order_id} method={payment.method} amount={payment.amount}')
 
         # Dispatcher theo cong thanh toan. Cash khong can goi gateway, danh dau pending
         # cho nha hang xac nhan. Online gateway tao session/payUrl roi tra ve cho FE.
