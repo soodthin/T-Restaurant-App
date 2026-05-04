@@ -5,8 +5,17 @@ import { editorialShadow } from '@styles/theme';
 export default StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.surface },
     header: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10 },
-    headerTitle: { fontSize: 26, fontWeight: '800', color: Colors.text },
-    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
+    headerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+    headerTitle: { fontSize: 26, fontWeight: '800', color: Colors.text, letterSpacing: -0.3 },
+    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 6, lineHeight: 20 },
+    refreshBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLow,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
     errorCard: {
         marginHorizontal: 16,
         marginTop: 16,
@@ -19,6 +28,8 @@ export default StyleSheet.create({
         ...editorialShadow,
     },
     errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
+
+    // Card
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,
@@ -27,55 +38,120 @@ export default StyleSheet.create({
         padding: 18,
         ...editorialShadow,
     },
+    cardCancelled: { opacity: 0.7 },
+
+    // Card header
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    orderId: { fontSize: 18, fontWeight: '800', color: Colors.text },
+    orderId: { fontSize: 18, fontWeight: '800', color: Colors.text, letterSpacing: -0.2 },
+    date: { fontSize: 12, color: Colors.textSecondary, marginTop: 4, fontWeight: '500' },
     badge: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingHorizontal: 12,
+        gap: 5,
+        paddingHorizontal: 10,
         paddingVertical: 6,
         borderRadius: 9999,
         marginLeft: 12,
     },
-    badgeDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-    badgeText: { fontSize: 12, fontWeight: '700' },
-    amount: { fontSize: 24, fontWeight: '800', color: Colors.primary, marginTop: 12 },
-    date: { fontSize: 13, color: Colors.textSecondary, marginTop: 6 },
-    paymentBlock: {
+    badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.1 },
+
+    // Summary row (amount + payment side by side)
+    summaryRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
         marginTop: 16,
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 18,
-        padding: 14,
+        gap: 12,
+    },
+    summaryAmount: { flex: 1 },
+    summaryLabel: {
+        fontSize: 10,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+        textTransform: 'uppercase',
+        letterSpacing: 0.8,
+        marginBottom: 4,
+    },
+    amount: { fontSize: 22, fontWeight: '800', color: Colors.primary, letterSpacing: -0.5 },
+    summaryPayment: { alignItems: 'flex-end' },
+    paymentMethodRow: {
         flexDirection: 'row',
         alignItems: 'center',
+        gap: 6,
+        marginBottom: 6,
     },
-    paymentIconWrap: {
-        width: 36,
-        height: 36,
-        borderRadius: 12,
-        backgroundColor: Colors.tertiaryLight,
-        justifyContent: 'center',
+    paymentMethodText: { fontSize: 13, fontWeight: '700', color: Colors.text },
+    payPill: {
+        paddingHorizontal: 8,
+        paddingVertical: 3,
+        borderRadius: 6,
+    },
+    payPillText: {
+        fontSize: 10,
+        fontWeight: '800',
+        letterSpacing: 0.4,
+        textTransform: 'uppercase',
+    },
+
+    // Divider
+    divider: {
+        height: 1,
+        backgroundColor: Colors.outlineVariant + '60',
+        marginTop: 14,
+    },
+
+    // Details toggle
+    detailsToggle: {
+        marginTop: 12,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
         alignItems: 'center',
-        marginRight: 12,
     },
-    paymentText: { fontSize: 15, fontWeight: '700', color: Colors.text },
-    paymentStatus: { fontSize: 13, color: Colors.textSecondary, marginTop: 4 },
-    detailList: { marginTop: 16 },
+    detailsToggleLeft: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+    },
+    detailsToggleText: { fontSize: 13, fontWeight: '700', color: Colors.text },
+    detailsTogglePill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        backgroundColor: Colors.surfaceContainerLow,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
+    },
+    detailsTogglePillText: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
+
+    // Details (expanded)
+    detailsCard: {
+        marginTop: 12,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 16,
+        padding: 12,
+        gap: 4,
+    },
     detailRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 8,
+        paddingVertical: 6,
+        gap: 10,
     },
     detailQtyBadge: {
         backgroundColor: Colors.primaryLight,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
+        minWidth: 28,
+        height: 24,
+        paddingHorizontal: 6,
         borderRadius: 8,
-        marginRight: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
-    detailQtyText: { fontSize: 12, fontWeight: '700', color: Colors.primary },
-    detailItem: { flex: 1, paddingRight: 12, fontSize: 14, color: Colors.text, fontWeight: '600' },
-    detailPrice: { fontSize: 13, color: Colors.textSecondary, fontWeight: '700' },
+    detailQtyText: { fontSize: 11, fontWeight: '800', color: Colors.primary },
+    detailItem: { flex: 1, fontSize: 13, color: Colors.text, fontWeight: '600' },
+    detailPrice: { fontSize: 12, color: Colors.textSecondary, fontWeight: '700' },
+
+    // Empty state
     empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
     emptyIconCircle: {
         width: 72,

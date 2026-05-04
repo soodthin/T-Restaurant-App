@@ -1,121 +1,277 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import Colors from '@styles/colors';
-import { editorialShadow } from '@styles/theme';
+
+const cardShadow = Platform.select({
+    ios: {
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
+    },
+    android: { elevation: 1 },
+    default: {},
+});
 
 export default StyleSheet.create({
-    segmentedRow: { paddingHorizontal: 16, paddingTop: 12 },
-    form: { padding: 20 },
-    summaryCard: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 20,
-        ...editorialShadow,
+    // === Tab segment ===
+    tabBar: {
+        flexDirection: 'row',
+        backgroundColor: Colors.surfaceContainerLow,
+        marginHorizontal: 20,
+        marginTop: 12,
+        marginBottom: 6,
+        padding: 4,
+        borderRadius: 14,
     },
-    summaryIcon: {
-        width: 48,
-        height: 48,
+    tabBtn: {
+        flex: 1,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: 10,
+        borderRadius: 10,
+        gap: 6,
+    },
+    tabBtnActive: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        ...cardShadow,
+    },
+    tabText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+    },
+    tabTextActive: {
+        color: Colors.primary,
+    },
+
+    // === Form layout ===
+    formContent: {
+        paddingHorizontal: 20,
+        paddingTop: 14,
+    },
+    fieldLabel: {
+        fontSize: 11,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+        marginBottom: 8,
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+    },
+
+    // === Date/Time picker side-by-side ===
+    dateTimeRow: {
+        flexDirection: 'row',
+        gap: 12,
+    },
+    pickerInput: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 16,
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        borderWidth: 1.5,
+        borderColor: Colors.outline,
+        gap: 10,
+    },
+    pickerInputText: {
+        fontSize: 15,
+        color: Colors.text,
+        fontWeight: '700',
+    },
+
+    // === Suggested times horizontal scroll ===
+    suggestedScroll: {
+        gap: 8,
+        paddingRight: 4,
+    },
+    suggestedChip: {
+        paddingHorizontal: 18,
+        paddingVertical: 10,
+        borderRadius: 9999,
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderWidth: 1,
+        borderColor: Colors.outline,
+    },
+    suggestedChipActive: {
+        backgroundColor: Colors.primary,
+        borderColor: Colors.primary,
+        ...cardShadow,
+    },
+    suggestedText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+    },
+    suggestedTextActive: {
+        color: Colors.onPrimary,
+    },
+
+    // === Stepper số khách compact pill ===
+    stepperPill: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderWidth: 1,
+        borderColor: Colors.outline,
+        borderRadius: 16,
+        padding: 6,
+        alignSelf: 'flex-start',
+    },
+    stepBtnMinus: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
+        backgroundColor: Colors.surfaceContainerLow,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    stepBtnPlus: {
+        width: 44,
+        height: 44,
+        borderRadius: 12,
         backgroundColor: Colors.primaryLight,
         justifyContent: 'center',
         alignItems: 'center',
-        marginBottom: 12,
     },
-    summaryTitle: { fontSize: 12, color: Colors.textSecondary, fontWeight: '700', letterSpacing: 1 },
-    summaryValue: { fontSize: 24, fontWeight: '800', color: Colors.text, marginTop: 8 },
-    summaryHint: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    label: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    pickerBtn: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    guestCount: {
+        minWidth: 60,
+        textAlign: 'center',
+        fontSize: 20,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+
+    // === Sticky bottom bar ===
+    bottomBar: {
+        position: 'absolute',
+        left: 0,
+        right: 0,
+        bottom: 0,
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        padding: 16,
-        marginBottom: 18,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
+        borderTopWidth: 1,
+        borderTopColor: Colors.outlineVariant + '40',
+        paddingHorizontal: 20,
+        paddingTop: 14,
     },
-    pickerText: { fontSize: 17, color: Colors.text, fontWeight: '700', marginLeft: 12 },
-    suggestedLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    suggestedRow: { flexDirection: 'row', flexWrap: 'wrap', marginBottom: 18 },
-    suggestedChip: {
-        marginRight: 8,
-        marginBottom: 8,
+    confirmBtn: {
+        borderRadius: 16,
     },
-    suggestedChipActive: { borderColor: Colors.primary, backgroundColor: Colors.primaryLight },
-    suggestedText: { fontSize: 13, fontWeight: '600', color: Colors.textSecondary },
-    suggestedTextActive: { color: Colors.primary, fontWeight: '700' },
-    guestStepper: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
-        paddingHorizontal: 6,
-        paddingVertical: 6,
-        marginBottom: 18,
-        alignSelf: 'flex-start',
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
-    },
-    guestStepIconBtn: {
-        width: 42,
-        height: 42,
-        borderRadius: 14,
-        backgroundColor: Colors.surfaceContainerLow,
-        margin: 0,
-    },
-    guestCount: { minWidth: 50, textAlign: 'center', fontSize: 20, fontWeight: '800', color: Colors.text },
-    historyHeader: { paddingHorizontal: 18, paddingBottom: 8 },
-    historyTitle: { fontSize: 26, fontWeight: '800', color: Colors.text },
-    historySubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
+
+    // === History card ===
     bookingCard: {
         backgroundColor: Colors.surfaceContainerLowest,
-        marginHorizontal: 16,
+        marginHorizontal: 20,
         marginVertical: 6,
-        borderRadius: 24,
+        borderRadius: 22,
         padding: 18,
-        ...editorialShadow,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
+        ...cardShadow,
     },
-    bookingHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    bookingDate: { fontSize: 16, fontWeight: '800', color: Colors.text, lineHeight: 22 },
-    bookingInfoRow: { flexDirection: 'row', marginTop: 8 },
-    bookingInfoChip: {
+    cardTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 14,
+    },
+    statusBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
         paddingHorizontal: 10,
         paddingVertical: 5,
         borderRadius: 9999,
     },
-    bookingInfoText: { fontSize: 13, color: Colors.text, fontWeight: '600', marginLeft: 4 },
-    statusBadge: {
+    statusDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginRight: 6,
+    },
+    statusText: {
+        fontSize: 11,
+        fontWeight: '800',
+    },
+    cardTime: {
+        fontSize: 18,
+        fontWeight: '800',
+        color: Colors.text,
+        lineHeight: 22,
+    },
+    cardDate: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        fontWeight: '600',
+        marginTop: 2,
+    },
+    guestPill: {
         flexDirection: 'row',
         alignItems: 'center',
+        alignSelf: 'flex-start',
+        backgroundColor: Colors.surfaceContainerLow,
         paddingHorizontal: 12,
         paddingVertical: 6,
         borderRadius: 9999,
-        marginLeft: 10,
+        gap: 6,
     },
-    statusDot: { width: 6, height: 6, borderRadius: 3, marginRight: 6 },
-    statusText: { fontSize: 12, fontWeight: '700' },
+    guestPillText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: Colors.text,
+    },
     noteBlock: {
         flexDirection: 'row',
         alignItems: 'flex-start',
         backgroundColor: Colors.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '30',
         padding: 12,
         borderRadius: 14,
-        marginTop: 12,
+        marginTop: 10,
+        gap: 8,
     },
-    bookingNote: { fontSize: 14, color: Colors.text, marginLeft: 8, flex: 1, lineHeight: 20, fontStyle: 'italic' },
-    empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
-    emptyIconWrap: {
-        width: 72,
-        height: 72,
-        borderRadius: 36,
+    bookingNote: {
+        flex: 1,
+        fontSize: 13,
+        color: Colors.text,
+        lineHeight: 19,
+        fontStyle: 'italic',
+    },
+    cancelBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginTop: 14,
+        paddingVertical: 11,
+        borderRadius: 12,
         backgroundColor: Colors.primaryLight,
+        gap: 8,
+    },
+    cancelBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: Colors.primary,
+    },
+
+    // === Empty state ===
+    empty: {
+        alignItems: 'center',
+        marginTop: 60,
+        paddingHorizontal: 32,
+    },
+    emptyIconWrap: {
+        width: 80,
+        height: 80,
+        borderRadius: 40,
+        backgroundColor: Colors.surfaceContainerLow,
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: 16,
     },
-    emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
-    emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22, textAlign: 'center' },
+    emptyText: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+        fontWeight: '600',
+    },
 });

@@ -238,36 +238,42 @@ const Home = ({ navigation }) => {
     const ListHeader = (
         <View>
             <FadeInDown duration={500}>
-                <View style={styles.banner}>
-                    <View style={styles.bannerBlob1} />
-                    <View style={styles.bannerBlob2} />
-                    <MaterialCommunityIcons name="noodles" size={50} color="#ffffff0D" style={{ position: 'absolute', top: 10, right: 60 }} />
-                    <MaterialCommunityIcons name="cup" size={40} color="#ffffff0D" style={{ position: 'absolute', bottom: 12, right: 16 }} />
-                    <MaterialCommunityIcons name="food-drumstick" size={36} color="#ffffff0D" style={{ position: 'absolute', top: 8, right: 12 }} />
-                    <View style={styles.bannerContent}>
-                        <View style={styles.bannerLogo}>
-                            <Text style={styles.bannerLogoText}>T</Text>
+                <TouchableOpacity
+                    activeOpacity={0.92}
+                    onPress={() => navigation.navigate('RestaurantDetail')}
+                >
+                    <View style={styles.banner}>
+                        <View style={styles.bannerBlob1} />
+                        <View style={styles.bannerBlob2} />
+                        <MaterialCommunityIcons name="noodles" size={50} color="#ffffff0D" style={{ position: 'absolute', top: 10, right: 60 }} />
+                        <MaterialCommunityIcons name="cup" size={40} color="#ffffff0D" style={{ position: 'absolute', bottom: 12, right: 16 }} />
+                        <MaterialCommunityIcons name="food-drumstick" size={36} color="#ffffff0D" style={{ position: 'absolute', top: 8, right: 12 }} />
+                        <View style={styles.bannerContent}>
+                            <View style={styles.bannerLogo}>
+                                <Text style={styles.bannerLogoText}>T</Text>
+                            </View>
+                            <View style={{ marginLeft: 16, flex: 1 }}>
+                                <Text style={styles.bannerName}>SAIGON SAVORY</Text>
+                                <Text style={styles.bannerSub}>{'\u1ea8m th\u1ef1c S\u00e0i G\u00f2n \u0111\u00edch th\u1ef1c'}</Text>
+                            </View>
                         </View>
-                        <View style={{ marginLeft: 16 }}>
-                            <Text style={styles.bannerName}>SAIGON SAVORY</Text>
-                            <Text style={styles.bannerSub}>{'\u1ea8m th\u1ef1c S\u00e0i G\u00f2n \u0111\u00edch th\u1ef1c'}</Text>
+                        <View style={styles.bannerTagRow}>
+                            <View style={styles.bannerTag}>
+                                <MaterialCommunityIcons name="silverware-fork-knife" size={12} color={Colors.onPrimary} />
+                                <Text style={styles.bannerTagText}>{`M\u00f3n Vi\u1ec7t`}</Text>
+                            </View>
+                            <View style={styles.bannerTag}>
+                                <MaterialCommunityIcons name="star" size={12} color={Colors.star} />
+                                <Text style={styles.bannerTagText}>4.8</Text>
+                            </View>
+                            <View style={styles.bannerExploreCta}>
+                                <MaterialCommunityIcons name="storefront-outline" size={12} color={Colors.onPrimary} />
+                                <Text style={styles.bannerExploreText}>{`Kh\u00e1m ph\u00e1`}</Text>
+                                <MaterialCommunityIcons name="arrow-right" size={12} color={Colors.onPrimary} />
+                            </View>
                         </View>
                     </View>
-                    <View style={styles.bannerTagRow}>
-                        <View style={styles.bannerTag}>
-                            <MaterialCommunityIcons name="silverware-fork-knife" size={12} color={Colors.onPrimary} />
-                            <Text style={styles.bannerTagText}>{`M\u00f3n Vi\u1ec7t`}</Text>
-                        </View>
-                        <View style={styles.bannerTag}>
-                            <MaterialCommunityIcons name="clock-outline" size={12} color={Colors.onPrimary} />
-                            <Text style={styles.bannerTagText}>{`M\u1edf c\u1eeda`}</Text>
-                        </View>
-                        <View style={styles.bannerTag}>
-                            <MaterialCommunityIcons name="star" size={12} color={Colors.star} />
-                            <Text style={styles.bannerTagText}>4.8</Text>
-                        </View>
-                    </View>
-                </View>
+                </TouchableOpacity>
             </FadeInDown>
 
             <FadeIn delay={200} duration={400} style={styles.searchRow}>

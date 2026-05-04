@@ -1,133 +1,297 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import Colors from '@styles/colors';
-import { editorialShadow } from '@styles/theme';
 
-const styles = StyleSheet.create({
-    keyboard: { flex: 1, backgroundColor: Colors.surface },
-    scroll: { backgroundColor: Colors.surface },
-    container: { padding: 20, paddingBottom: 36 },
-    loading: { flex: 1, backgroundColor: Colors.surface },
-    centerState: { flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: Colors.surface },
-    centerText: { color: Colors.text, fontSize: 15 },
-    hero: {
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 28,
-        padding: 24,
-        alignItems: 'center',
-        ...editorialShadow,
+const cardShadow = Platform.select({
+    ios: {
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 8,
     },
-    editAvatarBadge: {
+    android: { elevation: 1 },
+    default: {},
+});
+
+const floatShadow = Platform.select({
+    ios: {
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.12,
+        shadowRadius: 10,
+    },
+    android: { elevation: 4 },
+    default: {},
+});
+
+export default StyleSheet.create({
+    keyboard: { flex: 1, backgroundColor: Colors.surface },
+    scroll: { flex: 1 },
+    container: {},
+    loading: { flex: 1, backgroundColor: Colors.surface },
+
+    // === Cover ===
+    cover: {
+        height: 150,
+        backgroundColor: Colors.primary,
+        position: 'relative',
+        overflow: 'hidden',
+    },
+    coverOverlay: {
+        backgroundColor: Colors.primary + 'B3',
+    },
+    editFloatBtn: {
         position: 'absolute',
-        right: -2,
-        bottom: -2,
-        width: 34,
-        height: 34,
-        borderRadius: 17,
+        top: 14,
+        right: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        backgroundColor: Colors.surfaceContainerLowest + 'F2',
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 9999,
+        ...floatShadow,
+    },
+    editFloatBtnSave: {
+        backgroundColor: Colors.primaryContainer,
+    },
+    editFloatBtnText: {
+        fontSize: 13,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+
+    // === Avatar floating overlap ===
+    avatarWrap: {
+        marginTop: -50,
+        marginLeft: 24,
+        position: 'relative',
+        width: 100,
+        height: 100,
+    },
+    avatar: {
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        borderWidth: 4,
+        borderColor: Colors.surface,
+        backgroundColor: Colors.surfaceContainerLow,
+    },
+    avatarPlaceholder: {
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    avatarLetter: {
+        fontSize: 38,
+        fontWeight: '900',
+        color: Colors.onPrimary,
+    },
+    cameraBadge: {
+        position: 'absolute',
+        bottom: 0,
+        right: 0,
+        width: 32,
+        height: 32,
+        borderRadius: 16,
         backgroundColor: Colors.primary,
         justifyContent: 'center',
         alignItems: 'center',
         borderWidth: 3,
-        borderColor: Colors.surfaceContainerLowest,
+        borderColor: Colors.surface,
+    },
+
+    // === Profile header (name + badges) ===
+    profileHeader: {
+        paddingHorizontal: 24,
+        paddingTop: 14,
+        paddingBottom: 22,
     },
     name: {
-        marginTop: 18,
-        fontSize: 26,
-        lineHeight: 32,
-        fontWeight: '800',
-        textAlign: 'center',
+        fontSize: 24,
+        fontWeight: '900',
         color: Colors.text,
+        letterSpacing: -0.3,
     },
-    username: { marginTop: 6, fontSize: 14, color: Colors.textSecondary },
+    usernameHint: {
+        fontSize: 13,
+        color: Colors.textSecondary,
+        fontWeight: '600',
+        marginTop: 2,
+    },
     badgeRow: {
         flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        marginTop: 10,
         flexWrap: 'wrap',
-        justifyContent: 'center',
-        marginTop: 14,
     },
     roleBadge: {
-        backgroundColor: Colors.primary,
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginHorizontal: 4,
-        marginBottom: 8,
-    },
-    roleText: { fontSize: 13, fontWeight: '700', color: Colors.onPrimary },
-    statusBadge: {
-        borderRadius: 9999,
-        paddingHorizontal: 16,
-        paddingVertical: 8,
-        marginHorizontal: 4,
-        marginBottom: 8,
-    },
-    statusApproved: { backgroundColor: Colors.success + '18' },
-    statusPending: { backgroundColor: Colors.star + '18' },
-    statusBadgeText: { fontSize: 13, fontWeight: '700' },
-    banner: { marginTop: 18, width: '100%' },
-    infoCard: {
-        marginTop: 18,
-        backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        ...editorialShadow,
-    },
-    noteCard: {
-        marginTop: 14,
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 24,
-        padding: 20,
-    },
-    cardTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 10 },
-    infoRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: 12,
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 9999,
     },
-    infoIcon: {
-        width: 44,
-        height: 44,
-        borderRadius: 16,
-        backgroundColor: Colors.primaryLight,
+    roleBadgeText: {
+        fontSize: 11,
+        fontWeight: '800',
+    },
+    verifyBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 9999,
+    },
+    verifyBadgeOn: { backgroundColor: Colors.success + '20' },
+    verifyBadgeOff: { backgroundColor: Colors.textSecondary + '15' },
+    verifyBadgeText: {
+        fontSize: 11,
+        fontWeight: '800',
+    },
+
+    // === Section label ===
+    cardLabel: {
+        fontSize: 11,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        marginBottom: 12,
+        paddingHorizontal: 4,
+    },
+
+    // === Contact card ===
+    contactCard: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        marginHorizontal: 16,
+        marginBottom: 18,
+        padding: 18,
+        borderRadius: 24,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
+        ...cardShadow,
+    },
+    contactRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        paddingVertical: 8,
+    },
+    contactIconWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: Colors.surfaceContainerLow,
         justifyContent: 'center',
         alignItems: 'center',
-        marginRight: 14,
     },
-    infoContent: { flex: 1 },
-    infoLabel: {
-        fontSize: 12,
+    contactLabel: {
+        fontSize: 11,
         fontWeight: '700',
-        letterSpacing: 0.7,
         color: Colors.textSecondary,
-        textTransform: 'uppercase',
+        marginBottom: 2,
+        letterSpacing: 0.4,
     },
-    infoValue: { marginTop: 5, fontSize: 15, lineHeight: 22, color: Colors.text },
-    noteItem: { marginTop: 8, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    btn: { marginTop: 12, borderRadius: 20 },
-    btnContent: { paddingVertical: 8 },
-    editCard: {
-        marginTop: 18,
+    contactValue: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.text,
+        lineHeight: 19,
+    },
+    contactInput: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.text,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: Colors.outline,
+        borderRadius: 8,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        marginTop: 4,
+    },
+
+    // === Menu section ===
+    menuSection: {
+        marginHorizontal: 16,
+        marginBottom: 18,
+    },
+    menuList: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 24,
-        padding: 20,
-        ...editorialShadow,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
+        overflow: 'hidden',
+        ...cardShadow,
     },
-    editSubtitle: { marginBottom: 16, fontSize: 14, lineHeight: 22, color: Colors.textSecondary },
-    inputOutline: { borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 },
-    input: { backgroundColor: Colors.surfaceContainerLow, marginBottom: 14 },
-    addressLabel: { fontSize: 11, color: Colors.textSecondary, fontWeight: '700', marginBottom: 8, letterSpacing: 1 },
-    addressBtn: {
+    menuItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 16,
+        gap: 14,
         padding: 14,
-        marginBottom: 14,
-        borderWidth: 1.5,
-        borderColor: Colors.outline,
     },
-    addressText: { flex: 1, marginLeft: 12, fontSize: 15, color: Colors.text, fontWeight: '600', lineHeight: 21 },
-    addressPlaceholder: { color: Colors.placeholder, fontWeight: '400' },
-    actionRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 },
-});
+    menuItemBorder: {
+        borderTopWidth: 1,
+        borderTopColor: Colors.outlineVariant + '20',
+    },
+    menuIconWrap: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    menuLabel: {
+        flex: 1,
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.text,
+    },
 
-export default styles;
+    // === Logout ===
+    logoutBtn: {
+        marginHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        backgroundColor: Colors.primaryLight,
+        paddingVertical: 16,
+        borderRadius: 16,
+    },
+    logoutText: {
+        fontSize: 15,
+        fontWeight: '800',
+        color: Colors.primary,
+    },
+
+    // === Cancel link ===
+    cancelLinkBtn: {
+        alignSelf: 'center',
+        paddingVertical: 12,
+        paddingHorizontal: 16,
+    },
+    cancelLinkText: {
+        fontSize: 13,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+        textDecorationLine: 'underline',
+    },
+
+    // === Empty / center state ===
+    centerState: {
+        flex: 1,
+        backgroundColor: Colors.surface,
+        justifyContent: 'center',
+        alignItems: 'center',
+        padding: 32,
+    },
+    centerText: {
+        fontSize: 16,
+        color: Colors.textSecondary,
+    },
+});

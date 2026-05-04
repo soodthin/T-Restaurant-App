@@ -6,13 +6,14 @@ import {
     KeyboardAvoidingView,
     Platform,
     FlatList,
+    ScrollView,
     RefreshControl,
 } from 'react-native';
-import { TextInput, Button, ActivityIndicator, IconButton, Chip, SegmentedButtons } from 'react-native-paper';
+import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
+import { FadeIn, FadeInUp } from '@utils/animations';
 import { useFocusEffect } from '@react-navigation/native';
 import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
@@ -25,25 +26,18 @@ const createInitialDate = () => {
     return nextHour;
 };
 
-const statusColor = {
-    pending: Colors.star,
-    confirmed: Colors.success,
-    cancelled: Colors.primary,
-    completed: Colors.tertiary,
-};
-
-const statusLabel = {
-    pending: 'Ch\u1edd x\u00e1c nh\u1eadn',
-    confirmed: '\u0110\u00e3 x\u00e1c nh\u1eadn',
-    cancelled: '\u0110\u00e3 h\u1ee7y',
-    completed: 'Ho\u00e0n th\u00e0nh',
+const statusConfig = {
+    pending: { label: 'Chờ xác nhận', color: Colors.star },
+    confirmed: { label: 'Đã xác nhận', color: Colors.success },
+    cancelled: { label: 'Đã hủy', color: Colors.primary },
+    completed: { label: 'Hoàn thành', color: Colors.tertiary },
 };
 
 const suggestedTimes = ['11:30', '12:00', '12:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
 
-const Booking = ({ navigation }) => {
+const Booking = ({ navigation, route }) => {
     const tabBarHeight = useBottomTabBarHeight();
-    const [tab, setTab] = useState('new');
+    const [tab, setTab] = useState(route.params?.initialTab || 'new');
     const [date, setDate] = useState(createInitialDate());
     const [mode, setMode] = useState(null);
     const [guests, setGuests] = useState(2);
@@ -71,13 +65,13 @@ const Booking = ({ navigation }) => {
                 return;
             }
             if (!res.ok) {
-                throw new Error(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n'));
+                throw new Error(getApiErrorMessage(res, 'Không thể tải lịch đặt bàn'));
             }
             const data = res.data;
             setBookings(data.results || []);
         } catch (err) {
             setBookings([]);
-            showToast(err.message || 'Kh\u00f4ng th\u1ec3 t\u1ea3i l\u1ecbch \u0111\u1eb7t b\u00e0n');
+            showToast(err.message || 'Không thể tải lịch đặt bàn');
         } finally {
             setLoadingList(false);
             setRefreshing(false);
@@ -86,7 +80,13 @@ const Booking = ({ navigation }) => {
 
     useFocusEffect(useCallback(() => {
         loadBookings(true);
-    }, []));
+        // Nếu được điều hướng kèm initialTab (ví dụ từ Profile → "Lịch sử đặt bàn"),
+        // đổi tab tương ứng rồi xoá param để lần focus sau không bị giữ lại.
+        if (route.params?.initialTab) {
+            setTab(route.params.initialTab);
+            navigation.setParams({ initialTab: undefined });
+        }
+    }, [route.params?.initialTab]));
 
     const onChange = (event, selected) => {
         if (event.type === 'dismissed') {
@@ -117,11 +117,11 @@ const Booking = ({ navigation }) => {
 
     const book = () => {
         if (guests < 1) {
-            showToast('S\u1ed1 kh\u00e1ch ph\u1ea3i l\u1edbn h\u01a1n 0');
+            showToast('Số khách phải lớn hơn 0');
             return;
         }
         if (date <= new Date()) {
-            showToast('Vui l\u00f2ng ch\u1ecdn th\u1eddi gian trong t\u01b0\u01a1ng lai');
+            showToast('Vui lòng chọn thời gian trong tương lai');
             return;
         }
         setConfirm(true);
@@ -147,7 +147,7 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 \u0111\u1eb7t b\u00e0n'));
+                showToast(getApiErrorMessage(res, 'Không thể đặt bàn'));
                 return;
             }
 
@@ -157,7 +157,7 @@ const Booking = ({ navigation }) => {
             setSuccessDialog(true);
             loadBookings(false);
         } catch (err) {
-            showToast('Kh\u00f4ng th\u1ec3 k\u1ebft n\u1ed1i server');
+            showToast('Không thể kết nối server');
         } finally {
             setLoading(false);
         }
@@ -179,200 +179,218 @@ const Booking = ({ navigation }) => {
             }
 
             if (!res.ok) {
-                showToast(getApiErrorMessage(res, 'Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n'));
+                showToast(getApiErrorMessage(res, 'Không thể hủy lịch đặt bàn'));
                 return;
             }
 
             setBookings((prev) => prev.map((booking) => booking.id === cancelBookingId
                 ? { ...booking, status: 'cancelled' }
                 : booking));
-            showToast('\u0110\u00e3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n', 'success');
+            showToast('Đã hủy lịch đặt bàn', 'success');
         } catch (err) {
-            showToast('Kh\u00f4ng th\u1ec3 h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n');
+            showToast('Không thể hủy lịch đặt bàn');
         } finally {
             setCancelBookingId(null);
             setLoading(false);
         }
     };
 
-    const renderBooking = ({ item, index }) => (
-        <FadeInUp delay={index * 60} duration={400}>
-            <View style={[styles.bookingCard, item.status === 'cancelled' && { opacity: 0.6 }]}>
-                <View style={styles.bookingHeader}>
-                    <View style={{ flex: 1, paddingRight: 12 }}>
-                        <Text style={styles.bookingDate}>
-                            {new Date(item.booking_date).toLocaleDateString('vi-VN')} · {new Date(item.booking_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
-                        </Text>
-                        <View style={styles.bookingInfoRow}>
-                            <View style={styles.bookingInfoChip}>
-                                <MaterialCommunityIcons name="account-group-outline" size={14} color={Colors.text} />
-                                <Text style={styles.bookingInfoText}>{item.guests} {`kh\u00e1ch`}</Text>
-                            </View>
+    const renderBooking = ({ item, index }) => {
+        const conf = statusConfig[item.status] || { label: item.status, color: Colors.textSecondary };
+        return (
+            <FadeInUp delay={index * 60} duration={400}>
+                <View style={[styles.bookingCard, item.status === 'cancelled' && { opacity: 0.6 }]}>
+                    <View style={styles.cardTopRow}>
+                        <View style={[styles.statusBadge, { backgroundColor: conf.color + '18' }]}>
+                            <View style={[styles.statusDot, { backgroundColor: conf.color }]} />
+                            <Text style={[styles.statusText, { color: conf.color }]}>{conf.label}</Text>
+                        </View>
+                        <View style={{ alignItems: 'flex-end' }}>
+                            <Text style={styles.cardTime}>
+                                {new Date(item.booking_date).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                            </Text>
+                            <Text style={styles.cardDate}>
+                                {new Date(item.booking_date).toLocaleDateString('vi-VN')}
+                            </Text>
                         </View>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: (statusColor[item.status] || Colors.textSecondary) + '18' }]}>
-                        <View style={[styles.statusDot, { backgroundColor: statusColor[item.status] || Colors.textSecondary }]} />
-                        <Text style={[styles.statusText, { color: statusColor[item.status] || Colors.textSecondary }]}>
-                            {statusLabel[item.status] || item.status}
-                        </Text>
+
+                    <View style={styles.guestPill}>
+                        <MaterialCommunityIcons name="account-group-outline" size={15} color={Colors.textSecondary} />
+                        <Text style={styles.guestPillText}>{item.guests} khách</Text>
                     </View>
+
+                    {item.note ?
+                        <View style={styles.noteBlock}>
+                            <MaterialCommunityIcons name="note-text-outline" size={15} color={Colors.textSecondary} style={{ marginTop: 2 }} />
+                            <Text style={styles.bookingNote}>{item.note}</Text>
+                        </View> : null
+                    }
+
+                    {item.status === 'pending' ?
+                        <TouchableOpacity
+                            style={styles.cancelBtn}
+                            activeOpacity={0.7}
+                            onPress={() => setCancelBookingId(item.id)}>
+                            <MaterialCommunityIcons name="close-circle-outline" size={16} color={Colors.primary} />
+                            <Text style={styles.cancelBtnText}>Hủy lịch này</Text>
+                        </TouchableOpacity> :
+                        null
+                    }
                 </View>
-
-                {item.note ?
-                    <View style={styles.noteBlock}>
-                        <MaterialCommunityIcons name="note-text-outline" size={14} color={Colors.textSecondary} />
-                        <Text style={styles.bookingNote}>{item.note}</Text>
-                    </View> : null}
-
-                {item.status === 'pending' ?
-                    <Button
-                        mode="contained-tonal"
-                        onPress={() => setCancelBookingId(item.id)}
-                        style={{ alignSelf: 'flex-start', marginTop: 14, borderRadius: 9999 }}
-                        labelStyle={{ fontWeight: '700', fontSize: 13 }}
-                    >
-                        {`H\u1ee7y l\u1ecbch n\u00e0y`}
-                    </Button> :
-                    null
-                }
-            </View>
-        </FadeInUp>
-    );
+            </FadeInUp>
+        );
+    };
 
     return (
         <KeyboardAvoidingView
             style={{ flex: 1, backgroundColor: Colors.surface }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-            <FadeIn duration={300} style={styles.segmentedRow}>
-                <SegmentedButtons
-                    value={tab}
-                    onValueChange={setTab}
-                    buttons={[
-                        { value: 'new', label: '\u0110\u1eb7t b\u00e0n m\u1edbi', icon: 'calendar-plus' },
-                        { value: 'history', label: 'L\u1ecbch s\u1eed', icon: 'history' },
-                    ]}
-                    style={{ flex: 1 }}
-                />
-            </FadeIn>
+
+            {/* Tab segment */}
+            <View style={styles.tabBar}>
+                <TouchableOpacity
+                    style={[styles.tabBtn, tab === 'new' && styles.tabBtnActive]}
+                    activeOpacity={0.7}
+                    onPress={() => setTab('new')}>
+                    <MaterialCommunityIcons
+                        name="calendar-plus"
+                        size={18}
+                        color={tab === 'new' ? Colors.primary : Colors.textSecondary}
+                    />
+                    <Text style={[styles.tabText, tab === 'new' && styles.tabTextActive]}>Tạo mới</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                    style={[styles.tabBtn, tab === 'history' && styles.tabBtnActive]}
+                    activeOpacity={0.7}
+                    onPress={() => setTab('history')}>
+                    <MaterialCommunityIcons
+                        name="history"
+                        size={18}
+                        color={tab === 'history' ? Colors.primary : Colors.textSecondary}
+                    />
+                    <Text style={[styles.tabText, tab === 'history' && styles.tabTextActive]}>Lịch sử</Text>
+                </TouchableOpacity>
+            </View>
 
             {tab === 'new' ? (
-                <FlatList
-                    data={[]}
-                    renderItem={null}
-                    keyboardShouldPersistTaps="handled"
-                    contentContainerStyle={{ paddingBottom: tabBarHeight + 32 }}
-                    ListHeaderComponent={
-                        <View style={styles.form}>
-                            <FadeInDown delay={100} duration={400} style={styles.summaryCard}>
-                                <View style={styles.summaryIcon}>
-                                    <MaterialCommunityIcons name="calendar-check" size={24} color={Colors.primary} />
+                <>
+                    <ScrollView
+                        contentContainerStyle={[styles.formContent, { paddingBottom: tabBarHeight + 110 }]}
+                        keyboardShouldPersistTaps="handled"
+                        showsVerticalScrollIndicator={false}>
+
+                        <FadeIn duration={300}>
+                            {/* Ngày + Giờ side-by-side */}
+                            <View style={styles.dateTimeRow}>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.fieldLabel}>NGÀY</Text>
+                                    <TouchableOpacity
+                                        style={styles.pickerInput}
+                                        activeOpacity={0.8}
+                                        onPress={() => setMode('date')}>
+                                        <MaterialCommunityIcons name="calendar" size={20} color={Colors.primary} />
+                                        <Text style={styles.pickerInputText}>{fmt(date)}</Text>
+                                    </TouchableOpacity>
                                 </View>
-                                <Text style={styles.summaryTitle}>{`Khung gi\u1edd b\u1ea1n \u0111ang ch\u1ecdn`}</Text>
-                                <Text style={styles.summaryValue}>{fmt(date)} · {fmtTime(date)}</Text>
-                                <Text style={styles.summaryHint}>{`B\u1ea1n c\u00f3 th\u1ec3 \u0111\u1ed5i ng\u00e0y, gi\u1edd v\u00e0 s\u1ed1 l\u01b0\u1ee3ng kh\u00e1ch ngay b\u00ean d\u01b0\u1edbi.`}</Text>
-                            </FadeInDown>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.fieldLabel}>GIỜ</Text>
+                                    <TouchableOpacity
+                                        style={styles.pickerInput}
+                                        activeOpacity={0.8}
+                                        onPress={() => setMode('time')}>
+                                        <MaterialCommunityIcons name="clock-outline" size={20} color={Colors.primary} />
+                                        <Text style={styles.pickerInputText}>{fmtTime(date)}</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </View>
 
-                            <FadeInUp delay={200} duration={400}>
-                                <Text style={styles.label}>{`NG\u00c0Y`}</Text>
-                                <TouchableOpacity style={styles.pickerBtn} onPress={() => setMode('date')} activeOpacity={0.8}>
-                                    <MaterialCommunityIcons name="calendar" size={22} color={Colors.primary} />
-                                    <Text style={styles.pickerText}>{fmt(date)}</Text>
-                                    <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textSecondary} style={{ marginLeft: 'auto' }} />
-                                </TouchableOpacity>
-
-                                <Text style={styles.label}>{`GI\u1ede`}</Text>
-                                <TouchableOpacity style={styles.pickerBtn} onPress={() => setMode('time')} activeOpacity={0.8}>
-                                    <MaterialCommunityIcons name="clock-outline" size={22} color={Colors.primary} />
-                                    <Text style={styles.pickerText}>{fmtTime(date)}</Text>
-                                    <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textSecondary} style={{ marginLeft: 'auto' }} />
-                                </TouchableOpacity>
-
-                                <Text style={styles.suggestedLabel}>{`Gi\u1edd g\u1ee3i \u00fd`}</Text>
-                                <View style={styles.suggestedRow}>
-                                    {suggestedTimes.map((time) => (
-                                        <Chip
+                            {/* Suggested times — horizontal scroll */}
+                            <Text style={[styles.fieldLabel, { marginTop: 22 }]}>KHUNG GIỜ GỢI Ý</Text>
+                            <ScrollView
+                                horizontal
+                                showsHorizontalScrollIndicator={false}
+                                contentContainerStyle={styles.suggestedScroll}>
+                                {suggestedTimes.map((time) => {
+                                    const active = fmtTime(date) === time;
+                                    return (
+                                        <TouchableOpacity
                                             key={time}
-                                            selected={fmtTime(date) === time}
-                                            mode="flat"
+                                            activeOpacity={0.7}
                                             onPress={() => selectSuggestedTime(time)}
-                                            style={[
-                                                styles.suggestedChip,
-                                                fmtTime(date) === time && styles.suggestedChipActive,
-                                            ]}
-                                            textStyle={[
-                                                styles.suggestedText,
-                                                fmtTime(date) === time && styles.suggestedTextActive,
-                                            ]}
-                                            showSelectedOverlay
-                                        >
-                                            {time}
-                                        </Chip>
-                                    ))}
-                                </View>
+                                            style={[styles.suggestedChip, active && styles.suggestedChipActive]}>
+                                            <Text style={[styles.suggestedText, active && styles.suggestedTextActive]}>
+                                                {time}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    );
+                                })}
+                            </ScrollView>
 
-                                {mode &&
-                                    <DateTimePicker
-                                        value={date}
-                                        mode={mode}
-                                        display={Platform.OS === 'ios' ? 'spinner' : 'default'}
-                                        minimumDate={mode === 'date' ? new Date() : undefined}
-                                        onChange={onChange}
-                                    />
-                                }
-
-                                <Text style={styles.label}>{`S\u1ed0 KH\u00c1CH`}</Text>
-                                <View style={styles.guestStepper}>
-                                    <IconButton
-                                        icon="minus"
-                                        size={20}
-                                        iconColor={Colors.text}
-                                        onPress={() => setGuests((prev) => Math.max(1, prev - 1))}
-                                        style={styles.guestStepIconBtn}
-                                    />
-                                    <Text style={styles.guestCount}>{guests}</Text>
-                                    <IconButton
-                                        icon="plus"
-                                        size={20}
-                                        iconColor={Colors.text}
-                                        onPress={() => setGuests((prev) => prev + 1)}
-                                        style={styles.guestStepIconBtn}
-                                    />
-                                </View>
-
-                                <Text style={styles.label}>{`GHI CH\u00da`}</Text>
-                                <TextInput
-                                    mode="outlined"
-                                    placeholder={"Y\u00eau c\u1ea7u \u0111\u1eb7c bi\u1ec7t, d\u1ecb \u1ee9ng, gh\u1ebf tr\u1ebb em..."}
-                                    placeholderTextColor={Colors.placeholder}
-                                    value={note}
-                                    onChangeText={setNote}
-                                    multiline
-                                    textAlignVertical="top"
-                                    outlineStyle={{ borderRadius: 20, borderColor: Colors.outline, borderWidth: 1.5 }}
-                                    style={{ backgroundColor: Colors.surfaceContainerLowest, height: 90, marginBottom: 18 }}
-                                    activeOutlineColor={Colors.primary}
-                                    textColor={Colors.text}
+                            {mode &&
+                                <DateTimePicker
+                                    value={date}
+                                    mode={mode}
+                                    display={Platform.OS === 'ios' ? 'spinner' : 'default'}
+                                    minimumDate={mode === 'date' ? new Date() : undefined}
+                                    onChange={onChange}
                                 />
+                            }
 
-                                {loading ?
-                                    <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 16 }} /> :
-                                    <Button
-                                        mode="contained"
-                                        icon="chevron-right"
-                                        onPress={book}
-                                        buttonColor={Colors.primary}
-                                        textColor={Colors.onPrimary}
-                                        labelStyle={{ fontWeight: '800', fontSize: 17 }}
-                                        style={{ borderRadius: 20, marginTop: 8 }}
-                                        contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
-                                    >
-                                        {`X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n`}
-                                    </Button>
-                                }
-                            </FadeInUp>
-                        </View>
-                    }
-                />
+                            {/* Stepper số khách compact */}
+                            <Text style={[styles.fieldLabel, { marginTop: 22 }]}>SỐ LƯỢNG KHÁCH</Text>
+                            <View style={styles.stepperPill}>
+                                <TouchableOpacity
+                                    style={styles.stepBtnMinus}
+                                    activeOpacity={0.7}
+                                    onPress={() => setGuests((prev) => Math.max(1, prev - 1))}>
+                                    <MaterialCommunityIcons name="minus" size={20} color={Colors.text} />
+                                </TouchableOpacity>
+                                <Text style={styles.guestCount}>{guests}</Text>
+                                <TouchableOpacity
+                                    style={styles.stepBtnPlus}
+                                    activeOpacity={0.7}
+                                    onPress={() => setGuests((prev) => prev + 1)}>
+                                    <MaterialCommunityIcons name="plus" size={20} color={Colors.primary} />
+                                </TouchableOpacity>
+                            </View>
+
+                            {/* Note */}
+                            <Text style={[styles.fieldLabel, { marginTop: 22 }]}>GHI CHÚ THÊM</Text>
+                            <TextInput
+                                mode="outlined"
+                                placeholder={'Yêu cầu đặc biệt, dị ứng, ghế trẻ em...'}
+                                placeholderTextColor={Colors.placeholder}
+                                value={note}
+                                onChangeText={setNote}
+                                multiline
+                                textAlignVertical="top"
+                                left={<TextInput.Icon icon="note-text-outline" />}
+                                outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
+                                style={{ backgroundColor: Colors.surfaceContainerLowest, height: 100 }}
+                                activeOutlineColor={Colors.primary}
+                                textColor={Colors.text}
+                            />
+                        </FadeIn>
+                    </ScrollView>
+
+                    {/* Sticky bottom confirm button */}
+                    <View style={[styles.bottomBar, { paddingBottom: tabBarHeight + 16 }]}>
+                        <Button
+                            mode="contained"
+                            icon="chevron-right"
+                            onPress={book}
+                            disabled={loading}
+                            loading={loading}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
+                            style={styles.confirmBtn}
+                            labelStyle={{ fontWeight: '800', fontSize: 16 }}>
+                            Xác nhận đặt bàn
+                        </Button>
+                    </View>
+                </>
             ) : (
                 loadingList ?
                     <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 40 }} /> :
@@ -380,23 +398,21 @@ const Booking = ({ navigation }) => {
                         data={bookings}
                         renderItem={renderBooking}
                         keyExtractor={(item) => item.id.toString()}
-                        contentContainerStyle={{ paddingTop: 12, paddingBottom: tabBarHeight + 24 }}
+                        contentContainerStyle={{ paddingTop: 8, paddingBottom: tabBarHeight + 24 }}
                         refreshControl={
-                            <RefreshControl refreshing={refreshing} onRefresh={() => loadBookings(false)} tintColor={Colors.primary} />
-                        }
-                        ListHeaderComponent={
-                            <FadeIn duration={400} style={styles.historyHeader}>
-                                <Text style={styles.historyTitle}>{`L\u1ecbch s\u1eed \u0111\u1eb7t b\u00e0n`}</Text>
-                                <Text style={styles.historySubtitle}>{`Theo d\u00f5i tr\u1ea1ng th\u00e1i x\u00e1c nh\u1eadn v\u00e0 h\u1ee7y l\u1ecbch khi c\u00f2n \u0111ang ch\u1edd.`}</Text>
-                            </FadeIn>
+                            <RefreshControl
+                                refreshing={refreshing}
+                                onRefresh={() => loadBookings(false)}
+                                tintColor={Colors.primary}
+                                colors={[Colors.primary]}
+                            />
                         }
                         ListEmptyComponent={
                             <View style={styles.empty}>
                                 <View style={styles.emptyIconWrap}>
-                                    <MaterialCommunityIcons name="calendar-blank" size={36} color={Colors.primary} />
+                                    <MaterialCommunityIcons name="calendar-blank" size={32} color={Colors.textSecondary} />
                                 </View>
-                                <Text style={styles.emptyTitle}>{`Ch\u01b0a c\u00f3 l\u1ecbch \u0111\u1eb7t b\u00e0n`}</Text>
-                                <Text style={styles.emptyText}>{`Khi b\u1ea1n t\u1ea1o l\u1ecbch m\u1edbi, th\u00f4ng tin s\u1ebd hi\u1ec3n th\u1ecb t\u1ea1i \u0111\u00e2y.`}</Text>
+                                <Text style={styles.emptyText}>Chưa có lịch đặt bàn nào.</Text>
                             </View>
                         }
                     />
@@ -405,29 +421,29 @@ const Booking = ({ navigation }) => {
             <ConfirmDialog
                 visible={confirm}
                 type="confirm"
-                title={"X\u00e1c nh\u1eadn \u0111\u1eb7t b\u00e0n"}
-                message={`${guests} kh\u00e1ch v\u00e0o ${fmt(date)} l\u00fac ${fmtTime(date)}`}
+                title={'Xác nhận đặt bàn'}
+                message={`${guests} khách vào ${fmt(date)} lúc ${fmtTime(date)}`}
                 onCancel={() => setConfirm(false)}
                 onConfirm={doBook}
-                confirmText={"\u0110\u1eb7t b\u00e0n"}
+                confirmText={'Đặt bàn'}
             />
 
             <ConfirmDialog
                 visible={Boolean(cancelBookingId)}
                 type="warning"
-                title={"H\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n"}
-                message={"B\u1ea1n ch\u1eafc ch\u1eafn mu\u1ed1n h\u1ee7y l\u1ecbch \u0111\u1eb7t b\u00e0n n\u00e0y?"}
+                title={'Hủy lịch đặt bàn'}
+                message={'Bạn chắc chắn muốn hủy lịch đặt bàn này?'}
                 onCancel={() => setCancelBookingId(null)}
                 onConfirm={cancelBooking}
-                confirmText={"H\u1ee7y l\u1ecbch"}
+                confirmText={'Hủy lịch'}
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title={"\u0110\u1eb7t b\u00e0n th\u00e0nh c\u00f4ng"}
-                message={"Nh\u00e0 h\u00e0ng s\u1ebd x\u00e1c nh\u1eadn l\u1ecbch \u0111\u1eb7t b\u00e0n c\u1ee7a b\u1ea1n trong th\u1eddi gian s\u1edbm nh\u1ea5t."}
-                confirmText={"Xem l\u1ecbch s\u1eed"}
+                title={'Đặt bàn thành công'}
+                message={'Nhà hàng đã nhận được yêu cầu và sẽ xác nhận trong thời gian sớm nhất.'}
+                confirmText={'Xem lịch sử'}
                 onConfirm={() => {
                     setSuccessDialog(false);
                     setTab('history');

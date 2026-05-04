@@ -5,8 +5,9 @@ import {
     FlatList,
     TouchableOpacity,
     Image,
+    ScrollView,
 } from 'react-native';
-import { Button, ActivityIndicator, IconButton, Chip } from 'react-native-paper';
+import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInUp, FadeIn } from '@utils/animations';
@@ -17,10 +18,9 @@ import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs
 import styles from './styles';
 
 const paymentOptions = [
-    { key: 'cash', label: 'Ti\u1ec1n m\u1eb7t', icon: 'cash' },
+    { key: 'cash', label: 'Tiền mặt khi nhận', icon: 'cash' },
     { key: 'momo', label: 'MoMo', icon: 'wallet-outline' },
-    { key: 'zalopay', label: 'ZaloPay', icon: 'credit-card-outline' },
-    { key: 'paypal', label: 'PayPal', icon: 'paypal' },
+    { key: 'stripe', label: 'Stripe', icon: 'credit-card-outline' },
 ];
 
 const Cart = ({ navigation, route }) => {
@@ -48,11 +48,11 @@ const Cart = ({ navigation, route }) => {
 
     const checkout = async () => {
         if (!items.length) {
-            showToast('Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng');
+            showToast('Giỏ hàng đang trống');
             return;
         }
         if (isGuest) {
-            showToast('Vui l\u00f2ng \u0111\u0103ng nh\u1eadp \u0111\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng');
+            showToast('Vui lòng đăng nhập để tạo đơn hàng');
             return;
         }
         setConfirmCheckout(true);
@@ -74,7 +74,7 @@ const Cart = ({ navigation, route }) => {
             }
 
             if (!orderRes.ok) {
-                showToast(getApiErrorMessage(orderRes, 'Kh\u00f4ng th\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng'));
+                showToast(getApiErrorMessage(orderRes, 'Không thể tạo đơn hàng'));
                 return;
             }
 
@@ -96,7 +96,7 @@ const Cart = ({ navigation, route }) => {
                 }
 
                 if (!detailRes.ok) {
-                    showToast(getApiErrorMessage(detailRes, 'Kh\u00f4ng th\u1ec3 th\u00eam m\u00f3n v\u00e0o \u0111\u01a1n h\u00e0ng'));
+                    showToast(getApiErrorMessage(detailRes, 'Không thể thêm món vào đơn hàng'));
                     return;
                 }
 
@@ -121,64 +121,61 @@ const Cart = ({ navigation, route }) => {
             const paymentSaved = paymentRes.ok;
             clearCart();
             setSuccessMessage(paymentSaved
-                ? '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o v\u00e0 ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n \u0111\u00e3 \u0111\u01b0\u1ee3c ghi nh\u1eadn.'
-                : '\u0110\u01a1n h\u00e0ng \u0111\u00e3 \u0111\u01b0\u1ee3c t\u1ea1o, nh\u01b0ng h\u1ec7 th\u1ed1ng ch\u01b0a ghi nh\u1eadn thanh to\u00e1n. B\u1ea1n v\u1eabn c\u00f3 th\u1ec3 xem \u0111\u01a1n trong l\u1ecbch s\u1eed.');
+                ? 'Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.'
+                : 'Đơn hàng đã được tạo, nhưng hệ thống chưa ghi nhận thanh toán. Bạn vẫn có thể xem đơn trong lịch sử.');
             setSuccessDialog(true);
         } catch (err) {
-            showToast('Kh\u00f4ng th\u1ec3 ho\u00e0n t\u1ea5t \u0111\u1eb7t m\u00f3n. Vui l\u00f2ng th\u1eed l\u1ea1i.');
+            showToast('Không thể hoàn tất đặt món. Vui lòng thử lại.');
         } finally {
             setSubmitting(false);
         }
     };
 
     const renderItem = ({ item, index }) => (
-        <FadeInUp delay={index * 60} duration={400}>
-            <View style={styles.card}>
-                <View style={styles.cardContent}>
-                    {item.image ?
-                        <Image source={{ uri: item.image }} style={styles.image} /> :
-                        <View style={[styles.image, styles.imagePlaceholder]}>
-                            <MaterialCommunityIcons name="food-variant" size={24} color={Colors.textSecondary} />
-                        </View>
-                    }
+        <FadeInUp delay={index * 80} duration={400}>
+            <View style={styles.itemCard}>
+                {item.image ?
+                    <Image source={{ uri: item.image }} style={styles.itemImage} /> :
+                    <View style={[styles.itemImage, styles.itemImagePlaceholder]}>
+                        <MaterialCommunityIcons name="food-variant" size={28} color={Colors.textSecondary} />
+                    </View>
+                }
 
-                    <View style={styles.cardBody}>
-                        <View style={styles.cardHeader}>
-                            <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
-                            <IconButton
-                                icon="trash-can-outline"
-                                size={18}
-                                iconColor={Colors.textSecondary}
-                                onPress={() => removeItem(item.id)}
-                                style={{ margin: -4 }}
-                            />
-                        </View>
+                <View style={styles.itemBody}>
+                    <View style={styles.itemTopRow}>
+                        <Text style={styles.itemName} numberOfLines={2}>{item.name}</Text>
+                        <TouchableOpacity
+                            style={styles.removeBtn}
+                            activeOpacity={0.7}
+                            hitSlop={6}
+                            onPress={() => removeItem(item.id)}>
+                            <MaterialCommunityIcons name="trash-can-outline" size={18} color={Colors.textSecondary} />
+                        </TouchableOpacity>
+                    </View>
 
-                        <Text style={styles.meta}>{item.preparation_time} {`ph\u00fat`} · {item.chef_name || 'Nh\u00e0 h\u00e0ng'}</Text>
-                        <Text style={styles.price}>{Number(item.price).toLocaleString()}{`\u0111`}</Text>
+                    <Text style={styles.itemMeta}>
+                        {item.preparation_time} phút chuẩn bị
+                    </Text>
 
-                        <View style={styles.cardFooter}>
-                            <View style={styles.stepper}>
-                                <IconButton
-                                    icon="minus"
-                                    size={16}
-                                    iconColor={Colors.text}
-                                    onPress={() => updateQuantity(item.id, item.quantity - 1)}
-                                    style={styles.stepIconBtn}
-                                />
-                                <Text style={styles.quantity}>{item.quantity}</Text>
-                                <IconButton
-                                    icon="plus"
-                                    size={16}
-                                    iconColor={Colors.text}
-                                    onPress={() => updateQuantity(item.id, item.quantity + 1)}
-                                    style={styles.stepIconBtn}
-                                />
-                            </View>
+                    <View style={styles.itemBottomRow}>
+                        <Text style={styles.itemPrice}>
+                            {Number(item.price).toLocaleString()}đ
+                        </Text>
 
-                            <Text style={styles.lineTotal}>
-                                {(item.price * item.quantity).toLocaleString()}{`\u0111`}
-                            </Text>
+                        <View style={styles.stepperPill}>
+                            <TouchableOpacity
+                                style={styles.stepperBtn}
+                                activeOpacity={0.7}
+                                onPress={() => updateQuantity(item.id, item.quantity - 1)}>
+                                <MaterialCommunityIcons name="minus" size={16} color={Colors.text} />
+                            </TouchableOpacity>
+                            <Text style={styles.stepperValue}>{item.quantity}</Text>
+                            <TouchableOpacity
+                                style={styles.stepperBtn}
+                                activeOpacity={0.7}
+                                onPress={() => updateQuantity(item.id, item.quantity + 1)}>
+                                <MaterialCommunityIcons name="plus" size={16} color={Colors.text} />
+                            </TouchableOpacity>
                         </View>
                     </View>
                 </View>
@@ -192,26 +189,32 @@ const Cart = ({ navigation, route }) => {
 
     if (!items.length) {
         return (
-            <View style={styles.empty}>
-                <FadeIn duration={500} style={{ alignItems: 'center' }}>
-                    <View style={styles.emptyIconCircle}>
-                        <MaterialCommunityIcons name="cart-outline" size={40} color={Colors.primary} />
-                    </View>
-                    <Text style={styles.emptyTitle}>{`Gi\u1ecf h\u00e0ng \u0111ang tr\u1ed1ng`}</Text>
-                    <Text style={styles.emptyText}>
-                        {`Th\u00eam m\u00f3n t\u1eeb trang kh\u00e1m ph\u00e1 ho\u1eb7c chi ti\u1ebft m\u00f3n \u0111\u1ec3 b\u1eaft \u0111\u1ea7u \u0111\u1eb7t m\u00f3n.`}
-                    </Text>
-                    <Button
-                        mode="contained"
-                        onPress={() => navigation.navigate('Home')}
-                        buttonColor={Colors.primary}
-                        textColor={Colors.onPrimary}
-                        labelStyle={{ fontWeight: '800', fontSize: 15 }}
-                        style={{ marginTop: 20, borderRadius: 20 }}
-                    >
-                        {`\u0110i kh\u00e1m ph\u00e1 m\u00f3n`}
-                    </Button>
-                </FadeIn>
+            <View style={styles.container}>
+                <FadeInUp duration={400} style={styles.headerCard}>
+                    <Text style={styles.headerTitle}>Giỏ hàng của bạn</Text>
+                </FadeInUp>
+                <View style={styles.emptyWrap}>
+                    <FadeIn duration={500} style={{ alignItems: 'center' }}>
+                        <View style={styles.emptyIconCircle}>
+                            <MaterialCommunityIcons name="shopping-outline" size={36} color={Colors.primary} />
+                        </View>
+                        <Text style={styles.emptyTitle}>Giỏ hàng trống</Text>
+                        <Text style={styles.emptyText}>
+                            Hãy khám phá thêm menu để chọn cho mình những món ăn ngon nhé!
+                        </Text>
+                        <Button
+                            mode="contained"
+                            onPress={() => navigation.navigate('Home')}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            labelStyle={{ fontWeight: '800', fontSize: 14 }}
+                            style={{ marginTop: 22, borderRadius: 16 }}
+                            contentStyle={{ paddingVertical: 4, paddingHorizontal: 12 }}
+                        >
+                            Đi khám phá
+                        </Button>
+                    </FadeIn>
+                </View>
             </View>
         );
     }
@@ -222,12 +225,14 @@ const Cart = ({ navigation, route }) => {
                 data={items}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingHorizontal: 16, paddingTop: 14, paddingBottom: tabBarHeight + 260 }}
+                contentContainerStyle={{ paddingBottom: tabBarHeight + 320 }}
+                showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                     <FadeIn duration={400} style={styles.headerCard}>
-                        <Text style={styles.headerTitle}>{`Gi\u1ecf h\u00e0ng c\u1ee7a b\u1ea1n`}</Text>
+                        <Text style={styles.headerTitle}>Giỏ hàng của bạn</Text>
                         <Text style={styles.headerSubtitle}>
-                            {totalItems} {`m\u00f3n \u0111ang ch\u1edd x\u00e1c nh\u1eadn. Ki\u1ec3m tra l\u1ea1i tr\u01b0\u1edbc khi t\u1ea1o \u0111\u01a1n.`}
+                            <Text style={styles.headerCount}>{totalItems} món</Text>
+                            {' đang chờ xác nhận. Kiểm tra lại trước khi tạo đơn.'}
                         </Text>
                     </FadeIn>
                 }
@@ -236,53 +241,51 @@ const Cart = ({ navigation, route }) => {
             <View style={[styles.bottomSheet, { bottom: tabBarHeight }]}>
                 {!isGuest ? (
                     <>
-                        <Text style={styles.sheetTitle}>{'Ph\u01b0\u01a1ng th\u1ee9c thanh to\u00e1n'}</Text>
-                        <View style={styles.paymentRow}>
-                            {paymentOptions.map((option) => (
-                                <Chip
-                                    key={option.key}
-                                    icon={option.icon}
-                                    selected={paymentMethod === option.key}
-                                    showSelectedOverlay
-                                    mode="flat"
-                                    onPress={() => setPaymentMethod(option.key)}
-                                    style={[
-                                        styles.chip,
-                                        paymentMethod === option.key && { backgroundColor: Colors.primary },
-                                    ]}
-                                    textStyle={[
-                                        styles.chipText,
-                                        paymentMethod === option.key && { color: Colors.onPrimary },
-                                    ]}
-                                    selectedColor={paymentMethod === option.key ? Colors.onPrimary : Colors.text}
-                                >
-                                    {option.label}
-                                </Chip>
-                            ))}
-                        </View>
+                        <Text style={styles.sheetTitle}>PHƯƠNG THỨC THANH TOÁN</Text>
+
+                        <ScrollView
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.paymentScroll}>
+                            {paymentOptions.map((option) => {
+                                const active = paymentMethod === option.key;
+                                return (
+                                    <TouchableOpacity
+                                        key={option.key}
+                                        activeOpacity={0.7}
+                                        onPress={() => setPaymentMethod(option.key)}
+                                        style={[styles.paymentChip, active && styles.paymentChipActive]}>
+                                        <MaterialCommunityIcons
+                                            name={option.icon}
+                                            size={18}
+                                            color={active ? Colors.primary : Colors.textSecondary}
+                                        />
+                                        <Text style={[styles.paymentChipText, active && styles.paymentChipTextActive]}>
+                                            {option.label}
+                                        </Text>
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
 
                         <View style={styles.summaryBlock}>
-                            <View style={styles.summaryRow}>
-                                <Text style={styles.summaryLabel}>{'T\u1ed5ng thanh to\u00e1n'}</Text>
-                                <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{'\u0111'}</Text>
-                            </View>
+                            <Text style={styles.summaryLabel}>Tổng thanh toán</Text>
+                            <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}đ</Text>
                         </View>
 
-                        {submitting ?
-                            <ActivityIndicator size="large" color={Colors.primary} style={{ marginTop: 10 }} /> :
-                            <Button
-                                mode="contained"
-                                icon="check-circle-outline"
-                                onPress={checkout}
-                                buttonColor={Colors.primary}
-                                textColor={Colors.onPrimary}
-                                labelStyle={{ fontWeight: '800', fontSize: 16 }}
-                                style={{ marginTop: 14, borderRadius: 20 }}
-                                contentStyle={{ paddingVertical: 8 }}
-                            >
-                                {'T\u1ea1o \u0111\u01a1n h\u00e0ng'}
-                            </Button>
-                        }
+                        <Button
+                            mode="contained"
+                            icon="chevron-right"
+                            onPress={checkout}
+                            disabled={submitting}
+                            loading={submitting}
+                            buttonColor={Colors.primary}
+                            textColor={Colors.onPrimary}
+                            contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
+                            style={styles.checkoutBtn}
+                            labelStyle={{ fontWeight: '800', fontSize: 16 }}>
+                            Tạo đơn hàng
+                        </Button>
                     </>
                 ) : (
                     <View style={styles.guestPrompt}>
@@ -290,16 +293,14 @@ const Cart = ({ navigation, route }) => {
                             <MaterialCommunityIcons name="account-lock-outline" size={26} color={Colors.primary} />
                         </View>
                         <View style={{ flex: 1 }}>
-                            <Text style={styles.guestPromptTitle}>{'\u0110\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u1eb7t m\u00f3n'}</Text>
+                            <Text style={styles.guestPromptTitle}>Đăng nhập để đặt món</Text>
                             <Text style={styles.guestPromptText}>
-                                {'B\u1ea1n c\u1ea7n t\u00e0i kho\u1ea3n kh\u00e1ch h\u00e0ng \u0111\u1ec3 t\u1ea1o \u0111\u01a1n h\u00e0ng v\u00e0 theo d\u00f5i tr\u1ea1ng th\u00e1i m\u00f3n.'}
+                                Bạn cần tài khoản khách hàng để tạo đơn hàng và theo dõi trạng thái món.
                             </Text>
                         </View>
                         <View style={styles.summaryBlock}>
-                            <View style={styles.summaryRow}>
-                                <Text style={styles.summaryLabel}>{'T\u1ed5ng t\u1ea1m t\u00ednh'}</Text>
-                                <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}{'\u0111'}</Text>
-                            </View>
+                            <Text style={styles.summaryLabel}>Tổng tạm tính</Text>
+                            <Text style={styles.summaryAmount}>{totalAmount.toLocaleString()}đ</Text>
                         </View>
                         <Button
                             mode="contained"
@@ -308,9 +309,9 @@ const Cart = ({ navigation, route }) => {
                             buttonColor={Colors.primary}
                             textColor={Colors.onPrimary}
                             labelStyle={{ fontWeight: '800', fontSize: 16 }}
-                            style={{ marginTop: 14, borderRadius: 20 }}
+                            style={styles.checkoutBtn}
                             contentStyle={{ paddingVertical: 8 }}>
-                            {'\u0110\u0103ng nh\u1eadp ngay'}
+                            Đăng nhập ngay
                         </Button>
                     </View>
                 )}
@@ -319,19 +320,19 @@ const Cart = ({ navigation, route }) => {
             <ConfirmDialog
                 visible={confirmCheckout}
                 type="confirm"
-                title={"X\u00e1c nh\u1eadn t\u1ea1o \u0111\u01a1n"}
-                message={`${totalItems} m\u00f3n v\u1edbi t\u1ed5ng gi\u00e1 tr\u1ecb ${totalAmount.toLocaleString()}\u0111 s\u1ebd \u0111\u01b0\u1ee3c t\u1ea1o th\u00e0nh \u0111\u01a1n h\u00e0ng m\u1edbi.`}
+                title={'Xác nhận tạo đơn'}
+                message={`${totalItems} món với tổng giá trị ${totalAmount.toLocaleString()}đ sẽ được tạo thành đơn hàng mới.`}
                 onCancel={() => setConfirmCheckout(false)}
                 onConfirm={doCheckout}
-                confirmText={"T\u1ea1o \u0111\u01a1n"}
+                confirmText={'Tạo đơn'}
             />
 
             <ConfirmDialog
                 visible={successDialog}
                 type="success"
-                title={"\u0110\u1eb7t m\u00f3n th\u00e0nh c\u00f4ng"}
+                title={'Đặt món thành công'}
                 message={successMessage}
-                confirmText={"Xem \u0111\u01a1n h\u00e0ng"}
+                confirmText={'Xem đơn hàng'}
                 onConfirm={() => {
                     setSuccessDialog(false);
                     navigation.navigate('Orders');

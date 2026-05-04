@@ -44,7 +44,7 @@ export default StyleSheet.create({
     bannerLogoText: { fontSize: 26, fontWeight: '900', fontStyle: 'italic', color: Colors.onPrimary },
     bannerName: { color: Colors.onPrimary, fontSize: 18, fontWeight: '900', letterSpacing: 2 },
     bannerSub: { color: Colors.onPrimary + 'B3', fontSize: 13, fontWeight: '600', marginTop: 4 },
-    bannerTagRow: { flexDirection: 'row', marginTop: 16, gap: 8 },
+    bannerTagRow: { flexDirection: 'row', marginTop: 16, gap: 8, alignItems: 'center' },
     bannerTag: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -54,6 +54,24 @@ export default StyleSheet.create({
         borderRadius: 10,
     },
     bannerTagText: { color: Colors.onPrimary, fontSize: 12, fontWeight: '700', marginLeft: 5 },
+    bannerExploreCta: {
+        marginLeft: 'auto',
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        backgroundColor: '#ffffff2A',
+        borderWidth: 1,
+        borderColor: '#ffffff40',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 9999,
+    },
+    bannerExploreText: {
+        color: Colors.onPrimary,
+        fontSize: 11,
+        fontWeight: '800',
+        letterSpacing: 0.3,
+    },
     searchRow: { flexDirection: 'row', paddingHorizontal: 16, paddingTop: 8, alignItems: 'center' },
     searchbar: {
         flex: 1,

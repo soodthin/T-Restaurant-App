@@ -80,9 +80,15 @@ export const getStoredUser = async () => {
 };
 
 // === Trích thông điệp lỗi từ response ===
+const HTML_RESPONSE_RE = /<\s*(?:!doctype|html|head|body|title|h\d|p|div|script)\b/i;
+
 const extractMessage = (payload) => {
     if (!payload) return '';
-    if (typeof payload === 'string') return payload;
+    if (typeof payload === 'string') {
+        // Server-side error pages (Django DEBUG=False trả HTML 500) — không cho leak ra UI.
+        if (HTML_RESPONSE_RE.test(payload)) return '';
+        return payload;
+    }
     if (Array.isArray(payload)) {
         return payload.map(extractMessage).filter(Boolean).join('\n');
     }
@@ -94,7 +100,10 @@ const extractMessage = (payload) => {
 
 export const getApiErrorMessage = (res, fallback = 'Đã có lỗi xảy ra') => {
     if (!res) return fallback;
-    return extractMessage(res.data) || fallback;
+    const msg = extractMessage(res.data);
+    if (msg) return msg;
+    if (res.status >= 500) return `Máy chủ tạm thời gặp sự cố (mã ${res.status}). Vui lòng thử lại sau.`;
+    return fallback;
 };
 
 // === Wrapper giữ chữ ký fetch để call site đổi ít nhất ===

@@ -1,78 +1,241 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 import Colors from '@styles/colors';
-import { editorialShadow } from '@styles/theme';
+
+const cardShadow = Platform.select({
+    ios: {
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.04,
+        shadowRadius: 8,
+    },
+    android: { elevation: 1 },
+    default: {},
+});
+
+const sheetShadow = Platform.select({
+    ios: {
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: -8 },
+        shadowOpacity: 0.06,
+        shadowRadius: 24,
+    },
+    android: { elevation: 12 },
+    default: {},
+});
 
 export default StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.surface },
+
+    // === Header card ===
     headerCard: {
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
-        padding: 20,
-        marginBottom: 12,
-        ...editorialShadow,
+        paddingHorizontal: 24,
+        paddingTop: 18,
+        paddingBottom: 22,
+        borderBottomLeftRadius: 28,
+        borderBottomRightRadius: 28,
+        marginBottom: 14,
+        ...cardShadow,
     },
-    headerTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
-    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, lineHeight: 21 },
-    card: {
+    headerTitle: {
+        fontSize: 24,
+        fontWeight: '900',
+        color: Colors.text,
+        letterSpacing: -0.3,
+    },
+    headerSubtitle: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+        marginTop: 8,
+        fontWeight: '600',
+    },
+    headerCount: {
+        fontWeight: '800',
+        color: Colors.primary,
+    },
+
+    // === Item card ===
+    itemCard: {
+        flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 24,
+        marginHorizontal: 16,
         marginBottom: 12,
-        ...editorialShadow,
+        padding: 12,
+        borderRadius: 22,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
+        gap: 14,
+        ...cardShadow,
     },
-    cardContent: { flexDirection: 'row', padding: 14 },
-    image: { width: 100, height: 100, borderRadius: 18 },
-    imagePlaceholder: { backgroundColor: Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' },
-    cardBody: { flex: 1, marginLeft: 14 },
-    cardHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-    name: { fontSize: 16, fontWeight: '800', color: Colors.text, lineHeight: 21, flex: 1, marginRight: 8 },
-    meta: { fontSize: 12, color: Colors.textSecondary, marginTop: 4 },
-    price: { fontSize: 16, color: Colors.primary, fontWeight: '800', marginTop: 6 },
-    cardFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 10 },
-    stepper: {
+    itemImage: {
+        width: 100,
+        height: 100,
+        borderRadius: 16,
+    },
+    itemImagePlaceholder: {
+        backgroundColor: Colors.surfaceContainerLow,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    itemBody: {
+        flex: 1,
+        justifyContent: 'space-between',
+        paddingVertical: 2,
+    },
+    itemTopRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        justifyContent: 'space-between',
+    },
+    itemName: {
+        flex: 1,
+        fontSize: 15,
+        fontWeight: '800',
+        color: Colors.text,
+        lineHeight: 19,
+        marginRight: 6,
+    },
+    removeBtn: {
+        padding: 4,
+        marginRight: -4,
+        marginTop: -4,
+    },
+    itemMeta: {
+        fontSize: 12,
+        color: Colors.textSecondary,
+        fontWeight: '600',
+        marginTop: 4,
+    },
+    itemBottomRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginTop: 8,
+    },
+    itemPrice: {
+        fontSize: 16,
+        fontWeight: '900',
+        color: Colors.primary,
+    },
+
+    // === Stepper pill ===
+    stepperPill: {
         flexDirection: 'row',
         alignItems: 'center',
         backgroundColor: Colors.surfaceContainerLow,
-        borderRadius: 14,
-        paddingHorizontal: 4,
-        paddingVertical: 4,
+        borderRadius: 12,
+        padding: 4,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '30',
     },
-    stepIconBtn: { width: 32, height: 32, borderRadius: 10, backgroundColor: Colors.surfaceContainerLowest, margin: 0 },
-    quantity: { minWidth: 30, textAlign: 'center', fontSize: 16, fontWeight: '800', color: Colors.text },
-    lineTotal: { fontSize: 15, fontWeight: '800', color: Colors.text },
+    stepperBtn: {
+        width: 28,
+        height: 28,
+        borderRadius: 8,
+        backgroundColor: Colors.surfaceContainerLowest,
+        justifyContent: 'center',
+        alignItems: 'center',
+        ...cardShadow,
+    },
+    stepperValue: {
+        minWidth: 32,
+        textAlign: 'center',
+        fontSize: 14,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+
+    // === Bottom sheet ===
     bottomSheet: {
         position: 'absolute',
         left: 0,
         right: 0,
-        backgroundColor: Colors.surface + 'CC',
-        borderTopLeftRadius: 28,
-        borderTopRightRadius: 28,
-        paddingHorizontal: 20,
-        paddingTop: 18,
-        paddingBottom: 30,
-        ...editorialShadow,
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingHorizontal: 22,
+        paddingTop: 22,
+        paddingBottom: 24,
+        borderTopWidth: 1,
+        borderTopColor: Colors.outlineVariant + '30',
+        ...sheetShadow,
     },
-    sheetTitle: { fontSize: 16, fontWeight: '800', color: Colors.text },
-    paymentRow: { flexDirection: 'row', flexWrap: 'wrap', marginTop: 12 },
-    chip: {
-        marginRight: 8,
-        marginBottom: 8,
+    sheetTitle: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.text,
+        letterSpacing: 1,
+        textTransform: 'uppercase',
+        marginBottom: 14,
     },
-    chipText: { fontSize: 13, fontWeight: '700' },
+
+    // === Payment chips ===
+    paymentScroll: {
+        gap: 10,
+        paddingRight: 4,
+    },
+    paymentChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 10,
+        borderRadius: 9999,
+        borderWidth: 2,
+        borderColor: Colors.outlineVariant + '50',
+        backgroundColor: Colors.surfaceContainerLowest,
+    },
+    paymentChipActive: {
+        borderColor: Colors.primary,
+        backgroundColor: Colors.primaryLight,
+    },
+    paymentChipText: {
+        fontSize: 14,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+    },
+    paymentChipTextActive: {
+        color: Colors.primary,
+    },
+
+    // === Summary ===
     summaryBlock: {
-        backgroundColor: Colors.surfaceContainerHigh,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        backgroundColor: Colors.surfaceContainerLow,
         borderRadius: 16,
-        padding: 14,
-        marginTop: 8,
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        marginTop: 16,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '30',
     },
-    summaryRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-    summaryLabel: { fontSize: 15, color: Colors.textSecondary, fontWeight: '700' },
-    summaryAmount: { fontSize: 24, fontWeight: '800', color: Colors.primary },
-    empty: {
+    summaryLabel: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+        fontWeight: '700',
+    },
+    summaryAmount: {
+        fontSize: 22,
+        fontWeight: '900',
+        color: Colors.primary,
+        letterSpacing: -0.3,
+    },
+
+    // === Checkout button ===
+    checkoutBtn: {
+        borderRadius: 16,
+    },
+
+    // === Empty state ===
+    emptyWrap: {
         flex: 1,
-        backgroundColor: Colors.surface,
         justifyContent: 'center',
         alignItems: 'center',
         paddingHorizontal: 32,
+        paddingBottom: 80,
     },
     emptyIconCircle: {
         width: 80,
@@ -83,8 +246,20 @@ export default StyleSheet.create({
         alignItems: 'center',
         marginBottom: 18,
     },
-    emptyTitle: { fontSize: 24, fontWeight: '800', color: Colors.text },
-    emptyText: { fontSize: 15, color: Colors.textSecondary, textAlign: 'center', marginTop: 10, lineHeight: 22 },
+    emptyTitle: {
+        fontSize: 22,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    emptyText: {
+        fontSize: 14,
+        color: Colors.textSecondary,
+        textAlign: 'center',
+        marginTop: 10,
+        lineHeight: 20,
+    },
+
+    // === Guest prompt ===
     guestPrompt: { paddingTop: 4 },
     guestPromptIcon: {
         width: 56,
