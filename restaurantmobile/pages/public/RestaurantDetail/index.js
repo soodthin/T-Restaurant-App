@@ -15,6 +15,7 @@ import { Button } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FadeIn, FadeInUp, FadeInDown, ScaleIn } from '@utils/animations';
+import { getStoredToken } from '@configs';
 import Colors from '@styles/colors';
 import styles from './styles';
 
@@ -243,7 +244,17 @@ const RestaurantDetail = ({ navigation }) => {
     const openLightbox = (i) => setLightbox({ visible: true, startIndex: i });
     const closeLightbox = () => setLightbox({ visible: false, startIndex: 0 });
 
-    const goBooking = () => {
+    const goBooking = async () => {
+        // Chua dang nhap (guest) -> di thang qua Login kem toast, tranh truong hop
+        // route den Booking roi authFetch tra 401 moi reset, gay flash man hinh.
+        const token = await getStoredToken();
+        if (!token) {
+            navigation.navigate('Login', {
+                flashMessage: 'Bạn cần đăng nhập để đặt bàn',
+                flashType: 'error',
+            });
+            return;
+        }
         navigation.navigate('Main', { screen: 'Booking' });
     };
 

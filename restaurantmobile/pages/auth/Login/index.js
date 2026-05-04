@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
 import { TextInput, Button, ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -11,13 +11,25 @@ import Colors from '@styles/colors';
 import { editorialShadow } from '@styles/theme';
 import styles from './styles';
 
-const Login = ({ navigation }) => {
+const Login = ({ navigation, route }) => {
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
 
     const showToast = (message, type = 'error') => setToast({ visible: true, message, type });
+
+    // Khi navigate vao Login kem flashMessage (vi du tu RestaurantDetail "Dat ban ngay"
+    // ma chua dang nhap), hien toast ngay khi mount de user biet ly do bi yeu cau dang nhap.
+    useEffect(() => {
+        const flash = route?.params?.flashMessage;
+        if (flash) {
+            const flashType = route?.params?.flashType || 'error';
+            showToast(flash, flashType);
+            // Reset param de neu user navigate qua lai khong show lai toast.
+            navigation.setParams({ flashMessage: undefined, flashType: undefined });
+        }
+    }, [route?.params?.flashMessage]);
 
     const login = async () => {
         if (!username || !password) {

@@ -15,6 +15,7 @@ import { Apis, authFetch, endpoints, clearSession, getApiErrorMessage, getStored
 import Colors from '@styles/colors';
 import { Toast } from '@components/CustomDialog';
 import { useCart } from '@contexts/CartContext';
+import { stripHtml } from '@utils/format';
 import styles from './styles';
 
 const DishDetail = ({ route, navigation }) => {
@@ -170,8 +171,11 @@ const DishDetail = ({ route, navigation }) => {
         );
     }
 
-    const ingredientsList = dish.ingredients
-        ? dish.ingredients.split(',').map((s) => s.trim()).filter(Boolean)
+    // Backend dùng RichTextField → trả HTML có entity Việt; cần strip để hiển thị plain.
+    const cleanDescription = stripHtml(dish.description);
+    const cleanIngredients = stripHtml(dish.ingredients);
+    const ingredientsList = cleanIngredients
+        ? cleanIngredients.split(',').map((s) => s.trim()).filter(Boolean)
         : [];
 
     return (
@@ -207,7 +211,7 @@ const DishDetail = ({ route, navigation }) => {
                                 <Text style={styles.price}>{Number(dish.price).toLocaleString()}{`\u0111`}</Text>
                             </View>
 
-                            <Text style={styles.desc}>{dish.description || 'Nh\u00e0 h\u00e0ng ch\u01b0a c\u1eadp nh\u1eadt m\u00f4 t\u1ea3 cho m\u00f3n n\u00e0y.'}</Text>
+                            <Text style={styles.desc}>{cleanDescription || 'Nh\u00e0 h\u00e0ng ch\u01b0a c\u1eadp nh\u1eadt m\u00f4 t\u1ea3 cho m\u00f3n n\u00e0y.'}</Text>
 
                             <View style={styles.tagRow}>
                                 <Chip
@@ -340,39 +344,42 @@ const DishDetail = ({ route, navigation }) => {
                 contentContainerStyle={{ paddingBottom: 100 }}
             />
 
-            <View style={styles.bottomBar}>
-                <View style={styles.stepper}>
-                    <IconButton
-                        icon="minus"
-                        size={18}
-                        onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}
-                        style={styles.stepBtn}
-                        iconColor={Colors.text}
-                    />
-                    <Text style={styles.quantityText}>{quantity}</Text>
-                    <IconButton
-                        icon="plus"
-                        size={18}
-                        onPress={() => setQuantity((prev) => prev + 1)}
-                        style={styles.stepBtn}
-                        iconColor={Colors.text}
-                    />
+            {/* Chef khong dat hang nen an thanh cong cu them gio. */}
+            {currentUser?.role !== 'chef' && (
+                <View style={styles.bottomBar}>
+                    <View style={styles.stepper}>
+                        <IconButton
+                            icon="minus"
+                            size={18}
+                            onPress={() => setQuantity((prev) => Math.max(1, prev - 1))}
+                            style={styles.stepBtn}
+                            iconColor={Colors.text}
+                        />
+                        <Text style={styles.quantityText}>{quantity}</Text>
+                        <IconButton
+                            icon="plus"
+                            size={18}
+                            onPress={() => setQuantity((prev) => prev + 1)}
+                            style={styles.stepBtn}
+                            iconColor={Colors.text}
+                        />
+                    </View>
+                    <Button
+                        mode="contained"
+                        icon="cart-plus"
+                        onPress={() => {
+                            addItem(dish, quantity);
+                            showToast(`\u0110\u00e3 th\u00eam ${quantity} ${dish.name} v\u00e0o gi\u1ecf`, 'success');
+                        }}
+                        buttonColor={Colors.primary}
+                        textColor={Colors.onPrimary}
+                        style={styles.cartBtn}
+                        labelStyle={{ fontWeight: '800', fontSize: 16 }}
+                        contentStyle={{ paddingVertical: 6 }}>
+                        {`Th\u00eam v\u00e0o gi\u1ecf`}
+                    </Button>
                 </View>
-                <Button
-                    mode="contained"
-                    icon="cart-plus"
-                    onPress={() => {
-                        addItem(dish, quantity);
-                        showToast(`\u0110\u00e3 th\u00eam ${quantity} ${dish.name} v\u00e0o gi\u1ecf`, 'success');
-                    }}
-                    buttonColor={Colors.primary}
-                    textColor={Colors.onPrimary}
-                    style={styles.cartBtn}
-                    labelStyle={{ fontWeight: '800', fontSize: 16 }}
-                    contentStyle={{ paddingVertical: 6 }}>
-                    {`Th\u00eam v\u00e0o gi\u1ecf`}
-                </Button>
-            </View>
+            )}
 
             <Toast
                 visible={toast.visible}

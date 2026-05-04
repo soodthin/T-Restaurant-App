@@ -7,11 +7,12 @@ import Colors from '@styles/colors';
 import { Apis, endpoints, getApiErrorMessage } from '@configs';
 import { useCart } from '@contexts/CartContext';
 import { Toast } from '@components/CustomDialog';
+import { stripHtml } from '@utils/format';
 import styles from './styles';
 
 const PREVIEW_INGREDIENTS = 2;
 
-const splitIngredients = (raw) => (raw || '')
+const splitIngredients = (raw) => stripHtml(raw)
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean);
@@ -300,7 +301,7 @@ const CompareDishes = ({ route, navigation }) => {
                             {ingredientDish?.description ?
                                 <View style={styles.descriptionBlock}>
                                     <Text style={styles.dialogSection}>{'Mô tả món'}</Text>
-                                    <Text style={styles.descriptionText}>{ingredientDish.description}</Text>
+                                    <Text style={styles.descriptionText}>{stripHtml(ingredientDish.description)}</Text>
                                 </View> :
                                 null
                             }

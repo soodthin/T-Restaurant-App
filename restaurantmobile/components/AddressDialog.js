@@ -10,6 +10,8 @@ import {
     TextInput as RNTextInput,
     Keyboard,
     Pressable,
+    KeyboardAvoidingView,
+    Platform,
 } from 'react-native';
 import { ActivityIndicator } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
@@ -89,8 +91,12 @@ const AddressDialog = ({ visible, onClose, onConfirm }) => {
 
     return (
         <Modal visible transparent animationType="fade" onRequestClose={onClose}>
-            <Pressable style={mode === 'form' ? styles.overlay : styles.overlaySmall} onPress={onClose} />
-            <View style={[styles.dialog, mode !== 'form' && { flex: 1 }]}>
+            <KeyboardAvoidingView
+                style={{ flex: 1 }}
+                behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+            >
+                <Pressable style={mode === 'form' ? styles.overlay : styles.overlaySmall} onPress={onClose} />
+                <View style={[styles.dialog, mode !== 'form' && { flex: 1 }]}>
                 <View style={styles.handle} />
                 {mode === 'form' ? (
                     <ScrollView keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
@@ -188,7 +194,8 @@ const AddressDialog = ({ visible, onClose, onConfirm }) => {
                         )}
                     </>
                 )}
-            </View>
+                </View>
+            </KeyboardAvoidingView>
         </Modal>
     );
 };
