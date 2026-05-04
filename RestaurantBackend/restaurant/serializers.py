@@ -175,6 +175,10 @@ class DishSerializer(ModelSerializer):
 
     def create(self, validated_data):
         validated_data['chef'] = self.context['request'].user
+        # Mon moi LUON tao voi active=False de cho admin duyet noi dung truoc khi hien thi
+        # cong khai cho khach. Chef van thay/sua/xoa duoc mon cua minh qua ?my=true
+        # (xem DishViewSet.get_queryset).
+        validated_data['active'] = False
         return super().create(validated_data)
 
     def get_chef_name(self, obj):

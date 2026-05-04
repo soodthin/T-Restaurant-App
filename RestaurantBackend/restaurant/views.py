@@ -84,10 +84,9 @@ class DishViewSet(viewsets.ModelViewSet):
     serializer_class = DishSerializer
     pagination_class = ItemPaginator
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    search_fields = [
-        'name', 'chef__username', 'chef__first_name', 'chef__last_name',
-        'category__name', 'menu__name'
-    ]
+    # Search chi theo ten mon. Loc theo category/menu da co query param rieng
+    # (category_id, menu_id) o get_queryset.
+    search_fields = ['name']
     ordering_fields = ['name', 'price', 'preparation_time', 'avg_rating']
 
     def get_permissions(self):
@@ -99,10 +98,23 @@ class DishViewSet(viewsets.ModelViewSet):
         return [IsChef()]
 
     def get_queryset(self):
-        qs = Dish.objects.filter(active=True).select_related('chef', 'category', 'menu').annotate(
+        user = self.request.user
+        qs = Dish.objects.all().select_related('chef', 'category', 'menu').annotate(
             avg_rating=Coalesce(Avg('reviews__rating'), Value(0.0), output_field=FloatField()),
             review_count=Count('reviews', distinct=True),
         )
+        # Chef can thay ca mon active=False khi (a) ?my=true hoac (b) PATCH/DELETE
+        # mon cua minh. Cac context khac chi tra ve mon active=True.
+        is_chef_owner_action = (
+            user.is_authenticated
+            and getattr(user, 'role', None) == 'chef'
+            and (
+                self.request.query_params.get('my') == 'true'
+                or self.action in ('partial_update', 'update', 'destroy')
+            )
+        )
+        if not is_chef_owner_action:
+            qs = qs.filter(active=True)
         params = self.request.query_params
         # loc theo category_id neu co truyen
         cat_id = params.get('category_id')

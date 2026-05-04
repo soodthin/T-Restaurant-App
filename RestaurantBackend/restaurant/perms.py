@@ -1,23 +1,45 @@
 from rest_framework import permissions
+from rest_framework.exceptions import PermissionDenied
 
 
 class IsChef(permissions.BasePermission):
-    # cho phep dau bep da duoc admin duyet
+    """
+    Cho phep dau bep da duoc admin duyet.
+    Phan biet thong diep loi de UI hien thi tieng Viet de hieu cho user.
+    """
+
     def has_permission(self, request, view):
-        return (
-            request.user.is_authenticated
-            and request.user.role == 'chef'
-            and request.user.is_verified
-        )
+        user = request.user
+        if not user.is_authenticated:
+            return False
+        if getattr(user, 'role', None) != 'chef':
+            raise PermissionDenied(
+                'Chỉ tài khoản đầu bếp mới có quyền thực hiện thao tác này.'
+            )
+        if not getattr(user, 'is_verified', False):
+            raise PermissionDenied(
+                'Tài khoản đầu bếp của bạn chưa được Admin phê duyệt. '
+                'Vui lòng liên hệ quản trị viên để được kích hoạt.'
+            )
+        return True
 
 
 class IsOwner(permissions.BasePermission):
-    # chi chinh chu moi duoc sua/xoa, ai cung doc duoc
+    """
+    Chi chinh chu moi duoc sua/xoa; ai cung doc duoc (SAFE_METHODS).
+    """
+
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:
             return True
         if hasattr(obj, 'customer'):
-            return obj.customer == request.user
-        if hasattr(obj, 'chef'):
-            return obj.chef == request.user
-        return obj == request.user
+            owner = obj.customer
+        elif hasattr(obj, 'chef'):
+            owner = obj.chef
+        else:
+            owner = obj
+        if owner != request.user:
+            raise PermissionDenied(
+                'Bạn không có quyền chỉnh sửa hoặc xóa tài nguyên này vì không phải chủ sở hữu.'
+            )
+        return True
