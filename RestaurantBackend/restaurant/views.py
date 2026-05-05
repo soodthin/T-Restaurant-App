@@ -4,11 +4,15 @@ from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.db.models import Sum, F, Avg, Count, FloatField, Value, DecimalField
 from django.db.models.functions import Coalesce, TruncDay, TruncWeek, TruncMonth
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from datetime import timedelta
 import json
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import (
     User, FoodCategory, Menu, Dish,
@@ -373,32 +377,36 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
 
 @csrf_exempt
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
+@require_POST
 def momo_ipn(request):
     """Webhook MoMo callback ve sau khi user thanh toan xong tren cong MoMo.
 
-    Verify chu ky → cap nhat Payment.status va transaction_id. Khong tra payload
-    cho FE, MoMo chi can HTTP 204.
+    Dung raw Django view (khong dung DRF @api_view) de dam bao request.body
+    khong bi consume truoc — nhat quan voi stripe_webhook.
+    Verify chu ky → cap nhat Payment.status va transaction_id.
+    MoMo chi can HTTP 204.
     """
     from .momo import verify_ipn_signature
 
     try:
-        data = request.data if isinstance(request.data, dict) else json.loads(request.body)
+        data = json.loads(request.body)
     except Exception:
-        return Response({'detail': 'Invalid payload'}, status=400)
+        logger.warning('[momo_ipn] Invalid JSON payload')
+        return JsonResponse({'detail': 'Invalid payload'}, status=400)
 
     if not verify_ipn_signature(data):
-        return Response({'detail': 'Invalid signature'}, status=400)
+        logger.warning('[momo_ipn] Invalid signature for orderId=%s', data.get('orderId'))
+        return JsonResponse({'detail': 'Invalid signature'}, status=400)
 
     request_id = data.get('requestId')
     if not request_id:
-        return Response({'detail': 'Missing requestId'}, status=400)
+        return JsonResponse({'detail': 'Missing requestId'}, status=400)
 
     try:
         payment = Payment.objects.get(transaction_id=request_id, method='momo')
     except Payment.DoesNotExist:
-        return Response({'detail': 'Payment not found'}, status=404)
+        logger.warning('[momo_ipn] Payment not found for requestId=%s', request_id)
+        return JsonResponse({'detail': 'Payment not found'}, status=404)
 
     result_code = data.get('resultCode')
     if result_code == 0:
@@ -407,12 +415,14 @@ def momo_ipn(request):
         trans_id = data.get('transId')
         if trans_id:
             payment.transaction_id = str(trans_id)
+        logger.info('[momo_ipn] Payment %d completed (transId=%s)', payment.id, trans_id)
     else:
         payment.status = 'failed'
+        logger.info('[momo_ipn] Payment %d failed (resultCode=%s)', payment.id, result_code)
     payment.save()
     _sync_order_status_from_payment(payment)
 
-    return Response(status=204)
+    return HttpResponse(status=204)
 
 
 def _sync_order_status_from_payment(payment):
@@ -450,10 +460,15 @@ def momo_redirect(request):
 
 
 @csrf_exempt
-@api_view(['POST'])
-@permission_classes([permissions.AllowAny])
+@require_POST
 def stripe_webhook(request):
     """Webhook Stripe gui ve khi co event tren Checkout Session.
+
+    QUAN TRONG: Phai dung raw Django view (khong dung DRF @api_view) vi Stripe
+    SDK can doc request.body nguyen ban de verify signature. DRF @api_view se
+    consume body stream khi parse request.data → request.body tra ve rong →
+    construct_webhook_event() crash voi "cannot access body after reading from
+    request's data stream".
 
     Verify signature qua header `Stripe-Signature` → cap nhat Payment.status
     dua tren event type. Lang nghe `checkout.session.completed` (success) va
@@ -461,38 +476,44 @@ def stripe_webhook(request):
     """
     from .stripe_gw import construct_webhook_event
 
+    # Doc body TRUOC — truoc khi bat ky middleware/parser nao dong vao.
+    payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
     try:
-        event = construct_webhook_event(request.body, sig_header)
+        event = construct_webhook_event(payload, sig_header)
     except Exception as e:
         # Stripe se retry neu nhan 400 → giup phuc hoi neu transient.
-        return Response({'detail': f'Invalid webhook: {e}'}, status=400)
+        logger.warning('[stripe_webhook] Signature verification failed: %s', e)
+        return JsonResponse({'detail': f'Invalid webhook: {e}'}, status=400)
 
-    event_type = event.get('type')
-    session = event.get('data', {}).get('object', {})
-    session_id = session.get('id')
+    event_type = event.type
+    session = event.data.object
+    session_id = session.id
     if not session_id:
-        return Response({'detail': 'Missing session id'}, status=400)
+        return JsonResponse({'detail': 'Missing session id'}, status=400)
 
     try:
         payment = Payment.objects.get(transaction_id=session_id, method='stripe')
     except Payment.DoesNotExist:
         # Stripe co the gui webhook truoc khi session.id kip luu vao DB —
         # tra 200 de Stripe khong retry vo han, va vi day la edge case hiem.
-        return Response(status=200)
+        logger.info('[stripe_webhook] Payment not found for session=%s (race condition)', session_id)
+        return HttpResponse(status=200)
 
-    if event_type == 'checkout.session.completed' and session.get('payment_status') == 'paid':
+    if event_type == 'checkout.session.completed' and getattr(session, 'payment_status', None) == 'paid':
         payment.status = 'completed'
         # Luu payment_intent thuc te de doi soat sau nay.
-        intent = session.get('payment_intent')
+        intent = getattr(session, 'payment_intent', None)
         if intent:
             payment.transaction_id = str(intent)
+        logger.info('[stripe_webhook] Payment %d completed (intent=%s)', payment.id, intent)
     elif event_type in ('checkout.session.expired', 'checkout.session.async_payment_failed'):
         payment.status = 'failed'
+        logger.info('[stripe_webhook] Payment %d failed (event=%s)', payment.id, event_type)
     payment.save()
     _sync_order_status_from_payment(payment)
 
-    return Response(status=200)
+    return HttpResponse(status=200)
 
 
 def stripe_return(request):

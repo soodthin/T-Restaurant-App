@@ -13,8 +13,8 @@ import styles from './styles';
 const isRedirectUrl = (url) =>
     url && (url.includes('/api/momo/redirect') || url.includes('/api/stripe/return'));
 
-const POLL_INTERVAL = 2000;
-const POLL_MAX_TRIES = 8;
+const POLL_INTERVAL_MS = 2000;
+const POLL_MAX_TRIES = 45;  // 45 tries × 2s = ~90s max, đủ cho Render cold start
 
 const METHOD_TITLES = {
     momo: 'Thanh toán MoMo',
@@ -28,6 +28,7 @@ const PaymentCheckout = ({ route, navigation }) => {
 
     const [paid, setPaid] = useState(false);
     const [polling, setPolling] = useState(false);
+    const [pollTimedOut, setPollTimedOut] = useState(false);
     const [confirmCancel, setConfirmCancel] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const triesRef = useRef(0);
@@ -47,36 +48,40 @@ const PaymentCheckout = ({ route, navigation }) => {
         if (!paymentId) return;
         triesRef.current += 1;
 
-        const res = await authFetch(endpoints['payment-detail'](paymentId));
-        if (res.ok) {
-            const status = res.data?.status;
-            if (status === 'completed') {
-                setPolling(false);
-                showToast('Thanh toán thành công!', 'success');
-                setTimeout(goToOrders, 1200);
-                return;
+        try {
+            const res = await authFetch(endpoints['payment-detail'](paymentId));
+            if (res.ok) {
+                const status = res.data?.status;
+                if (status === 'completed') {
+                    setPolling(false);
+                    showToast('Thanh toán thành công!', 'success');
+                    setTimeout(goToOrders, 1200);
+                    return;
+                }
+                if (status === 'failed') {
+                    setPolling(false);
+                    showToast('Thanh toán thất bại. Vui lòng thử lại.', 'error');
+                    setTimeout(() => navigation.goBack(), 1500);
+                    return;
+                }
             }
-            if (status === 'failed') {
-                setPolling(false);
-                showToast('Thanh toán thất bại. Vui lòng thử lại.', 'error');
-                setTimeout(() => navigation.goBack(), 1500);
-                return;
-            }
+        } catch (_) {
+            // Network error — tiep tuc poll
         }
 
         if (triesRef.current >= POLL_MAX_TRIES) {
             setPolling(false);
-            showToast('Chưa nhận được xác nhận. Bạn có thể kiểm tra trong Đơn hàng.', 'info');
-            setTimeout(goToOrders, 1500);
+            setPollTimedOut(true);
             return;
         }
 
-        setTimeout(pollStatus, POLL_INTERVAL);
+        setTimeout(pollStatus, POLL_INTERVAL_MS);
     };
 
     useEffect(() => {
-        if (paid && !polling) {
+        if (paid && !polling && !pollTimedOut) {
             setPolling(true);
+            setPollTimedOut(false);
             triesRef.current = 0;
             pollStatus();
         }
@@ -140,11 +145,39 @@ const PaymentCheckout = ({ route, navigation }) => {
                 </View>
             }
 
-            {paid &&
+            {(paid || pollTimedOut) &&
                 <View style={styles.confirmingOverlay}>
-                    <ActivityIndicator size="large" color={Colors.primary} />
-                    <Text style={styles.confirmingText}>Đang xác nhận thanh toán...</Text>
-                    <Text style={styles.confirmingSub}>Vui lòng chờ trong giây lát</Text>
+                    {polling && !pollTimedOut && <>
+                        <ActivityIndicator size="large" color={Colors.primary} />
+                        <Text style={styles.confirmingText}>Đang xác nhận thanh toán...</Text>
+                        <Text style={styles.confirmingSub}>Vui lòng chờ trong giây lát</Text>
+                    </>}
+                    {pollTimedOut && <>
+                        <MaterialCommunityIcons name="clock-alert-outline" size={48} color={Colors.star} />
+                        <Text style={styles.confirmingText}>Chưa nhận được xác nhận</Text>
+                        <Text style={[styles.confirmingSub, { textAlign: 'center', marginHorizontal: 24 }]}>
+                            Hệ thống đang xử lý. Bạn có thể thử kiểm tra lại hoặc xem trong mục Đơn hàng.
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 12, marginTop: 20 }}>
+                            <TouchableOpacity
+                                style={[styles.headerBtn, { backgroundColor: Colors.surfaceContainerLowest, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }]}
+                                activeOpacity={0.7}
+                                onPress={() => {
+                                    setPollTimedOut(false);
+                                    setPolling(true);
+                                    triesRef.current = 0;
+                                    pollStatus();
+                                }}>
+                                <Text style={{ color: Colors.primary, fontWeight: '700', fontSize: 14 }}>Thử lại</Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity
+                                style={[styles.headerBtn, { backgroundColor: Colors.primary, borderRadius: 12, paddingHorizontal: 20, paddingVertical: 10 }]}
+                                activeOpacity={0.7}
+                                onPress={goToOrders}>
+                                <Text style={{ color: Colors.onPrimary, fontWeight: '700', fontSize: 14 }}>Xem đơn hàng</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </>}
                 </View>
             }
 
