@@ -28,6 +28,7 @@ export const endpoints = {
     'reviews': '/api/reviews/',
     'payments': '/api/payments/',
     'payment-detail': (id) => `/api/payments/${id}/`,
+    'payment-cancel': (id) => `/api/payments/${id}/cancel/`,
     'stats': '/api/stats/',
 };
 

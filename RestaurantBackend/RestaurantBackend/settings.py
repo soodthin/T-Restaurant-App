@@ -160,5 +160,5 @@ STRIPE_SUCCESS_URL = os.environ.get(
 )
 STRIPE_CANCEL_URL = os.environ.get(
     'STRIPE_CANCEL_URL',
-    'https://t-restaurant.onrender.com/api/stripe/return/?status=cancel'
+    'https://t-restaurant.onrender.com/api/stripe/return/?status=cancel&session_id={CHECKOUT_SESSION_ID}'
 )

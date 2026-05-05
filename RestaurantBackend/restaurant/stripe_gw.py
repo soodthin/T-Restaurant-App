@@ -5,8 +5,16 @@ Dung Checkout Session (hosted page) thay cho PaymentIntent de FE chi can mo
 `pay_url` trong WebView — tuong tu flow MoMo, khong phai tich hop Stripe SDK
 phia mobile.
 """
+import time
+
 import stripe
 from django.conf import settings
+
+
+# Stripe default expires_at = 24h. Rut xuong 30 phut de webhook checkout.session.expired
+# fire som hon → mark Payment.failed va Order.payment_failed → user thay status dung
+# thay vi cho 24h. Min cho phep cua Stripe la 30 phut (1800s) tinh tu thoi diem tao.
+SESSION_EXPIRES_AFTER_SECONDS = 30 * 60
 
 
 def _client():
@@ -42,6 +50,8 @@ def create_stripe_checkout(order_id: int, amount: int, order_info: str = ''):
         }],
         success_url=settings.STRIPE_SUCCESS_URL,
         cancel_url=settings.STRIPE_CANCEL_URL,
+        # Expire som de webhook bao failed nhanh hon (xem comment hang dau file).
+        expires_at=int(time.time()) + SESSION_EXPIRES_AFTER_SECONDS,
         # Metadata se duoc Stripe gui kem trong webhook event → tra cuu Payment.
         metadata={'order_id': str(order_id)},
     )

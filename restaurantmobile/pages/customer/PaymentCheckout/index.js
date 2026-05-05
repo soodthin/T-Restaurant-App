@@ -189,8 +189,17 @@ const PaymentCheckout = ({ route, navigation }) => {
                 confirmText="Hủy thanh toán"
                 cancelText="Tiếp tục"
                 onCancel={() => setConfirmCancel(false)}
-                onConfirm={() => {
+                onConfirm={async () => {
                     setConfirmCancel(false);
+                    // Bao BE mark failed luon (thay vi cho 30 phut Stripe expired hoac
+                    // never voi MoMo). BE idempotent: 400 neu da thanh toan xong → bo qua.
+                    if (paymentId) {
+                        try {
+                            await authFetch(endpoints['payment-cancel'](paymentId), { method: 'POST' });
+                        } catch (_) {
+                            // Network error — ke ca khong call duoc thi user van quay lai duoc
+                        }
+                    }
                     navigation.goBack();
                 }}
             />

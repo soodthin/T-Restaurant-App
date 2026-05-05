@@ -37,7 +37,7 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
     pagination_class = ItemPaginator
 
     def get_permissions(self):
-        if self.action in ['create']:
+        if self.action in ['create', 'chefs']:
             return [permissions.AllowAny()]
         return [permissions.IsAuthenticated()]
 
@@ -375,6 +375,25 @@ class PaymentViewSet(viewsets.ModelViewSet):
             status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=True, methods=['post'], url_path='cancel')
+    def cancel(self, request, pk=None):
+        """User chu dong huy thanh toan tu app (vd: dong WebView).
+
+        Idempotent: chi mark failed neu dang pending. Dam bao webhook 'completed'
+        chay sau (race) khong bi ghi de — webhook se thay payment.failed va bo qua
+        sync, hoac neu webhook chay truoc thi cancel nay khong lam gi.
+        """
+        payment = self.get_object()
+        if payment.status != 'pending':
+            return Response(
+                {'detail': f'Khong the huy: payment dang o trang thai "{payment.status}".'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        payment.status = 'failed'
+        payment.save()
+        _sync_order_status_from_payment(payment)
+        return Response(self.get_serializer(payment).data)
+
 
 @csrf_exempt
 @require_POST
@@ -521,7 +540,24 @@ def stripe_return(request):
 
     FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
     Stripe gui them query `status=success|cancel` (xem STRIPE_SUCCESS_URL/CANCEL_URL).
+
+    Neu user click "Cancel" tren trang Stripe → query co `status=cancel&session_id=...`
+    → mark Payment failed ngay, khong cho user / FE phai cho 30 phut tu Stripe expired
+    webhook. Chi mark khi payment van pending de tranh ghi de webhook completed
+    (truong hop user thanh toan thanh cong roi van bam Cancel — race hiem nhung co the).
     """
+    if request.GET.get('status') == 'cancel':
+        session_id = request.GET.get('session_id')
+        if session_id:
+            try:
+                payment = Payment.objects.get(transaction_id=session_id, method='stripe')
+                if payment.status == 'pending':
+                    payment.status = 'failed'
+                    payment.save()
+                    _sync_order_status_from_payment(payment)
+                    logger.info('[stripe_return] Payment %d cancelled by user', payment.id)
+            except Payment.DoesNotExist:
+                logger.warning('[stripe_return] Payment not found for session=%s', session_id)
     return HttpResponse(
         '<html><body style="font-family:sans-serif;text-align:center;padding:40px">'
         '<h2>Dang xu ly thanh toan...</h2>'

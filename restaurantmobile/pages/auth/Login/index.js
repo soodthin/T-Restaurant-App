@@ -115,7 +115,6 @@ const Login = ({ navigation, route }) => {
                         outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
                         style={{ backgroundColor: Colors.surfaceContainerLowest, marginBottom: 18 }}
                     />
-                    <Text style={styles.helperText}>Đăng nhập bằng username đã đăng ký, không dùng email.</Text>
 
                     <Text style={styles.label}>MẬT KHẨU</Text>
                     <PasswordInput value={password} onChangeText={setPassword} />
