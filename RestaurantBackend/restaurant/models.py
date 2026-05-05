@@ -162,3 +162,40 @@ class Payment(models.Model):
 
     def __str__(self):
         return f"Payment #{self.id} - {self.get_method_display()} ({self.get_status_display()})"
+
+
+class WebhookEvent(models.Model):
+    """Audit log moi event tu cong thanh toan (MoMo IPN / Stripe webhook).
+
+    Muc dich:
+    - Minh bach tai chinh: chung minh moi state change cua Payment deu co evidence
+      tu gateway (raw payload + signature verify result).
+    - Idempotency: gateway co the retry → check event_id de tranh xu ly trung.
+    - Debug: xem duoc payload thuc te khi gateway report khac DB (hiem khi xay ra).
+    """
+    PROVIDERS = [('momo', 'MoMo'), ('stripe', 'Stripe')]
+    RESULTS = [
+        ('updated', 'Da cap nhat payment'),
+        ('duplicate', 'Trung event (bo qua)'),
+        ('unknown_payment', 'Khong tim thay payment'),
+        ('invalid_signature', 'Sai chu ky'),
+        ('invalid_payload', 'Payload loi'),
+    ]
+
+    # Stripe gui evt.id, MoMo khong co → ta build "{requestId}:{resultCode}".
+    event_id = models.CharField(max_length=255, unique=True)
+    payment = models.ForeignKey(Payment, on_delete=models.SET_NULL,
+                                null=True, blank=True, related_name='webhook_events')
+    provider = models.CharField(max_length=10, choices=PROVIDERS)
+    event_type = models.CharField(max_length=100, blank=True)
+    payload = models.JSONField()
+    signature_valid = models.BooleanField(default=False)
+    result = models.CharField(max_length=30, choices=RESULTS)
+    created_date = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_date']
+        indexes = [models.Index(fields=['provider', 'created_date'])]
+
+    def __str__(self):
+        return f"{self.get_provider_display()} {self.event_type} [{self.result}]"

@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from .models import (
     User, FoodCategory, Menu, Dish,
     TableBooking, Order, OrderDetail,
-    Review, Payment
+    Review, Payment, WebhookEvent
 )
 from .serializers import (
     UserSerializer, FoodCategorySerializer, MenuSerializer,
@@ -404,6 +404,10 @@ def momo_ipn(request):
     khong bi consume truoc — nhat quan voi stripe_webhook.
     Verify chu ky → cap nhat Payment.status va transaction_id.
     MoMo chi can HTTP 204.
+
+    Audit: moi event log vao WebhookEvent (raw payload + ket qua xu ly) phuc vu
+    minh bach tai chinh. Idempotency theo event_id de tranh xu ly trung khi MoMo
+    retry.
     """
     from .momo import verify_ipn_signature
 
@@ -411,13 +415,39 @@ def momo_ipn(request):
         data = json.loads(request.body)
     except Exception:
         logger.warning('[momo_ipn] Invalid JSON payload')
+        WebhookEvent.objects.create(
+            event_id=f'momo:invalid:{timezone.now().timestamp()}',
+            provider='momo', event_type='momo.ipn',
+            payload={'raw': request.body.decode('utf-8', errors='replace')[:1000]},
+            signature_valid=False, result='invalid_payload',
+        )
         return JsonResponse({'detail': 'Invalid payload'}, status=400)
 
-    if not verify_ipn_signature(data):
+    sig_valid = verify_ipn_signature(data)
+    request_id = data.get('requestId') or ''
+    result_code = data.get('resultCode')
+    # MoMo khong co event_id, ta build tu requestId + resultCode (deterministic
+    # cho cung 1 event, retry cua MoMo se trung).
+    event_id = f'momo:{request_id}:{result_code}'
+
+    # Idempotency check: neu da xu ly roi → tra 204 ngay, log nhu duplicate.
+    if WebhookEvent.objects.filter(event_id=event_id).exists():
+        WebhookEvent.objects.create(
+            event_id=f'{event_id}:dup:{timezone.now().timestamp()}',
+            provider='momo', event_type='momo.ipn',
+            payload=data, signature_valid=sig_valid, result='duplicate',
+        )
+        logger.info('[momo_ipn] Duplicate event %s ignored', event_id)
+        return HttpResponse(status=204)
+
+    if not sig_valid:
         logger.warning('[momo_ipn] Invalid signature for orderId=%s', data.get('orderId'))
+        WebhookEvent.objects.create(
+            event_id=event_id, provider='momo', event_type='momo.ipn',
+            payload=data, signature_valid=False, result='invalid_signature',
+        )
         return JsonResponse({'detail': 'Invalid signature'}, status=400)
 
-    request_id = data.get('requestId')
     if not request_id:
         return JsonResponse({'detail': 'Missing requestId'}, status=400)
 
@@ -425,9 +455,12 @@ def momo_ipn(request):
         payment = Payment.objects.get(transaction_id=request_id, method='momo')
     except Payment.DoesNotExist:
         logger.warning('[momo_ipn] Payment not found for requestId=%s', request_id)
+        WebhookEvent.objects.create(
+            event_id=event_id, provider='momo', event_type='momo.ipn',
+            payload=data, signature_valid=True, result='unknown_payment',
+        )
         return JsonResponse({'detail': 'Payment not found'}, status=404)
 
-    result_code = data.get('resultCode')
     if result_code == 0:
         payment.status = 'completed'
         # Luu transId thuc te tu MoMo de tra cuu doi soat sau nay.
@@ -440,6 +473,11 @@ def momo_ipn(request):
         logger.info('[momo_ipn] Payment %d failed (resultCode=%s)', payment.id, result_code)
     payment.save()
     _sync_order_status_from_payment(payment)
+
+    WebhookEvent.objects.create(
+        event_id=event_id, payment=payment, provider='momo', event_type='momo.ipn',
+        payload=data, signature_valid=True, result='updated',
+    )
 
     return HttpResponse(status=204)
 
@@ -503,11 +541,30 @@ def stripe_webhook(request):
     except Exception as e:
         # Stripe se retry neu nhan 400 → giup phuc hoi neu transient.
         logger.warning('[stripe_webhook] Signature verification failed: %s', e)
+        WebhookEvent.objects.create(
+            event_id=f'stripe:invalid:{timezone.now().timestamp()}',
+            provider='stripe', event_type='unknown',
+            payload={'raw': payload.decode('utf-8', errors='replace')[:1000]},
+            signature_valid=False, result='invalid_signature',
+        )
         return JsonResponse({'detail': f'Invalid webhook: {e}'}, status=400)
 
+    event_id = event.id  # Stripe luon gui evt_xxx unique
     event_type = event.type
     session = event.data.object
     session_id = session.id
+    raw_payload = json.loads(payload.decode('utf-8'))
+
+    # Idempotency: Stripe co the retry → check event_id da xu ly chua.
+    if WebhookEvent.objects.filter(event_id=event_id).exists():
+        WebhookEvent.objects.create(
+            event_id=f'{event_id}:dup:{timezone.now().timestamp()}',
+            provider='stripe', event_type=event_type,
+            payload=raw_payload, signature_valid=True, result='duplicate',
+        )
+        logger.info('[stripe_webhook] Duplicate event %s ignored', event_id)
+        return HttpResponse(status=200)
+
     if not session_id:
         return JsonResponse({'detail': 'Missing session id'}, status=400)
 
@@ -517,6 +574,10 @@ def stripe_webhook(request):
         # Stripe co the gui webhook truoc khi session.id kip luu vao DB —
         # tra 200 de Stripe khong retry vo han, va vi day la edge case hiem.
         logger.info('[stripe_webhook] Payment not found for session=%s (race condition)', session_id)
+        WebhookEvent.objects.create(
+            event_id=event_id, provider='stripe', event_type=event_type,
+            payload=raw_payload, signature_valid=True, result='unknown_payment',
+        )
         return HttpResponse(status=200)
 
     if event_type == 'checkout.session.completed' and getattr(session, 'payment_status', None) == 'paid':
@@ -531,6 +592,11 @@ def stripe_webhook(request):
         logger.info('[stripe_webhook] Payment %d failed (event=%s)', payment.id, event_type)
     payment.save()
     _sync_order_status_from_payment(payment)
+
+    WebhookEvent.objects.create(
+        event_id=event_id, payment=payment, provider='stripe', event_type=event_type,
+        payload=raw_payload, signature_valid=True, result='updated',
+    )
 
     return HttpResponse(status=200)
 

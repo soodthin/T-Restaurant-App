@@ -1,3 +1,4 @@
+import csv
 from datetime import timedelta
 
 from django import forms
@@ -5,6 +6,7 @@ from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.db.models import Count, Sum, F
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path
 from django.utils import timezone
@@ -13,7 +15,7 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from .models import (
     User, FoodCategory, Menu, Dish,
     TableBooking, Order, OrderDetail,
-    Review, Payment
+    Review, Payment, WebhookEvent
 )
 
 
@@ -159,6 +161,69 @@ class RestaurantAdminSite(admin.AdminSite):
         return TemplateResponse(request, 'admin/stats.html', ctx)
 
 
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ['id', 'order', 'method', 'status', 'amount',
+                    'transaction_id', 'created_date']
+    list_filter = ['method', 'status', 'created_date']
+    search_fields = ['transaction_id', 'order__id', 'order__customer__username']
+    readonly_fields = ['transaction_id', 'pay_url', 'amount', 'created_date']
+    actions = ['export_csv']
+
+    @admin.action(description='Xuat CSV giao dich (doi soat)')
+    def export_csv(self, request, queryset):
+        """Xuat danh sach payment ra CSV de doi soat voi MoMo/Stripe Dashboard.
+
+        Truong xuat ra: id, order_id, customer, method, status, amount,
+        transaction_id, created_date. Encode UTF-8 BOM de Excel mo dung tieng Viet.
+        """
+        response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
+        ts = timezone.now().strftime('%Y%m%d_%H%M%S')
+        response['Content-Disposition'] = f'attachment; filename="payments_{ts}.csv"'
+        response.write('﻿')  # BOM cho Excel mo dung tieng Viet
+        writer = csv.writer(response)
+        writer.writerow([
+            'ID', 'Order ID', 'Customer', 'Method', 'Status', 'Amount (VND)',
+            'Transaction ID', 'Created date',
+        ])
+        for p in queryset.select_related('order__customer').order_by('-created_date'):
+            writer.writerow([
+                p.id, p.order_id,
+                p.order.customer.username if p.order and p.order.customer else '',
+                p.get_method_display(), p.get_status_display(),
+                p.amount, p.transaction_id or '',
+                timezone.localtime(p.created_date).strftime('%Y-%m-%d %H:%M:%S'),
+            ])
+        self.message_user(
+            request,
+            f'Da xuat {queryset.count()} giao dich ra CSV.',
+            level=messages.SUCCESS,
+        )
+        return response
+
+
+class WebhookEventAdmin(admin.ModelAdmin):
+    """Audit log cong thanh toan — read-only, khong cho admin tao/sua/xoa.
+
+    Day la evidence cua moi state change tu gateway → khong duoc phep chinh sua
+    de bao toan tinh minh bach.
+    """
+    list_display = ['id', 'created_date', 'provider', 'event_type',
+                    'payment', 'signature_valid', 'result']
+    list_filter = ['provider', 'result', 'signature_valid', 'created_date']
+    search_fields = ['event_id', 'payment__id', 'payment__transaction_id']
+    readonly_fields = ['event_id', 'payment', 'provider', 'event_type',
+                       'payload', 'signature_valid', 'result', 'created_date']
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 admin_site = RestaurantAdminSite(name='restaurant')
 
 admin_site.register(User, UserAdmin)
@@ -169,4 +234,5 @@ admin_site.register(TableBooking)
 admin_site.register(Order)
 admin_site.register(OrderDetail)
 admin_site.register(Review)
-admin_site.register(Payment)
+admin_site.register(Payment, PaymentAdmin)
+admin_site.register(WebhookEvent, WebhookEventAdmin)
