@@ -3,10 +3,7 @@ from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get(
-    'DJANGO_SECRET_KEY',
-    'django-insecure-0e0-t_72u_#+d)6s#v$&kyznk-(qhw*8g@(&5$2q6or$2jkb2f'
-)
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', '')
 
 DEBUG = os.environ.get('DJANGO_DEBUG', 'True').lower() in ('1', 'true', 'yes')
 
@@ -67,11 +64,11 @@ WSGI_APPLICATION = 'RestaurantBackend.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.environ.get('MYSQL_ADDON_DB', 'restaurantdb'),
-        'USER': os.environ.get('MYSQL_ADDON_USER', 'root'),
-        'PASSWORD': os.environ.get('MYSQL_ADDON_PASSWORD', '12345'),
-        'HOST': os.environ.get('MYSQL_ADDON_HOST', 'localhost'),
-        'PORT': os.environ.get('MYSQL_ADDON_PORT', '3306'),
+        'NAME': os.environ.get('MYSQL_ADDON_DB', ''),
+        'USER': os.environ.get('MYSQL_ADDON_USER', ''),
+        'PASSWORD': os.environ.get('MYSQL_ADDON_PASSWORD', ''),
+        'HOST': os.environ.get('MYSQL_ADDON_HOST', ''),
+        'PORT': os.environ.get('MYSQL_ADDON_PORT', ''),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'connect_timeout': 10,
@@ -96,9 +93,9 @@ STATIC_ROOT = BASE_DIR / 'staticfiles'
 
 # luu anh len cloudinary
 CLOUDINARY_STORAGE = {
-    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', 'dxhp3sukx'),
-    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', '657381574582262'),
-    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', 'GAVUf-uitHW43NVQk63mWChPUL8'),
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME', ''),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY', ''),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET', ''),
 }
 STORAGES = {
     "default": {
