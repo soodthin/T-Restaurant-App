@@ -276,7 +276,31 @@ admin_site.register(FoodCategory)
 admin_site.register(Menu)
 admin_site.register(Dish, DishAdmin)
 admin_site.register(TableBooking)
-admin_site.register(Order)
+class OrderDetailInline(admin.TabularInline):
+    model = OrderDetail
+    extra = 0
+
+class OrderAdmin(admin.ModelAdmin):
+    list_display = ['id', 'customer', 'status', 'get_payment_method', 'get_payment_status', 'total_amount', 'created_date']
+    list_filter = ['status', 'created_date']
+    search_fields = ['id', 'customer__username']
+    inlines = [OrderDetailInline]
+
+    @admin.display(description='P.Thức T.Toán')
+    def get_payment_method(self, obj):
+        try:
+            return obj.payment.get_method_display()
+        except Payment.DoesNotExist:
+            return '-'
+
+    @admin.display(description='T.Thái T.Toán')
+    def get_payment_status(self, obj):
+        try:
+            return obj.payment.get_status_display()
+        except Payment.DoesNotExist:
+            return '-'
+
+admin_site.register(Order, OrderAdmin)
 admin_site.register(OrderDetail)
 admin_site.register(Review)
 admin_site.register(Payment, PaymentAdmin)
