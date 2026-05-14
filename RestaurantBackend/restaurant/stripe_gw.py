@@ -67,9 +67,21 @@ def construct_webhook_event(payload: bytes, sig_header: str):
     Raise stripe.error.SignatureVerificationError neu khong hop le. View se
     catch va tra 400 cho Stripe (Stripe se retry).
     """
+    if not settings.STRIPE_WEBHOOK_SECRET:
+        raise RuntimeError(
+            'STRIPE_WEBHOOK_SECRET chua cau hinh. Set env tu Stripe CLI/Dashboard'
+        )
     sdk = _client()
     return sdk.Webhook.construct_event(
         payload=payload,
         sig_header=sig_header,
         secret=settings.STRIPE_WEBHOOK_SECRET,
     )
+
+
+def expire_stripe_checkout(session_id: str):
+    """Chu dong dong Checkout Session neu user het han/cancel trong app."""
+    if not session_id:
+        return None
+    sdk = _client()
+    return sdk.checkout.Session.expire(session_id)

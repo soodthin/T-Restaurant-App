@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 from .models import (
     User, FoodCategory, Menu, Dish,
     TableBooking, Order, OrderDetail,
-    Review, Payment, WebhookEvent
+    Review, Payment, PaymentAttempt, WebhookEvent
 )
 from .serializers import (
     UserSerializer, FoodCategorySerializer, MenuSerializer,
@@ -27,6 +27,110 @@ from .serializers import (
 )
 from .perms import IsChef, IsOwner
 from .paginators import ItemPaginator, ReviewPaginator
+
+
+ONLINE_PAYMENT_METHODS = {'momo', 'stripe'}
+PAYMENT_ATTEMPT_TTL = timedelta(minutes=10)
+
+
+def _payment_expires_at(method):
+    if method in ONLINE_PAYMENT_METHODS:
+        return timezone.now() + PAYMENT_ATTEMPT_TTL
+    return None
+
+
+def _is_current_attempt(payment, attempt):
+    return payment.current_attempt_id == getattr(attempt, 'id', None)
+
+
+def _copy_attempt_to_payment(payment, attempt):
+    payment.method = attempt.method
+    payment.status = attempt.status
+    payment.amount = attempt.amount
+    payment.transaction_id = attempt.transaction_id
+    payment.gateway_request_id = attempt.gateway_request_id
+    payment.gateway_order_id = attempt.gateway_order_id
+    payment.pay_url = attempt.pay_url
+    payment.deeplink_url = attempt.deeplink_url
+    payment.qr_code_url = attempt.qr_code_url
+    payment.current_attempt = attempt
+    payment.expires_at = attempt.expires_at
+    payment.paid_at = attempt.paid_at
+    payment.failure_reason = attempt.failure_reason
+    payment.save(update_fields=[
+        'method', 'status', 'amount', 'transaction_id',
+        'gateway_request_id', 'gateway_order_id',
+        'pay_url', 'deeplink_url', 'qr_code_url', 'current_attempt',
+        'expires_at', 'paid_at', 'failure_reason', 'updated_date',
+    ])
+
+
+def _mark_attempt_failed(attempt, reason):
+    if attempt.status == 'completed':
+        return attempt.payment
+    attempt.status = 'failed'
+    attempt.failure_reason = reason
+    attempt.save(update_fields=['status', 'failure_reason', 'updated_date'])
+
+    payment = attempt.payment
+    if payment.status != 'completed' and _is_current_attempt(payment, attempt):
+        _copy_attempt_to_payment(payment, attempt)
+        _sync_order_status_from_payment(payment)
+    return payment
+
+
+def _mark_attempt_completed(attempt, transaction_id=None):
+    now = timezone.now()
+    attempt.status = 'completed'
+    attempt.transaction_id = str(transaction_id or attempt.transaction_id or '')
+    attempt.paid_at = now
+    attempt.failure_reason = ''
+    attempt.save(update_fields=[
+        'status', 'transaction_id', 'paid_at', 'failure_reason', 'updated_date'
+    ])
+
+    payment = attempt.payment
+    if payment.status != 'completed' or _is_current_attempt(payment, attempt):
+        _copy_attempt_to_payment(payment, attempt)
+        _sync_order_status_from_payment(payment)
+    return payment
+
+
+def _expire_gateway_session(attempt):
+    if attempt.method != 'stripe' or not attempt.gateway_request_id:
+        return
+    try:
+        from .stripe_gw import expire_stripe_checkout
+        expire_stripe_checkout(attempt.gateway_request_id)
+    except Exception as e:
+        logger.info(
+            '[payment] Cannot expire Stripe session %s: %s',
+            attempt.gateway_request_id, e,
+        )
+
+
+def _expire_payment_if_needed(payment):
+    if payment.status != 'pending' or not payment.expires_at:
+        return payment
+    if payment.expires_at > timezone.now():
+        return payment
+    attempt = payment.current_attempt
+    if attempt and attempt.status == 'pending':
+        _expire_gateway_session(attempt)
+        return _mark_attempt_failed(attempt, 'Het thoi gian thanh toan 10 phut.')
+    payment.status = 'failed'
+    payment.failure_reason = 'Het thoi gian thanh toan 10 phut.'
+    payment.save(update_fields=['status', 'failure_reason', 'updated_date'])
+    _sync_order_status_from_payment(payment)
+    return payment
+
+
+def _expire_stale_payments_for_user(user):
+    qs = Payment.objects.filter(status='pending', expires_at__lte=timezone.now())
+    if not user.is_staff:
+        qs = qs.filter(order__customer=user)
+    for payment in qs.select_related('current_attempt', 'order')[:100]:
+        _expire_payment_if_needed(payment)
 
 
 class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
@@ -247,6 +351,14 @@ class OrderViewSet(viewsets.ModelViewSet):
             return Order.objects.select_related('payment').prefetch_related('details__dish')
         return Order.objects.filter(customer=user).select_related('payment').prefetch_related('details__dish')
 
+    def list(self, request, *args, **kwargs):
+        _expire_stale_payments_for_user(request.user)
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        _expire_stale_payments_for_user(request.user)
+        return super().retrieve(request, *args, **kwargs)
+
     @action(detail=True, methods=['post'], url_path='add-detail')
     def add_detail(self, request, pk=None):
         order = self.get_object()
@@ -321,54 +433,104 @@ class PaymentViewSet(viewsets.ModelViewSet):
             return Payment.objects.all()
         return Payment.objects.filter(order__customer=user)
 
+    def list(self, request, *args, **kwargs):
+        _expire_stale_payments_for_user(request.user)
+        return super().list(request, *args, **kwargs)
+
+    def retrieve(self, request, *args, **kwargs):
+        payment = self.get_object()
+        _expire_payment_if_needed(payment)
+        serializer = self.get_serializer(payment)
+        return Response(serializer.data)
+
     def create(self, request, *args, **kwargs):
+        order_id = request.data.get('order')
+        if order_id:
+            stale = Payment.objects.filter(order_id=order_id).select_related(
+                'current_attempt', 'order'
+            ).first()
+            if stale:
+                _expire_payment_if_needed(stale)
+
         # Tao payment qua serializer (validate order, set amount tu order.total_amount).
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         payment = serializer.save()
-        # Log de debug truong hop amount=0 (Stripe se khong show card form).
-        print(f'[payment] id={payment.id} order={payment.order_id} method={payment.method} amount={payment.amount}')
+        logger.info(
+            '[payment] id=%s order=%s method=%s amount=%s',
+            payment.id, payment.order_id, payment.method, payment.amount,
+        )
 
         # Dispatcher theo cong thanh toan. Cash khong can goi gateway, danh dau pending
         # cho nha hang xac nhan. Online gateway tao session/payUrl roi tra ve cho FE.
         if payment.method == 'momo':
             from .momo import create_momo_payment
+            attempt = PaymentAttempt.objects.create(
+                payment=payment,
+                method=payment.method,
+                amount=payment.amount,
+                expires_at=_payment_expires_at(payment.method),
+            )
             try:
                 result = create_momo_payment(
                     order_id=payment.order_id,
                     amount=int(payment.amount),
                     order_info=f'Thanh toan don hang #{payment.order_id}',
                 )
-                payment.pay_url = result['pay_url']
-                payment.transaction_id = result['request_id']
-                payment.save()
+                attempt.pay_url = result.get('pay_url')
+                if not attempt.pay_url:
+                    raise RuntimeError('MoMo khong tra ve payUrl')
+                attempt.deeplink_url = result.get('deeplink') or result.get('applink')
+                attempt.qr_code_url = result.get('qr_code_url')
+                attempt.gateway_request_id = result['request_id']
+                attempt.gateway_order_id = result.get('order_id_momo')
+                attempt.save(update_fields=[
+                    'pay_url', 'deeplink_url', 'qr_code_url',
+                    'gateway_request_id', 'gateway_order_id', 'updated_date',
+                ])
+                _copy_attempt_to_payment(payment, attempt)
             except Exception as e:
-                payment.status = 'failed'
-                payment.save()
+                _mark_attempt_failed(attempt, f'Khong tao duoc giao dich MoMo: {e}')
                 return Response(
                     {'detail': f'Khong tao duoc giao dich MoMo: {e}'},
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
         elif payment.method == 'stripe':
             from .stripe_gw import create_stripe_checkout
+            attempt = PaymentAttempt.objects.create(
+                payment=payment,
+                method=payment.method,
+                amount=payment.amount,
+                expires_at=_payment_expires_at(payment.method),
+            )
             try:
                 result = create_stripe_checkout(
                     order_id=payment.order_id,
                     amount=int(payment.amount),
                     order_info=f'Thanh toan don hang #{payment.order_id}',
                 )
-                payment.pay_url = result['pay_url']
+                attempt.pay_url = result.get('pay_url')
+                if not attempt.pay_url:
+                    raise RuntimeError('Stripe khong tra ve Checkout URL')
                 # Luu session_id de webhook tra cuu Payment (Stripe khong gui
                 # Payment.id ve, chi gui session.id va metadata).
-                payment.transaction_id = result['session_id']
-                payment.save()
+                attempt.gateway_request_id = result['session_id']
+                attempt.gateway_order_id = result['session_id']
+                attempt.save(update_fields=[
+                    'pay_url', 'gateway_request_id', 'gateway_order_id',
+                    'updated_date',
+                ])
+                _copy_attempt_to_payment(payment, attempt)
             except Exception as e:
-                payment.status = 'failed'
-                payment.save()
+                _mark_attempt_failed(attempt, f'Khong tao duoc giao dich Stripe: {e}')
                 return Response(
                     {'detail': f'Khong tao duoc giao dich Stripe: {e}'},
                     status=status.HTTP_502_BAD_GATEWAY,
                 )
+        else:
+            payment.expires_at = None
+            payment.failure_reason = ''
+            payment.save(update_fields=['expires_at', 'failure_reason', 'updated_date'])
 
         return Response(
             self.get_serializer(payment).data,
@@ -389,9 +551,15 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 {'detail': f'Khong the huy: payment dang o trang thai "{payment.status}".'},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-        payment.status = 'failed'
-        payment.save()
-        _sync_order_status_from_payment(payment)
+        attempt = payment.current_attempt
+        if attempt:
+            _expire_gateway_session(attempt)
+            payment = _mark_attempt_failed(attempt, 'Khach hang huy thanh toan trong app.')
+        else:
+            payment.status = 'failed'
+            payment.failure_reason = 'Khach hang huy thanh toan trong app.'
+            payment.save(update_fields=['status', 'failure_reason', 'updated_date'])
+            _sync_order_status_from_payment(payment)
         return Response(self.get_serializer(payment).data)
 
 
@@ -452,8 +620,12 @@ def momo_ipn(request):
         return JsonResponse({'detail': 'Missing requestId'}, status=400)
 
     try:
-        payment = Payment.objects.get(transaction_id=request_id, method='momo')
-    except Payment.DoesNotExist:
+        attempt = PaymentAttempt.objects.select_related('payment').get(
+            gateway_request_id=request_id,
+            method='momo',
+        )
+        payment = attempt.payment
+    except PaymentAttempt.DoesNotExist:
         logger.warning('[momo_ipn] Payment not found for requestId=%s', request_id)
         WebhookEvent.objects.create(
             event_id=event_id, provider='momo', event_type='momo.ipn',
@@ -461,21 +633,27 @@ def momo_ipn(request):
         )
         return JsonResponse({'detail': 'Payment not found'}, status=404)
 
-    if result_code == 0:
-        payment.status = 'completed'
+    if str(result_code) == '0':
         # Luu transId thuc te tu MoMo de tra cuu doi soat sau nay.
         trans_id = data.get('transId')
-        if trans_id:
-            payment.transaction_id = str(trans_id)
+        payment = _mark_attempt_completed(attempt, trans_id)
         logger.info('[momo_ipn] Payment %d completed (transId=%s)', payment.id, trans_id)
     else:
-        payment.status = 'failed'
-        logger.info('[momo_ipn] Payment %d failed (resultCode=%s)', payment.id, result_code)
-    payment.save()
-    _sync_order_status_from_payment(payment)
+        if payment.status != 'completed':
+            payment = _mark_attempt_failed(
+                attempt,
+                data.get('message') or f'MoMo resultCode={result_code}',
+            )
+            logger.info('[momo_ipn] Payment %d failed (resultCode=%s)', payment.id, result_code)
+        else:
+            logger.info(
+                '[momo_ipn] Ignore failed result for already completed payment %d',
+                payment.id,
+            )
 
     WebhookEvent.objects.create(
-        event_id=event_id, payment=payment, provider='momo', event_type='momo.ipn',
+        event_id=event_id, payment=payment, attempt=attempt,
+        provider='momo', event_type='momo.ipn',
         payload=data, signature_valid=True, result='updated',
     )
 
@@ -486,21 +664,20 @@ def _sync_order_status_from_payment(payment):
     """Chuyen order.status theo ket qua payment online.
 
     Chi auto-transition tu trang thai 'pending' (don moi tao, chua co ai dong vao):
-    - completed → paid
-    - failed → payment_failed
+    - completed → paid neu order con pending/payment_failed. Case payment_failed
+      cover race: user bam huy/dong WebView truoc khi webhook success ve.
+    - failed → payment_failed chi khi order con pending.
     Cac trang thai khac (preparing/served/cancelled) khong dong vao de tranh
     ghi de logic chef/admin.
     """
     order = payment.order
-    if order.status != 'pending':
-        return
-    if payment.status == 'completed':
+    if payment.status == 'completed' and order.status in ('pending', 'payment_failed'):
         order.status = 'paid'
-    elif payment.status == 'failed':
+    elif payment.status == 'failed' and order.status == 'pending':
         order.status = 'payment_failed'
     else:
         return
-    order.save()
+    order.save(update_fields=['status', 'updated_date'])
 
 
 def momo_redirect(request):
@@ -569,8 +746,12 @@ def stripe_webhook(request):
         return JsonResponse({'detail': 'Missing session id'}, status=400)
 
     try:
-        payment = Payment.objects.get(transaction_id=session_id, method='stripe')
-    except Payment.DoesNotExist:
+        attempt = PaymentAttempt.objects.select_related('payment').get(
+            gateway_request_id=session_id,
+            method='stripe',
+        )
+        payment = attempt.payment
+    except PaymentAttempt.DoesNotExist:
         # Stripe co the gui webhook truoc khi session.id kip luu vao DB —
         # tra 200 de Stripe khong retry vo han, va vi day la edge case hiem.
         logger.info('[stripe_webhook] Payment not found for session=%s (race condition)', session_id)
@@ -581,20 +762,23 @@ def stripe_webhook(request):
         return HttpResponse(status=200)
 
     if event_type == 'checkout.session.completed' and getattr(session, 'payment_status', None) == 'paid':
-        payment.status = 'completed'
         # Luu payment_intent thuc te de doi soat sau nay.
         intent = getattr(session, 'payment_intent', None)
-        if intent:
-            payment.transaction_id = str(intent)
+        payment = _mark_attempt_completed(attempt, intent)
         logger.info('[stripe_webhook] Payment %d completed (intent=%s)', payment.id, intent)
     elif event_type in ('checkout.session.expired', 'checkout.session.async_payment_failed'):
-        payment.status = 'failed'
-        logger.info('[stripe_webhook] Payment %d failed (event=%s)', payment.id, event_type)
-    payment.save()
-    _sync_order_status_from_payment(payment)
+        if payment.status != 'completed':
+            payment = _mark_attempt_failed(attempt, f'Stripe event {event_type}')
+            logger.info('[stripe_webhook] Payment %d failed (event=%s)', payment.id, event_type)
+        else:
+            logger.info(
+                '[stripe_webhook] Ignore failed event for already completed payment %d',
+                payment.id,
+            )
 
     WebhookEvent.objects.create(
-        event_id=event_id, payment=payment, provider='stripe', event_type=event_type,
+        event_id=event_id, payment=payment, attempt=attempt,
+        provider='stripe', event_type=event_type,
         payload=raw_payload, signature_valid=True, result='updated',
     )
 
@@ -616,13 +800,15 @@ def stripe_return(request):
         session_id = request.GET.get('session_id')
         if session_id:
             try:
-                payment = Payment.objects.get(transaction_id=session_id, method='stripe')
-                if payment.status == 'pending':
-                    payment.status = 'failed'
-                    payment.save()
-                    _sync_order_status_from_payment(payment)
+                attempt = PaymentAttempt.objects.select_related('payment').get(
+                    gateway_request_id=session_id,
+                    method='stripe',
+                )
+                payment = attempt.payment
+                if payment.status == 'pending' and attempt.status == 'pending':
+                    payment = _mark_attempt_failed(attempt, 'Khach hang huy tren Stripe Checkout.')
                     logger.info('[stripe_return] Payment %d cancelled by user', payment.id)
-            except Payment.DoesNotExist:
+            except PaymentAttempt.DoesNotExist:
                 logger.warning('[stripe_return] Payment not found for session=%s', session_id)
     return HttpResponse(
         '<html><body style="font-family:sans-serif;text-align:center;padding:40px">'
@@ -675,8 +861,8 @@ def _series_for_admin(period, since):
         count=Count('id'),
     ).order_by('bucket')
     revenue = Payment.objects.filter(
-        status='completed', created_date__gte=since,
-    ).annotate(bucket=trunc('created_date')).values('bucket').annotate(
+        status='completed', paid_at__gte=since,
+    ).annotate(bucket=trunc('paid_at')).values('bucket').annotate(
         total=Sum('amount'),
     ).order_by('bucket')
 
@@ -732,12 +918,21 @@ class StatsView(generics.GenericAPIView):
             data['period'] = period
 
         if user.is_staff:
+            payments_by_method = list(
+                Payment.objects.filter(status='completed')
+                .values('method')
+                .annotate(total=Sum('amount'), count=Count('id'))
+                .order_by('method')
+            )
             data['total_dishes'] = Dish.objects.count()
             data['total_bookings'] = TableBooking.objects.count()
             data['total_orders'] = Order.objects.count()
             data['revenue'] = Payment.objects.filter(
                 status='completed'
             ).aggregate(total=Sum('amount'))['total'] or 0
+            data['pending_payments'] = Payment.objects.filter(status='pending').count()
+            data['failed_payments'] = Payment.objects.filter(status='failed').count()
+            data['payments_by_method'] = payments_by_method
             data['total_users'] = User.objects.count()
             data['series'] = _series_for_admin(period, since)
             data['period'] = period

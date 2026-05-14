@@ -156,12 +156,64 @@ class Payment(models.Model):
     status = models.CharField(max_length=20, choices=PAYMENT_STATUSES, default='pending')
     amount = models.DecimalField(max_digits=12, decimal_places=0)
     transaction_id = models.CharField(max_length=255, null=True, blank=True)
+    gateway_request_id = models.CharField(max_length=255, null=True, blank=True)
+    gateway_order_id = models.CharField(max_length=255, null=True, blank=True)
     # URL thanh toan tu cong (vi du payUrl tu MoMo). FE mo trong WebView.
     pay_url = models.URLField(max_length=500, null=True, blank=True)
+    deeplink_url = models.URLField(max_length=500, null=True, blank=True)
+    qr_code_url = models.URLField(max_length=500, null=True, blank=True)
+    current_attempt = models.ForeignKey(
+        'PaymentAttempt',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='+',
+    )
+    expires_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    failure_reason = models.TextField(null=True, blank=True)
     created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Payment #{self.id} - {self.get_method_display()} ({self.get_status_display()})"
+
+
+class PaymentAttempt(models.Model):
+    """Moi lan mo cong thanh toan la mot attempt rieng de doi soat tai chinh.
+
+    Payment la trang thai hien tai cua don hang. PaymentAttempt giu tung
+    session/request gateway cu the: Stripe Checkout Session, MoMo requestId,
+    payUrl/deeplink/QR va ket qua webhook. Nho vay admin khong mat lich su khi
+    khach het han 10 phut roi doi phuong thuc thanh toan.
+    """
+    PAYMENT_METHODS = Payment.PAYMENT_METHODS
+    PAYMENT_STATUSES = Payment.PAYMENT_STATUSES
+
+    payment = models.ForeignKey(Payment, on_delete=models.CASCADE, related_name='attempts')
+    method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
+    status = models.CharField(max_length=20, choices=PAYMENT_STATUSES, default='pending')
+    amount = models.DecimalField(max_digits=12, decimal_places=0)
+    gateway_request_id = models.CharField(max_length=255, null=True, blank=True, db_index=True)
+    gateway_order_id = models.CharField(max_length=255, null=True, blank=True)
+    transaction_id = models.CharField(max_length=255, null=True, blank=True)
+    pay_url = models.URLField(max_length=500, null=True, blank=True)
+    deeplink_url = models.URLField(max_length=500, null=True, blank=True)
+    qr_code_url = models.URLField(max_length=500, null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    failure_reason = models.TextField(null=True, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
+    updated_date = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-id']
+        indexes = [
+            models.Index(fields=['method', 'status']),
+        ]
+
+    def __str__(self):
+        return f"Attempt #{self.id} - Payment #{self.payment_id} ({self.method}/{self.status})"
 
 
 class WebhookEvent(models.Model):
@@ -185,6 +237,8 @@ class WebhookEvent(models.Model):
     # Stripe gui evt.id, MoMo khong co → ta build "{requestId}:{resultCode}".
     event_id = models.CharField(max_length=255, unique=True)
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL,
+                                null=True, blank=True, related_name='webhook_events')
+    attempt = models.ForeignKey(PaymentAttempt, on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name='webhook_events')
     provider = models.CharField(max_length=10, choices=PROVIDERS)
     event_type = models.CharField(max_length=100, blank=True)

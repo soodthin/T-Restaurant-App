@@ -21,12 +21,29 @@ def _sign(raw: str) -> str:
     ).hexdigest()
 
 
+def _ensure_configured():
+    missing = [
+        name for name in (
+            'MOMO_PARTNER_CODE',
+            'MOMO_ACCESS_KEY',
+            'MOMO_SECRET_KEY',
+            'MOMO_CREATE_URL',
+            'MOMO_IPN_URL',
+            'MOMO_REDIRECT_URL',
+        )
+        if not getattr(settings, name, '')
+    ]
+    if missing:
+        raise RuntimeError(f'Chua cau hinh MoMo: {", ".join(missing)}')
+
+
 def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
     """Tao giao dich MoMo, tra ve dict {pay_url, request_id, order_id_momo}.
 
     `order_id` la id Order trong he thong cua minh. MoMo yeu cau orderId unique
     moi lan tao request, nen ta append uuid vao de tranh trung khi user retry.
     """
+    _ensure_configured()
     request_id = str(uuid.uuid4())
     momo_order_id = f"order-{order_id}-{uuid.uuid4().hex[:8]}"
     extra_data = ''
@@ -85,6 +102,9 @@ def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
 
     return {
         'pay_url': body.get('payUrl'),
+        'deeplink': body.get('deeplink'),
+        'qr_code_url': body.get('qrCodeUrl'),
+        'applink': body.get('applink'),
         'request_id': request_id,
         'order_id_momo': momo_order_id,
     }

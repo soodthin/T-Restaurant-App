@@ -288,12 +288,22 @@ class OrderSerializer(ModelSerializer):
     details = OrderDetailSerializer(many=True, read_only=True)
     payment_method = SerializerMethodField()
     payment_status = SerializerMethodField()
+    payment_id = SerializerMethodField()
+    payment_pay_url = SerializerMethodField()
+    payment_deeplink_url = SerializerMethodField()
+    payment_qr_code_url = SerializerMethodField()
+    payment_expires_at = SerializerMethodField()
+    payment_paid_at = SerializerMethodField()
+    payment_failure_reason = SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
             'id', 'customer', 'booking', 'status',
             'total_amount', 'details', 'payment_method', 'payment_status',
+            'payment_id', 'payment_pay_url', 'payment_deeplink_url',
+            'payment_qr_code_url', 'payment_expires_at', 'payment_paid_at',
+            'payment_failure_reason',
             'created_date', 'updated_date'
         ]
         read_only_fields = ['customer', 'total_amount']
@@ -333,14 +343,64 @@ class OrderSerializer(ModelSerializer):
         return super().create(validated_data)
 
     def get_payment_method(self, obj):
-        if hasattr(obj, 'payment'):
-            return obj.payment.method
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.method
         return None
 
     def get_payment_status(self, obj):
-        if hasattr(obj, 'payment'):
-            return obj.payment.status
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.status
         return None
+
+    def get_payment_id(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.id
+        return None
+
+    def get_payment_pay_url(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.pay_url
+        return None
+
+    def get_payment_deeplink_url(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.deeplink_url
+        return None
+
+    def get_payment_qr_code_url(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.qr_code_url
+        return None
+
+    def get_payment_expires_at(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.expires_at
+        return None
+
+    def get_payment_paid_at(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.paid_at
+        return None
+
+    def get_payment_failure_reason(self, obj):
+        payment = self._get_payment(obj)
+        if payment:
+            return payment.failure_reason
+        return None
+
+    def _get_payment(self, obj):
+        try:
+            return obj.payment
+        except Payment.DoesNotExist:
+            return None
 
 
 class ReviewSerializer(ModelSerializer):
@@ -391,7 +451,19 @@ class PaymentSerializer(ModelSerializer):
     class Meta:
         model = Payment
         fields = '__all__'
-        read_only_fields = ['status', 'transaction_id', 'amount']
+        read_only_fields = [
+            'status', 'transaction_id', 'amount',
+            'gateway_request_id', 'gateway_order_id',
+            'pay_url', 'deeplink_url', 'qr_code_url', 'current_attempt',
+            'expires_at', 'paid_at', 'failure_reason',
+            'created_date', 'updated_date',
+        ]
+
+    def _get_existing_payment(self, order):
+        try:
+            return order.payment
+        except Payment.DoesNotExist:
+            return None
 
     def validate_order(self, value):
         if value is None:
@@ -400,7 +472,11 @@ class PaymentSerializer(ModelSerializer):
         if request and value.customer_id != request.user.id:
             raise serializers.ValidationError(
                 'Đơn hàng này không thuộc về bạn.')
-        if hasattr(value, 'payment'):
+        if value.status not in {'pending', 'payment_failed'}:
+            raise serializers.ValidationError(
+                'Chỉ có thể thanh toán đơn hàng đang chờ hoặc thanh toán lỗi.')
+        existing_payment = self._get_existing_payment(value)
+        if existing_payment and existing_payment.status != 'failed':
             raise serializers.ValidationError(
                 'Đơn hàng đã có thanh toán.')
         return value
@@ -415,5 +491,33 @@ class PaymentSerializer(ModelSerializer):
             raise serializers.ValidationError({
                 'order': 'Đơn hàng chưa có món nào hoặc tổng tiền bằng 0.'
             })
+
+        existing_payment = self._get_existing_payment(order)
+        if existing_payment and existing_payment.status == 'failed':
+            existing_payment.method = validated_data['method']
+            existing_payment.status = 'pending'
+            existing_payment.amount = order.total_amount
+            existing_payment.transaction_id = None
+            existing_payment.gateway_request_id = None
+            existing_payment.gateway_order_id = None
+            existing_payment.pay_url = None
+            existing_payment.deeplink_url = None
+            existing_payment.qr_code_url = None
+            existing_payment.current_attempt = None
+            existing_payment.expires_at = None
+            existing_payment.paid_at = None
+            existing_payment.failure_reason = ''
+            existing_payment.save(update_fields=[
+                'method', 'status', 'amount', 'transaction_id',
+                'gateway_request_id', 'gateway_order_id',
+                'pay_url', 'deeplink_url', 'qr_code_url', 'current_attempt',
+                'expires_at', 'paid_at', 'failure_reason', 'updated_date',
+            ])
+            if order.status == 'payment_failed':
+                order.status = 'pending'
+                order.save(update_fields=['status', 'updated_date'])
+            return existing_payment
+
         validated_data['amount'] = order.total_amount
+        validated_data['failure_reason'] = ''
         return super().create(validated_data)

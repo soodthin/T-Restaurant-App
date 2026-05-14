@@ -15,7 +15,7 @@ from ckeditor_uploader.widgets import CKEditorUploadingWidget
 from .models import (
     User, FoodCategory, Menu, Dish,
     TableBooking, Order, OrderDetail,
-    Review, Payment, WebhookEvent
+    Review, Payment, PaymentAttempt, WebhookEvent
 )
 
 
@@ -106,8 +106,8 @@ class RestaurantAdminSite(admin.AdminSite):
             .order_by('bucket')
         )
         revenue_series = list(
-            Payment.objects.filter(status='completed', created_date__gte=since)
-            .annotate(bucket=trunc('created_date'))
+            Payment.objects.filter(status='completed', paid_at__gte=since)
+            .annotate(bucket=trunc('paid_at'))
             .values('bucket').annotate(total=Sum('amount'))
             .order_by('bucket')
         )
@@ -139,6 +139,8 @@ class RestaurantAdminSite(admin.AdminSite):
             'chefs_pending': User.objects.filter(role='chef', is_verified=False).count(),
             'revenue': Payment.objects.filter(status='completed').aggregate(
                 total=Sum('amount'))['total'] or 0,
+            'pending_payments': Payment.objects.filter(status='pending').count(),
+            'failed_payments': Payment.objects.filter(status='failed').count(),
         }
 
         ctx = {
@@ -163,10 +165,18 @@ class RestaurantAdminSite(admin.AdminSite):
 
 class PaymentAdmin(admin.ModelAdmin):
     list_display = ['id', 'order', 'method', 'status', 'amount',
-                    'transaction_id', 'created_date']
-    list_filter = ['method', 'status', 'created_date']
-    search_fields = ['transaction_id', 'order__id', 'order__customer__username']
-    readonly_fields = ['transaction_id', 'pay_url', 'amount', 'created_date']
+                    'transaction_id', 'paid_at', 'expires_at', 'created_date']
+    list_filter = ['method', 'status', 'paid_at', 'expires_at', 'created_date']
+    search_fields = [
+        'transaction_id', 'gateway_request_id', 'gateway_order_id',
+        'order__id', 'order__customer__username',
+    ]
+    readonly_fields = [
+        'transaction_id', 'gateway_request_id', 'gateway_order_id',
+        'pay_url', 'deeplink_url', 'qr_code_url', 'current_attempt',
+        'amount', 'expires_at', 'paid_at', 'failure_reason',
+        'created_date', 'updated_date',
+    ]
     actions = ['export_csv']
 
     @admin.action(description='Xuat CSV giao dich (doi soat)')
@@ -183,14 +193,19 @@ class PaymentAdmin(admin.ModelAdmin):
         writer = csv.writer(response)
         writer.writerow([
             'ID', 'Order ID', 'Customer', 'Method', 'Status', 'Amount (VND)',
-            'Transaction ID', 'Created date',
+            'Transaction ID', 'Gateway request ID', 'Gateway order ID',
+            'Paid at', 'Expires at', 'Failure reason', 'Created date',
         ])
         for p in queryset.select_related('order__customer').order_by('-created_date'):
             writer.writerow([
                 p.id, p.order_id,
                 p.order.customer.username if p.order and p.order.customer else '',
                 p.get_method_display(), p.get_status_display(),
-                p.amount, p.transaction_id or '',
+                p.amount, p.transaction_id or '', p.gateway_request_id or '',
+                p.gateway_order_id or '',
+                timezone.localtime(p.paid_at).strftime('%Y-%m-%d %H:%M:%S') if p.paid_at else '',
+                timezone.localtime(p.expires_at).strftime('%Y-%m-%d %H:%M:%S') if p.expires_at else '',
+                p.failure_reason or '',
                 timezone.localtime(p.created_date).strftime('%Y-%m-%d %H:%M:%S'),
             ])
         self.message_user(
@@ -201,6 +216,36 @@ class PaymentAdmin(admin.ModelAdmin):
         return response
 
 
+class PaymentAttemptAdmin(admin.ModelAdmin):
+    """Lich su tung lan mo cong thanh toan, phuc vu doi soat tai chinh."""
+    list_display = [
+        'id', 'payment', 'method', 'status', 'amount',
+        'gateway_request_id', 'transaction_id', 'expires_at', 'paid_at',
+        'created_date',
+    ]
+    list_filter = ['method', 'status', 'expires_at', 'paid_at', 'created_date']
+    search_fields = [
+        'payment__id', 'payment__order__id', 'gateway_request_id',
+        'gateway_order_id', 'transaction_id',
+    ]
+    readonly_fields = [
+        'payment', 'method', 'status', 'amount',
+        'gateway_request_id', 'gateway_order_id', 'transaction_id',
+        'pay_url', 'deeplink_url', 'qr_code_url',
+        'expires_at', 'paid_at', 'failure_reason',
+        'created_date', 'updated_date',
+    ]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_change_permission(self, request, obj=None):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return False
+
+
 class WebhookEventAdmin(admin.ModelAdmin):
     """Audit log cong thanh toan — read-only, khong cho admin tao/sua/xoa.
 
@@ -208,10 +253,10 @@ class WebhookEventAdmin(admin.ModelAdmin):
     de bao toan tinh minh bach.
     """
     list_display = ['id', 'created_date', 'provider', 'event_type',
-                    'payment', 'signature_valid', 'result']
+                    'payment', 'attempt', 'signature_valid', 'result']
     list_filter = ['provider', 'result', 'signature_valid', 'created_date']
     search_fields = ['event_id', 'payment__id', 'payment__transaction_id']
-    readonly_fields = ['event_id', 'payment', 'provider', 'event_type',
+    readonly_fields = ['event_id', 'payment', 'attempt', 'provider', 'event_type',
                        'payload', 'signature_valid', 'result', 'created_date']
 
     def has_add_permission(self, request):
@@ -235,4 +280,5 @@ admin_site.register(Order)
 admin_site.register(OrderDetail)
 admin_site.register(Review)
 admin_site.register(Payment, PaymentAdmin)
+admin_site.register(PaymentAttempt, PaymentAttemptAdmin)
 admin_site.register(WebhookEvent, WebhookEventAdmin)
