@@ -624,8 +624,18 @@ def momo_ipn(request):
             gateway_request_id=request_id,
             method='momo',
         )
-        payment = attempt.payment
     except PaymentAttempt.DoesNotExist:
+        momo_order_id = data.get('orderId') or ''
+        try:
+            attempt = PaymentAttempt.objects.select_related('payment').get(
+                gateway_order_id=momo_order_id,
+                method='momo',
+            )
+        except PaymentAttempt.DoesNotExist:
+            attempt = None
+    if attempt is not None:
+        payment = attempt.payment
+    else:
         logger.warning('[momo_ipn] Payment not found for requestId=%s', request_id)
         WebhookEvent.objects.create(
             event_id=event_id, provider='momo', event_type='momo.ipn',
@@ -685,6 +695,44 @@ def momo_redirect(request):
 
     FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
     """
+    data = request.GET.dict()
+    request_id = data.get('requestId') or ''
+    momo_order_id = data.get('orderId') or ''
+    result_code = data.get('resultCode')
+
+    if request_id or momo_order_id:
+        attempt = None
+        if request_id:
+            attempt = PaymentAttempt.objects.filter(
+                gateway_request_id=request_id,
+                method='momo',
+            ).select_related('payment').first()
+        if attempt is None and momo_order_id:
+            attempt = PaymentAttempt.objects.filter(
+                gateway_order_id=momo_order_id,
+                method='momo',
+            ).select_related('payment').first()
+
+        if attempt:
+            payment = attempt.payment
+            if str(result_code) == '0':
+                payment = _mark_attempt_completed(attempt, data.get('transId'))
+            elif payment.status != 'completed' and result_code is not None:
+                payment = _mark_attempt_failed(
+                    attempt,
+                    data.get('message') or f'MoMo redirect resultCode={result_code}',
+                )
+            WebhookEvent.objects.create(
+                event_id=f"momo:redirect:{request_id or momo_order_id}:{timezone.now().timestamp()}",
+                payment=payment,
+                attempt=attempt,
+                provider='momo',
+                event_type='momo.redirect',
+                payload=data,
+                signature_valid=False,
+                result='updated',
+            )
+
     return HttpResponse(
         '<html><body style="font-family:sans-serif;text-align:center;padding:40px">'
         '<h2>Dang xu ly thanh toan...</h2>'
