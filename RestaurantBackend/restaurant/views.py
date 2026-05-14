@@ -339,6 +339,8 @@ class TableBookingViewSet(viewsets.ModelViewSet):
         return TableBooking.objects.filter(customer=user)
 
 
+from django.db import models
+
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
@@ -382,6 +384,44 @@ class OrderViewSet(viewsets.ModelViewSet):
         )
         order.save()
         return Response(OrderSerializer(order, context={'request': request}).data)
+
+    @action(detail=False, methods=['get'], url_path='chef-orders', permission_classes=[IsChef])
+    def chef_orders(self, request):
+        qs = Order.objects.filter(details__dish__chef=request.user).distinct().order_by('-created_date')
+        qs = qs.select_related('payment').prefetch_related('details__dish')
+        p = self.pagination_class()
+        page = p.paginate_queryset(qs, request)
+        if page is not None:
+            return p.get_paginated_response(OrderSerializer(page, many=True).data)
+        return Response(OrderSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=['patch'], url_path='chef-update-status', permission_classes=[IsChef])
+    def chef_update_status(self, request, pk=None):
+        try:
+            order = Order.objects.get(pk=pk)
+        except Order.DoesNotExist:
+            return Response({'detail': 'Không tìm thấy đơn hàng.'}, status=status.HTTP_404_NOT_FOUND)
+            
+        if not order.details.filter(dish__chef=request.user).exists():
+            return Response({'detail': 'Đơn hàng này không có món của bạn.'}, status=status.HTTP_403_FORBIDDEN)
+            
+        new_status = request.data.get('status')
+        if not new_status:
+            return Response({'detail': 'Vui lòng cung cấp trạng thái mới.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        current = order.status
+        allowed = {
+            'pending': {'preparing'},
+            'paid': {'preparing'},
+            'preparing': {'served'},
+        }
+        
+        if new_status not in allowed.get(current, set()):
+            return Response({'detail': f'Không thể chuyển trạng thái từ {current} sang {new_status}.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+        order.status = new_status
+        order.save(update_fields=['status', 'updated_date'])
+        return Response(OrderSerializer(order).data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
