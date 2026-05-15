@@ -1,21 +1,101 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, Modal, Pressable } from 'react-native';
-import { TextInput, Button } from 'react-native-paper';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '@styles/colors';
-import { sanitizeNumberInput } from '@utils/format';
 import styles from './styles';
 
-const toStr = (v) => (v === null || v === undefined || v === '' ? '' : String(v));
+// Preset buckets cho range filter (giá / thời gian phục vụ).
+// `min`/`max` = null nghĩa là khong rang buoc dau do.
+const PRICE_BUCKETS = [
+    { key: 'all', label: 'Tất cả', min: null, max: null },
+    { key: 'lt50', label: 'Dưới 50.000đ', min: null, max: 50000 },
+    { key: '50_100', label: '50.000đ – 100.000đ', min: 50000, max: 100000 },
+    { key: '100_200', label: '100.000đ – 200.000đ', min: 100000, max: 200000 },
+    { key: '200_500', label: '200.000đ – 500.000đ', min: 200000, max: 500000 },
+    { key: 'gt500', label: 'Trên 500.000đ', min: 500000, max: null },
+];
+
+const PREP_BUCKETS = [
+    { key: 'all', label: 'Tất cả', min: null, max: null },
+    { key: 'lt15', label: 'Dưới 15 phút', min: null, max: 15 },
+    { key: '15_30', label: '15 – 30 phút', min: 15, max: 30 },
+    { key: '30_60', label: '30 – 60 phút', min: 30, max: 60 },
+    { key: 'gt60', label: 'Trên 60 phút', min: 60, max: null },
+];
+
+// Map giá trị min/max hiện tại (props) ve bucket key. Neu khong khop preset
+// nao (data cu lan vao), tra ve null de SelectRow hien "Tùy chỉnh".
+const findBucketKey = (buckets, currentMin, currentMax) => {
+    const norm = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
+    const cMin = norm(currentMin);
+    const cMax = norm(currentMax);
+    const matched = buckets.find((b) => b.min === cMin && b.max === cMax);
+    return matched ? matched.key : null;
+};
+
+// Inline dropdown — thay cho list radio dai. Tap → mo sub-modal liet ke option
+// dang radio. Sub-modal nho hon sheet chinh, hien tu duoi len.
+const SelectRow = ({ label, valueLabel, options, selectedKey, onChange, active = false }) => {
+    const [open, setOpen] = useState(false);
+    return (
+        <>
+            <TouchableOpacity
+                style={[styles.selectRow, active && styles.selectRowActive]}
+                activeOpacity={0.7}
+                onPress={() => setOpen(true)}>
+                {!active && (
+                    <Text style={styles.selectRowLabel} numberOfLines={1}>{label}</Text>
+                )}
+                <View style={[styles.selectRowValueWrap, active && styles.selectRowValueWrapActive]}>
+                    <Text
+                        style={[styles.selectRowValue, active && styles.selectRowValueActive]}
+                        numberOfLines={1}>
+                        {valueLabel}
+                    </Text>
+                    <MaterialCommunityIcons name="chevron-down" size={20} color={active ? Colors.primary : Colors.textSecondary} />
+                </View>
+            </TouchableOpacity>
+
+            <Modal visible={open} transparent animationType="fade" onRequestClose={() => setOpen(false)}>
+                <Pressable style={styles.sheetOverlay} onPress={() => setOpen(false)} />
+                <View style={styles.subSheetContainer}>
+                    <View style={styles.sheetHandle} />
+                    <Text style={styles.sheetSectionTitle}>{label}</Text>
+                    <ScrollView showsVerticalScrollIndicator={false}>
+                        {options.map((option) => {
+                            const active = option.key === selectedKey;
+                            return (
+                                <TouchableOpacity
+                                    key={option.key === null ? '__null' : String(option.key)}
+                                    style={styles.sheetRow}
+                                    activeOpacity={0.7}
+                                    onPress={() => {
+                                        onChange(option.key);
+                                        setOpen(false);
+                                    }}>
+                                    <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>
+                                        {option.label}
+                                    </Text>
+                                    <View style={[styles.radio, active && styles.radioActive]}>
+                                        {active && <View style={styles.radioDot} />}
+                                    </View>
+                                </TouchableOpacity>
+                            );
+                        })}
+                    </ScrollView>
+                </View>
+            </Modal>
+        </>
+    );
+};
 
 const FilterSheet = ({
     visible,
     onClose,
     sortOptions,
     menus,
-    categories,
     chefs = [],
     menuId,
-    catId,
     chefId = null,
     ordering,
     priceMin,
@@ -23,7 +103,6 @@ const FilterSheet = ({
     prepMin,
     prepMax,
     onSelect,
-    onApplyRange,
 }) => {
 
     const formatChefName = (chef) => {
@@ -31,39 +110,47 @@ const FilterSheet = ({
         return full || chef.username;
     };
 
-    const [localPriceMin, setLocalPriceMin] = useState(toStr(priceMin));
-    const [localPriceMax, setLocalPriceMax] = useState(toStr(priceMax));
-    const [localPrepMin, setLocalPrepMin] = useState(toStr(prepMin));
-    const [localPrepMax, setLocalPrepMax] = useState(toStr(prepMax));
+    // Build options cho 4 SelectRow. "Tat ca" = key null.
+    const sortChoices = sortOptions.map((o) => ({ key: o.key, label: o.label }));
+    const currentSortLabel = sortChoices.find((o) => o.key === ordering)?.label || 'Mặc định';
 
-    useEffect(() => {
-        if (visible) {
-            setLocalPriceMin(toStr(priceMin));
-            setLocalPriceMax(toStr(priceMax));
-            setLocalPrepMin(toStr(prepMin));
-            setLocalPrepMax(toStr(prepMax));
-        }
-    }, [visible, priceMin, priceMax, prepMin, prepMax]);
+    const menuChoices = [
+        { key: null, label: 'Tất cả' },
+        ...menus.map((m) => ({ key: m.id, label: m.name })),
+    ];
+    const currentMenuLabel = menuChoices.find((o) => o.key === menuId)?.label || 'Tất cả';
 
-    const applyRanges = () => {
-        if (typeof onApplyRange === 'function') {
-            onApplyRange({
-                priceMin: localPriceMin || null,
-                priceMax: localPriceMax || null,
-                prepMin: localPrepMin || null,
-                prepMax: localPrepMax || null,
-            });
-        }
-    };
+    const chefChoices = [
+        { key: null, label: 'Tất cả' },
+        ...chefs.map((c) => ({ key: c.id, label: formatChefName(c) })),
+    ];
+    const currentChefLabel = chefChoices.find((o) => o.key === chefId)?.label || 'Tất cả';
 
-    const clearRanges = () => {
-        setLocalPriceMin('');
-        setLocalPriceMax('');
-        setLocalPrepMin('');
-        setLocalPrepMax('');
-        if (typeof onApplyRange === 'function') {
-            onApplyRange({ priceMin: null, priceMax: null, prepMin: null, prepMax: null });
-        }
+    const priceChoices = PRICE_BUCKETS.map((b) => ({ key: b.key, label: b.label }));
+    const currentPriceKey = findBucketKey(PRICE_BUCKETS, priceMin, priceMax) || 'all';
+    const currentPriceLabel = PRICE_BUCKETS.find((b) => b.key === currentPriceKey)?.label || 'Tùy chỉnh';
+
+    const prepChoices = PREP_BUCKETS.map((b) => ({ key: b.key, label: b.label }));
+    const currentPrepKey = findBucketKey(PREP_BUCKETS, prepMin, prepMax) || 'all';
+    const currentPrepLabel = PREP_BUCKETS.find((b) => b.key === currentPrepKey)?.label || 'Tùy chỉnh';
+
+    const orderingActive = !!ordering;
+    const priceActive = currentPriceKey !== 'all';
+    const prepActive = currentPrepKey !== 'all';
+    const menuActive = menuId !== null && menuId !== undefined;
+    const chefActive = chefId !== null && chefId !== undefined;
+    const hasAnyActive = orderingActive || priceActive || prepActive || menuActive || chefActive;
+
+    const clearAll = () => {
+        onSelect({
+            ordering: '',
+            priceMin: null,
+            priceMax: null,
+            prepMin: null,
+            prepMax: null,
+            menuId: null,
+            chefId: null,
+        });
     };
 
     return (
@@ -71,171 +158,79 @@ const FilterSheet = ({
             <Pressable style={styles.sheetOverlay} onPress={onClose} />
             <View style={styles.sheetContainer}>
                 <View style={styles.sheetHandle} />
+
+                <View style={styles.sheetTopBar}>
+                    <Text style={styles.sheetTitle}>Bộ lọc</Text>
+                    {hasAnyActive && (
+                        <TouchableOpacity onPress={clearAll} activeOpacity={0.7} style={styles.clearAllBtn}>
+                            <MaterialCommunityIcons name="close-circle-outline" size={16} color={Colors.onPrimary} />
+                            <Text style={styles.clearAllText}>Xóa bộ lọc</Text>
+                        </TouchableOpacity>
+                    )}
+                </View>
+
                 <ScrollView showsVerticalScrollIndicator={false}>
                     {sortOptions.length > 0 && (
-                        <View style={styles.sheetSection}>
-                            <Text style={styles.sheetSectionTitle}>Sắp xếp</Text>
-                            {sortOptions.map((option) => {
-                                const active = ordering === option.key;
-                                return (
-                                    <TouchableOpacity
-                                        key={option.key || 'default'}
-                                        style={styles.sheetRow}
-                                        activeOpacity={0.7}
-                                        onPress={() => onSelect({ ordering: option.key })}>
-                                        <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{option.label}</Text>
-                                        <View style={[styles.radio, active && styles.radioActive]}>
-                                            {active && <View style={styles.radioDot} />}
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                        <SelectRow
+                            label="Sắp xếp"
+                            valueLabel={currentSortLabel}
+                            options={sortChoices}
+                            selectedKey={ordering}
+                            onChange={(key) => onSelect({ ordering: key })}
+                            active={orderingActive}
+                        />
                     )}
-
-                    <View style={styles.sheetSection}>
-                        <Text style={styles.sheetSectionTitle}>Khoảng giá (đ)</Text>
-                        <View style={styles.rangeRow}>
-                            <TextInput
-                                mode="outlined"
-                                placeholder="Tối thiểu"
-                                value={localPriceMin}
-                                onChangeText={(v) => setLocalPriceMin(sanitizeNumberInput(v))}
-                                keyboardType="numeric"
-                                style={styles.rangeInput}
-                                outlineStyle={styles.rangeOutline}
-                                activeOutlineColor={Colors.primary}
-                                textColor={Colors.text}
-                            />
-                            <Text style={styles.rangeSeparator}>—</Text>
-                            <TextInput
-                                mode="outlined"
-                                placeholder="Tối đa"
-                                value={localPriceMax}
-                                onChangeText={(v) => setLocalPriceMax(sanitizeNumberInput(v))}
-                                keyboardType="numeric"
-                                style={styles.rangeInput}
-                                outlineStyle={styles.rangeOutline}
-                                activeOutlineColor={Colors.primary}
-                                textColor={Colors.text}
-                            />
-                        </View>
-                    </View>
-
-                    <View style={styles.sheetSection}>
-                        <Text style={styles.sheetSectionTitle}>Thời gian phục vụ (phút)</Text>
-                        <View style={styles.rangeRow}>
-                            <TextInput
-                                mode="outlined"
-                                placeholder="Tối thiểu"
-                                value={localPrepMin}
-                                onChangeText={(v) => setLocalPrepMin(sanitizeNumberInput(v))}
-                                keyboardType="numeric"
-                                style={styles.rangeInput}
-                                outlineStyle={styles.rangeOutline}
-                                activeOutlineColor={Colors.primary}
-                                textColor={Colors.text}
-                            />
-                            <Text style={styles.rangeSeparator}>—</Text>
-                            <TextInput
-                                mode="outlined"
-                                placeholder="Tối đa"
-                                value={localPrepMax}
-                                onChangeText={(v) => setLocalPrepMax(sanitizeNumberInput(v))}
-                                keyboardType="numeric"
-                                style={styles.rangeInput}
-                                outlineStyle={styles.rangeOutline}
-                                activeOutlineColor={Colors.primary}
-                                textColor={Colors.text}
-                            />
-                        </View>
-                        <View style={styles.rangeActions}>
-                            <Button
-                                mode="text"
-                                textColor={Colors.textSecondary}
-                                onPress={clearRanges}
-                                compact>
-                                Xóa khoảng lọc
-                            </Button>
-                            <Button
-                                mode="contained"
-                                buttonColor={Colors.primary}
-                                textColor={Colors.onPrimary}
-                                onPress={applyRanges}
-                                compact>
-                                Áp dụng
-                            </Button>
-                        </View>
-                    </View>
 
                     {menus.length > 0 && (
-                        <View style={styles.sheetSection}>
-                            <Text style={styles.sheetSectionTitle}>Thực đơn</Text>
-                            <TouchableOpacity style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ menuId: null })}>
-                                <Text style={[styles.sheetRowText, menuId === null && styles.sheetRowTextActive]}>Tất cả</Text>
-                                <View style={[styles.radio, menuId === null && styles.radioActive]}>
-                                    {menuId === null && <View style={styles.radioDot} />}
-                                </View>
-                            </TouchableOpacity>
-                            {menus.map((menu) => {
-                                const active = menuId === menu.id;
-                                return (
-                                    <TouchableOpacity key={menu.id} style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ menuId: menu.id })}>
-                                        <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{menu.name}</Text>
-                                        <View style={[styles.radio, active && styles.radioActive]}>
-                                            {active && <View style={styles.radioDot} />}
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
-                    )}
-
-                    {categories.length > 0 && (
-                        <View style={styles.sheetSection}>
-                            <Text style={styles.sheetSectionTitle}>Loại món</Text>
-                            <TouchableOpacity style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ catId: null })}>
-                                <Text style={[styles.sheetRowText, catId === null && styles.sheetRowTextActive]}>Tất cả</Text>
-                                <View style={[styles.radio, catId === null && styles.radioActive]}>
-                                    {catId === null && <View style={styles.radioDot} />}
-                                </View>
-                            </TouchableOpacity>
-                            {categories.map((category) => {
-                                const active = catId === category.id;
-                                return (
-                                    <TouchableOpacity key={category.id} style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ catId: category.id })}>
-                                        <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{category.name}</Text>
-                                        <View style={[styles.radio, active && styles.radioActive]}>
-                                            {active && <View style={styles.radioDot} />}
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                        <SelectRow
+                            label="Thực đơn"
+                            valueLabel={currentMenuLabel}
+                            options={menuChoices}
+                            selectedKey={menuId}
+                            onChange={(key) => onSelect({ menuId: key })}
+                            active={menuActive}
+                        />
                     )}
 
                     {chefs.length > 0 && (
-                        <View style={styles.sheetSection}>
-                            <Text style={styles.sheetSectionTitle}>Đầu bếp phụ trách</Text>
-                            <TouchableOpacity style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ chefId: null })}>
-                                <Text style={[styles.sheetRowText, chefId === null && styles.sheetRowTextActive]}>Tất cả</Text>
-                                <View style={[styles.radio, chefId === null && styles.radioActive]}>
-                                    {chefId === null && <View style={styles.radioDot} />}
-                                </View>
-                            </TouchableOpacity>
-                            {chefs.map((chef) => {
-                                const active = chefId === chef.id;
-                                return (
-                                    <TouchableOpacity key={chef.id} style={styles.sheetRow} activeOpacity={0.7} onPress={() => onSelect({ chefId: chef.id })}>
-                                        <Text style={[styles.sheetRowText, active && styles.sheetRowTextActive]}>{formatChefName(chef)}</Text>
-                                        <View style={[styles.radio, active && styles.radioActive]}>
-                                            {active && <View style={styles.radioDot} />}
-                                        </View>
-                                    </TouchableOpacity>
-                                );
-                            })}
-                        </View>
+                        <SelectRow
+                            label="Đầu bếp phụ trách"
+                            valueLabel={currentChefLabel}
+                            options={chefChoices}
+                            selectedKey={chefId}
+                            onChange={(key) => onSelect({ chefId: key })}
+                            active={chefActive}
+                        />
                     )}
+
+                    <View style={styles.dualRow}>
+                        <View style={styles.dualCol}>
+                            <SelectRow
+                                label="Khoảng giá"
+                                valueLabel={currentPriceLabel}
+                                options={priceChoices}
+                                selectedKey={currentPriceKey}
+                                onChange={(key) => {
+                                    const b = PRICE_BUCKETS.find((x) => x.key === key);
+                                    onSelect({ priceMin: b?.min ?? null, priceMax: b?.max ?? null });
+                                }}
+                                active={priceActive}
+                            />
+                        </View>
+                        <View style={styles.dualCol}>
+                            <SelectRow
+                                label="Thời gian"
+                                valueLabel={currentPrepLabel}
+                                options={prepChoices}
+                                selectedKey={currentPrepKey}
+                                onChange={(key) => {
+                                    const b = PREP_BUCKETS.find((x) => x.key === key);
+                                    onSelect({ prepMin: b?.min ?? null, prepMax: b?.max ?? null });
+                                }}
+                                active={prepActive}
+                            />
+                        </View>
+                    </View>
                 </ScrollView>
             </View>
         </Modal>

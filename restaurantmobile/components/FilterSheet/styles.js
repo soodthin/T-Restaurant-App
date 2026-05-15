@@ -43,11 +43,73 @@ const styles = StyleSheet.create({
     },
     radioActive: { borderColor: Colors.primary },
     radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary },
-    rangeRow: { flexDirection: 'row', alignItems: 'center', marginTop: 6 },
-    rangeInput: { flex: 1, backgroundColor: Colors.surfaceContainerLowest, height: 48 },
-    rangeOutline: { borderRadius: 14, borderColor: Colors.outline, borderWidth: 1.5 },
-    rangeSeparator: { marginHorizontal: 10, color: Colors.textSecondary, fontWeight: '700' },
-    rangeActions: { flexDirection: 'row', justifyContent: 'space-between', marginTop: 12 },
+    // Inline dropdown (thay list radio dai)
+    selectRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingVertical: 16,
+        paddingHorizontal: 16,
+        marginBottom: 12,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 14,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
+    },
+    selectRowLabel: { fontSize: 15, fontWeight: '700', color: Colors.text, flexShrink: 1 },
+    selectRowValueWrap: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        maxWidth: '60%',
+    },
+    selectRowValue: { fontSize: 14, color: Colors.primary, fontWeight: '600' },
+    selectRowActive: {
+        borderColor: Colors.primary,
+        borderWidth: 1.5,
+        backgroundColor: Colors.primary + '12',
+    },
+    // Khi active: an label, value wrap chiem het row de hien gia tri day du
+    selectRowValueWrapActive: {
+        flex: 1,
+        maxWidth: '100%',
+        justifyContent: 'space-between',
+    },
+    selectRowValueActive: { fontSize: 15, fontWeight: '700', flexShrink: 1 },
+
+    // 2-column row cho cap select rang gon (Khoang gia + Thoi gian)
+    dualRow: { flexDirection: 'row', gap: 10 },
+    dualCol: { flex: 1 },
+
+    // Top bar cua sheet (title + nut Xoa bo loc)
+    sheetTopBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 14,
+    },
+    sheetTitle: { fontSize: 18, fontWeight: '800', color: Colors.text },
+    clearAllBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 4,
+        paddingVertical: 7,
+        paddingHorizontal: 12,
+        borderRadius: 9999,
+        backgroundColor: Colors.primary,
+    },
+    clearAllText: { fontSize: 13, fontWeight: '700', color: Colors.onPrimary },
+
+    // Sub-modal cho dropdown — gioi han chieu cao 60% de tranh chen sheet chinh
+    subSheetContainer: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderTopLeftRadius: 28,
+        borderTopRightRadius: 28,
+        paddingHorizontal: 20,
+        paddingBottom: 40,
+        maxHeight: '60%',
+        marginTop: 'auto',
+    },
 });
 
 export default styles;

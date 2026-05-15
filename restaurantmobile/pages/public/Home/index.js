@@ -6,6 +6,7 @@ import {
     TouchableOpacity,
     Image,
     RefreshControl,
+    ScrollView,
 } from 'react-native';
 import { Searchbar, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -308,18 +309,46 @@ const Home = ({ navigation }) => {
                     elevation={0}
                 />
                 {!searchFocused &&
-                    <IconButton
-                        icon="tune-variant"
-                        mode="contained"
-                        containerColor={Colors.primary}
-                        iconColor={Colors.onPrimary}
-                        size={22}
-                        onPress={() => setShowFilters(true)}
-                        style={styles.filterBtn}
-                    />
+                    <View>
+                        <IconButton
+                            icon="tune-variant"
+                            mode="contained"
+                            containerColor={Colors.primary}
+                            iconColor={Colors.onPrimary}
+                            size={22}
+                            onPress={() => setShowFilters(true)}
+                            style={styles.filterBtn}
+                        />
+                        {(ordering || priceMin || priceMax || prepMin || prepMax || menuId || chefId) ? (
+                            <View pointerEvents="none" style={styles.filterDot} />
+                        ) : null}
+                    </View>
                 }
             </FadeIn>
 
+            {categories.length > 0 && (
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.categoryChipsRow}>
+                    {[{ id: null, name: 'Tất cả' }, ...categories].map((c) => {
+                        const active = catId === c.id;
+                        return (
+                            <TouchableOpacity
+                                key={c.id ?? '__all'}
+                                activeOpacity={0.85}
+                                onPress={() => refresh({ catId: c.id })}
+                                style={[styles.chip, active && styles.chipActive]}>
+                                <Text
+                                    numberOfLines={1}
+                                    style={[styles.chipText, active && styles.chipTextActive]}>
+                                    {c.name}
+                                </Text>
+                            </TouchableOpacity>
+                        );
+                    })}
+                </ScrollView>
+            )}
 
             {error ?
                 <View style={styles.errorCard}>
@@ -409,10 +438,8 @@ const Home = ({ navigation }) => {
                 onClose={() => setShowFilters(false)}
                 sortOptions={sortOptions}
                 menus={menus}
-                categories={categories}
                 chefs={chefs}
                 menuId={menuId}
-                catId={catId}
                 chefId={chefId}
                 ordering={ordering}
                 priceMin={priceMin}
@@ -420,10 +447,6 @@ const Home = ({ navigation }) => {
                 prepMin={prepMin}
                 prepMax={prepMax}
                 onSelect={(selection) => refresh(selection)}
-                onApplyRange={(range) => {
-                    refresh(range);
-                    setShowFilters(false);
-                }}
             />
 
             <Toast
