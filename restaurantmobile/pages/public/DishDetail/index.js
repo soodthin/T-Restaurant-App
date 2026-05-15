@@ -16,6 +16,7 @@ import Colors from '@styles/colors';
 import { Toast } from '@components/CustomDialog';
 import { useCart } from '@contexts/CartContext';
 import { stripHtml } from '@utils/format';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styles from './styles';
 
 const DishDetail = ({ route, navigation }) => {
@@ -31,6 +32,7 @@ const DishDetail = ({ route, navigation }) => {
     const [submittingReview, setSubmittingReview] = useState(false);
     const [error, setError] = useState('');
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const insets = useSafeAreaInsets();
 
     const showToast = (message, type = 'error') => {
         setToast({ visible: true, message, type });
@@ -190,19 +192,18 @@ const DishDetail = ({ route, navigation }) => {
                 ListHeaderComponent={
                     <View>
                         <View style={styles.heroWrap}>
+                            <View style={[styles.headerActions, { top: Math.max(insets.top, 16) + 10 }]}>
+                                <TouchableOpacity style={styles.actionBtn} onPress={() => navigation.goBack()}>
+                                    <MaterialCommunityIcons name="chevron-left" size={26} color={Colors.text} />
+                                </TouchableOpacity>
+                            </View>
+
                             {dish.image ?
                                 <FadeIn duration={500}><Image source={{ uri: dish.image }} style={styles.img} /></FadeIn> :
                                 <View style={[styles.img, styles.imagePlaceholder]}>
                                     <MaterialCommunityIcons name="food-variant" size={60} color={Colors.textSecondary} />
                                 </View>
                             }
-                            <View style={styles.ratingOverlay}>
-                                <MaterialCommunityIcons name="star" size={18} color={Colors.star} />
-                                <Text style={styles.ratingOverlayText}>
-                                    {dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'M\u1edbi'}
-                                </Text>
-                                <Text style={styles.ratingOverlaySub}> · {dish.review_count || 0}</Text>
-                            </View>
                         </View>
 
                         <FadeInUp delay={200} duration={400} style={styles.infoBox}>
@@ -211,123 +212,160 @@ const DishDetail = ({ route, navigation }) => {
                                 <Text style={styles.price}>{Number(dish.price).toLocaleString()}{`\u0111`}</Text>
                             </View>
 
+                            <View style={styles.quickStatsRow}>
+                                <View style={styles.ratingBadge}>
+                                    <MaterialCommunityIcons name="star" size={16} color={Colors.primary} />
+                                    <Text style={styles.ratingBadgeText}>{dish.avg_rating > 0 ? Number(dish.avg_rating).toFixed(1) : 'M\u1edbi'}</Text>
+                                    <Text style={styles.ratingBadgeSub}>({dish.review_count || 0})</Text>
+                                </View>
+                                <View style={styles.prepTimeBadge}>
+                                    <MaterialCommunityIcons name="clock-outline" size={16} color={Colors.textSecondary} />
+                                    <Text style={styles.prepTimeText}>{dish.preparation_time} phút</Text>
+                                </View>
+                            </View>
+
                             <Text style={styles.desc}>{cleanDescription || 'Nh\u00e0 h\u00e0ng ch\u01b0a c\u1eadp nh\u1eadt m\u00f4 t\u1ea3 cho m\u00f3n n\u00e0y.'}</Text>
 
-                            <View style={styles.tagRow}>
-                                <Chip
-                                    icon="clock-outline"
-                                    mode="flat"
-                                    compact
-                                    style={styles.tagChip}
-                                    textStyle={styles.tagChipText}>
-                                    {dish.preparation_time} {`ph\u00fat`}
-                                </Chip>
-                                <Chip
-                                    icon="chef-hat"
-                                    mode="flat"
-                                    compact
-                                    style={styles.tagChip}
-                                    textStyle={styles.tagChipText}>
-                                    {dish.chef_name || 'Nh\u00e0 h\u00e0ng'}
-                                </Chip>
-                            </View>
-                        </FadeInUp>
-
-                        <FadeInUp delay={300} duration={400} style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>{`Nguy\u00ean li\u1ec7u`}</Text>
-                            {ingredientsList.length > 0 ? (
-                                <View style={styles.ingredientGrid}>
-                                    {ingredientsList.map((item, idx) => (
-                                        <Chip
-                                            key={idx}
-                                            icon="leaf"
-                                            mode="outlined"
-                                            compact
-                                            style={styles.ingredientChip}
-                                            textStyle={styles.ingredientText}>
-                                            {item}
-                                        </Chip>
-                                    ))}
-                                </View>
-                            ) : (
-                                <Text style={styles.ingredients}>{`Th\u00f4ng tin nguy\u00ean li\u1ec7u \u0111ang \u0111\u01b0\u1ee3c c\u1eadp nh\u1eadt.`}</Text>
+                            {dish.chef && (
+                                <TouchableOpacity
+                                    style={styles.chatChefCard}
+                                    activeOpacity={currentUser && currentUser.role !== 'chef' ? 0.8 : 1}
+                                    onPress={() => {
+                                        if (currentUser && currentUser.role !== 'chef') {
+                                            navigation.navigate('ChatScreen', {
+                                                otherUser: {
+                                                    id: dish.chef,
+                                                    first_name: dish.chef_name || '',
+                                                    last_name: '',
+                                                    username: dish.chef_name || `Chef #${dish.chef}`,
+                                                    avatar: null,
+                                                    role: 'chef',
+                                                },
+                                            });
+                                        }
+                                    }}>
+                                    <View style={styles.chatChefInfo}>
+                                        <View style={styles.chatChefAvatar}>
+                                            <MaterialCommunityIcons name="chef-hat" size={24} color={Colors.primary} />
+                                        </View>
+                                        <View style={styles.chatChefText}>
+                                            <Text style={styles.chatChefTitle}>Đầu bếp đảm nhận</Text>
+                                            <Text style={styles.chatChefName} numberOfLines={1}>
+                                                {dish.chef_name || 'Nhà hàng'}
+                                            </Text>
+                                        </View>
+                                    </View>
+                                    
+                                    {currentUser && currentUser.role !== 'chef' && (
+                                        <View style={styles.chatChefAction}>
+                                            <MaterialCommunityIcons name="message-text-outline" size={20} color={Colors.onPrimary} />
+                                        </View>
+                                    )}
+                                </TouchableOpacity>
                             )}
-                        </FadeInUp>
 
-                        <FadeInUp delay={400} duration={400} style={styles.sectionCard}>
-                            <Text style={styles.sectionTitle}>
-                                {myReview ? '\u0110\u00e1nh gi\u00e1 c\u1ee7a b\u1ea1n' : 'Vi\u1ebft \u0111\u00e1nh gi\u00e1'}
-                            </Text>
-                            <View style={styles.starRow}>
-                                {[1, 2, 3, 4, 5].map((star) => (
-                                    <TouchableOpacity
-                                        key={star}
-                                        style={styles.starBtn}
-                                        onPress={() => setRating(star)}>
-                                        <MaterialCommunityIcons
-                                            name={star <= rating ? 'star' : 'star-outline'}
-                                            size={30}
-                                            color={Colors.star}
-                                        />
-                                    </TouchableOpacity>
-                                ))}
+                            <View style={styles.sectionContainer}>
+                                <Text style={styles.sectionTitle}>{`Nguyên liệu chính`}</Text>
+                                {ingredientsList.length > 0 ? (
+                                    <View style={styles.ingredientGrid}>
+                                        {ingredientsList.map((item, idx) => (
+                                            <View key={idx} style={styles.ingredientChip}>
+                                                <MaterialCommunityIcons name="leaf" size={14} color="#22c55e" />
+                                                <Text style={styles.ingredientText}>{item}</Text>
+                                            </View>
+                                        ))}
+                                    </View>
+                                ) : (
+                                    <Text style={styles.ingredients}>{`Thông tin nguyên liệu đang được cập nhật.`}</Text>
+                                )}
                             </View>
 
-                            <TextInput
-                                mode="outlined"
-                                placeholder={"Chia s\u1ebb c\u1ea3m nh\u1eadn c\u1ee7a b\u1ea1n v\u1ec1 m\u00f3n n\u00e0y..."}
-                                placeholderTextColor={Colors.placeholder}
-                                value={comment}
-                                onChangeText={setComment}
-                                multiline
-                                style={{ backgroundColor: Colors.surfaceContainerLowest, minHeight: 96 }}
-                                outlineStyle={{ borderRadius: 16, borderColor: Colors.outline, borderWidth: 1.5 }}
-                                activeOutlineColor={Colors.primary}
-                                textColor={Colors.text}
-                            />
+                            <View style={styles.divider} />
 
-                            {currentUser ?
-                                <Button
-                                    mode="contained"
-                                    icon="send"
-                                    onPress={submitReview}
-                                    disabled={submittingReview}
-                                    loading={submittingReview}
-                                    buttonColor={Colors.primary}
-                                    textColor={Colors.onPrimary}
-                                    style={{ borderRadius: 20, marginTop: 14 }}
-                                    labelStyle={{ fontWeight: '700', fontSize: 15 }}>
-                                    {myReview ? 'C\u1eadp nh\u1eadt \u0111\u00e1nh gi\u00e1' : 'G\u1eedi \u0111\u00e1nh gi\u00e1'}
-                                </Button> :
-                                <Button
-                                    mode="contained-tonal"
-                                    onPress={() => navigation.navigate('Login')}
-                                    style={{ borderRadius: 20, marginTop: 14 }}
-                                    labelStyle={{ fontWeight: '700', fontSize: 15 }}>
-                                    {`\u0110\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u00e1nh gi\u00e1 m\u00f3n n\u00e0y`}
-                                </Button>
-                            }
-                        </FadeInUp>
+                            <View style={styles.sectionContainer}>
+                                <Text style={styles.sectionTitle}>
+                                    {myReview ? '\u0110\u00e1nh gi\u00e1 c\u1ee7a b\u1ea1n' : 'Tr\u1ea3i nghi\u1ec7m c\u1ee7a b\u1ea1n?'}
+                                </Text>
+                                <View style={styles.writeReviewCard}>
+                                    <View style={styles.starRow}>
+                                        {[1, 2, 3, 4, 5].map((star) => (
+                                            <TouchableOpacity
+                                                key={star}
+                                                onPress={() => setRating(star)}>
+                                                <MaterialCommunityIcons
+                                                    name={star <= rating ? 'star' : 'star-outline'}
+                                                    size={32}
+                                                    color={star <= rating ? Colors.star : Colors.outline}
+                                                />
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
 
-                        <FadeInUp delay={500} duration={400} style={styles.reviewHeader}>
-                            <Text style={styles.sectionTitle}>{`\u0110\u00e1nh gi\u00e1 g\u1ea7n \u0111\u00e2y`} ({reviews.length})</Text>
+                                    <TextInput
+                                        mode="flat"
+                                        placeholder={"Chia s\u1ebb c\u1ea3m nh\u1eadn c\u1ee7a b\u1ea1n v\u1ec1 m\u00f3n n\u00e0y..."}
+                                        placeholderTextColor={Colors.placeholder}
+                                        value={comment}
+                                        onChangeText={setComment}
+                                        multiline
+                                        style={{ backgroundColor: Colors.surfaceContainerLow, minHeight: 96, borderRadius: 12 }}
+                                        underlineColor="transparent"
+                                        activeUnderlineColor="transparent"
+                                        textColor={Colors.text}
+                                    />
+
+                                    {currentUser ?
+                                        <Button
+                                            mode="contained"
+                                            onPress={submitReview}
+                                            disabled={submittingReview}
+                                            loading={submittingReview}
+                                            buttonColor={Colors.primary}
+                                            textColor={Colors.onPrimary}
+                                            style={{ borderRadius: 16, marginTop: 14 }}
+                                            labelStyle={{ fontWeight: '700', fontSize: 15 }}
+                                            contentStyle={{ paddingVertical: 6 }}>
+                                            {myReview ? 'C\u1eadp nh\u1eadt \u0111\u00e1nh gi\u00e1' : 'G\u1eedi \u0111\u00e1nh gi\u00e1'}
+                                        </Button> :
+                                        <Button
+                                            mode="contained-tonal"
+                                            onPress={() => navigation.navigate('Login')}
+                                            style={{ borderRadius: 16, marginTop: 14 }}
+                                            labelStyle={{ fontWeight: '700', fontSize: 15 }}
+                                            contentStyle={{ paddingVertical: 6 }}>
+                                            {`\u0110\u0103ng nh\u1eadp \u0111\u1ec3 \u0111\u00e1nh gi\u00e1 m\u00f3n n\u00e0y`}
+                                        </Button>
+                                    }
+                                </View>
+                            </View>
+
+                            <View style={[styles.sectionContainer, { marginTop: 24, paddingHorizontal: 4 }]}>
+                                <Text style={styles.sectionTitle}>{`\u0110\u00e1nh gi\u00e1 g\u1ea7n \u0111\u00e2y`} ({reviews.length})</Text>
+                            </View>
                         </FadeInUp>
                     </View>
                 }
                 renderItem={({ item, index }) => (
-                    <FadeInUp delay={index * 50} duration={300}>
+                    <FadeInUp delay={index * 50} duration={300} style={{ paddingHorizontal: 20 }}>
                         <View style={styles.reviewItem}>
                             <View style={styles.reviewTop}>
-                                <View style={{ flex: 1, paddingRight: 12 }}>
-                                    <Text style={styles.reviewAuthor}>
-                                        {item.customer_name || `Kh\u00e1ch #${item.customer}`}
-                                    </Text>
-                                    <Text style={styles.reviewDate}>
-                                        {new Date(item.created_date).toLocaleDateString('vi-VN')}
-                                    </Text>
+                                <View style={styles.reviewAuthorWrap}>
+                                    <View style={styles.reviewAvatar}>
+                                        <Text style={styles.reviewAvatarText}>
+                                            {(item.customer_name || `K`).charAt(0).toUpperCase()}
+                                        </Text>
+                                    </View>
+                                    <View>
+                                        <Text style={styles.reviewAuthor}>
+                                            {item.customer_name || `Kh\u00e1ch #${item.customer}`}
+                                        </Text>
+                                        <Text style={styles.reviewDate}>
+                                            {new Date(item.created_date).toLocaleDateString('vi-VN')}
+                                        </Text>
+                                    </View>
                                 </View>
                                 <View style={styles.reviewStarBadge}>
-                                    <MaterialCommunityIcons name="star" size={14} color={Colors.star} />
+                                    <MaterialCommunityIcons name="star" size={12} color={Colors.star} />
                                     <Text style={styles.reviewStarText}>{item.rating}</Text>
                                 </View>
                             </View>
@@ -341,12 +379,12 @@ const DishDetail = ({ route, navigation }) => {
                         <Text style={styles.emptyReviewText}>{`Ch\u01b0a c\u00f3 \u0111\u00e1nh gi\u00e1 n\u00e0o cho m\u00f3n n\u00e0y.`}</Text>
                     </View>
                 }
-                contentContainerStyle={{ paddingBottom: 100 }}
+                contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
             />
 
             {/* Chef khong dat hang nen an thanh cong cu them gio. */}
             {currentUser?.role !== 'chef' && (
-                <View style={styles.bottomBar}>
+                <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <View style={styles.stepper}>
                         <IconButton
                             icon="minus"
@@ -364,20 +402,20 @@ const DishDetail = ({ route, navigation }) => {
                             iconColor={Colors.text}
                         />
                     </View>
-                    <Button
-                        mode="contained"
-                        icon="cart-plus"
+                    <TouchableOpacity
+                        style={styles.cartBtn}
+                        activeOpacity={0.85}
                         onPress={() => {
                             addItem(dish, quantity);
-                            showToast(`\u0110\u00e3 th\u00eam ${quantity} ${dish.name} v\u00e0o gi\u1ecf`, 'success');
-                        }}
-                        buttonColor={Colors.primary}
-                        textColor={Colors.onPrimary}
-                        style={styles.cartBtn}
-                        labelStyle={{ fontWeight: '800', fontSize: 16 }}
-                        contentStyle={{ paddingVertical: 6 }}>
-                        {`Th\u00eam v\u00e0o gi\u1ecf`}
-                    </Button>
+                            showToast(`\u0110\u00e3 th\u00eam ${quantity} ph\u1ea7n v\u00e0o gi\u1ecf!`, 'success');
+                        }}>
+                        <MaterialCommunityIcons name="cart-outline" size={18} color={Colors.onPrimary} />
+                        <Text style={styles.cartBtnText}>Thêm vào giỏ</Text>
+                        <View style={styles.cartBtnDivider} />
+                        <Text style={styles.cartBtnPrice}>
+                            {(Number(dish.price) * quantity).toLocaleString()}đ
+                        </Text>
+                    </TouchableOpacity>
                 </View>
             )}
 

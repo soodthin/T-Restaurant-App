@@ -328,9 +328,9 @@ const MainScreen = ({ route, navigation }) => {
         <View style={{ flex: 1 }}>
             {tabContent}
             {showFab && (
-                <ChatFab
-                    onPress={() => navigation.navigate('ChatList')}
-                    unreadCount={unreadCount}
+                <ChatFab 
+                    onPress={() => navigation.navigate('ChatList')} 
+                    unreadCount={unreadCount} 
                 />
             )}
         </View>
@@ -370,7 +370,7 @@ const App = () => (
                     <Stack.Screen
                         name="DishDetail"
                         component={DishDetail}
-                        options={{ title: 'Chi tiết món ăn', ...stackScreenOptions }}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="RestaurantDetail"
