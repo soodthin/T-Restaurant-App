@@ -69,11 +69,14 @@ const tabOptions = {
     },
 };
 
-const CustomerTab = () => {
+const CUSTOMER_TABS = ['Home', 'Cart', 'Booking', 'Orders', 'Profile'];
+
+const CustomerTab = ({ initialRouteName = 'Home' }) => {
     const { totalItems } = useCart();
+    const initialTab = CUSTOMER_TABS.includes(initialRouteName) ? initialRouteName : 'Home';
 
     return (
-        <Tab.Navigator screenOptions={tabOptions}>
+        <Tab.Navigator initialRouteName={initialTab} screenOptions={tabOptions}>
             <Tab.Screen
                 name="Home"
                 component={Home}
@@ -295,6 +298,7 @@ const fabStyles = StyleSheet.create({
 
 const MainScreen = ({ route, navigation }) => {
     const role = route.params?.role || 'customer';
+    const initialScreen = route.params?.initialScreen || 'Home';
     const showFab = role !== 'guest';
     const [unreadCount, setUnreadCount] = useState(0);
 
@@ -318,7 +322,7 @@ const MainScreen = ({ route, navigation }) => {
         ? <ChefTab />
         : role === 'guest'
             ? <GuestTab />
-            : <CustomerTab />;
+            : <CustomerTab initialRouteName={initialScreen} />;
 
     return (
         <View style={{ flex: 1 }}>

@@ -28,8 +28,8 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const statusConfig = {
     pending: { label: 'Chờ xử lý', color: Colors.star, icon: 'clock-outline' },
-    paid: { label: 'Đã thanh toán', color: Colors.success, icon: 'cash-check' },
-    payment_failed: { label: 'Lỗi thanh toán', color: Colors.primary, icon: 'cash-remove' },
+    paid: { label: 'Đã xác nhận', color: Colors.success, icon: 'check-decagram' }, // Đổi từ "Đã thanh toán" để tránh trùng với Payment Status
+    payment_failed: { label: 'Hủy (Lỗi TT)', color: Colors.primary, icon: 'cash-remove' },
     preparing: { label: 'Đang chuẩn bị', color: Colors.tertiary, icon: 'chef-hat' },
     served: { label: 'Đã phục vụ', color: Colors.success, icon: 'check-circle-outline' },
     cancelled: { label: 'Đã hủy', color: Colors.primary, icon: 'close-circle-outline' },
@@ -40,7 +40,7 @@ const statusConfig = {
 const filterOptions = [
     { key: 'all', label: 'Tất cả' },
     { key: 'pending', label: 'Chờ xử lý' },
-    { key: 'paid', label: 'Đã thanh toán' },
+    { key: 'paid', label: 'Đã xác nhận' },
     { key: 'preparing', label: 'Đang chuẩn bị' },
     { key: 'served', label: 'Đã phục vụ' },
     { key: 'payment_failed', label: 'Lỗi thanh toán' },
@@ -59,6 +59,26 @@ const paymentStatusConfig = {
     failed: { label: 'Thanh toán lỗi', color: Colors.primary },
 };
 
+const retryPaymentMethods = [
+    { key: 'momo', label: 'MoMo', icon: 'wallet-outline' },
+    { key: 'stripe', label: 'Stripe', icon: 'credit-card-outline' },
+    { key: 'cash', label: 'Tiền mặt', icon: 'cash' },
+];
+
+const getRemainingSeconds = (expiresAt, now) => {
+    if (!expiresAt) return null;
+    const expiresAtMs = new Date(expiresAt).getTime();
+    if (Number.isNaN(expiresAtMs)) return null;
+    return Math.max(0, Math.ceil((expiresAtMs - now) / 1000));
+};
+
+const formatRemaining = (seconds) => {
+    if (seconds === null) return '';
+    const mins = Math.floor(seconds / 60).toString().padStart(2, '0');
+    const secs = (seconds % 60).toString().padStart(2, '0');
+    return `${mins}:${secs}`;
+};
+
 const formatDateTime = (iso) => {
     const d = new Date(iso);
     const date = d.toLocaleDateString('vi-VN');
@@ -66,14 +86,19 @@ const formatDateTime = (iso) => {
     return `${date} · ${time}`;
 };
 
-const OrderCard = ({ item, index }) => {
+const OrderCard = ({ item, index, now, onPayAgain, onChangeMethod, paying }) => {
     const [expanded, setExpanded] = useState(false);
     const status = statusConfig[item.status] || { label: item.status, color: Colors.textSecondary, icon: 'help-circle-outline' };
     const payment = paymentMethodConfig[item.payment_method] || { label: 'Chưa chọn', icon: 'credit-card-outline' };
     const payStatus = paymentStatusConfig[item.payment_status] || { label: 'Chưa ghi nhận', color: Colors.textSecondary };
     const isCancelled = item.status === 'cancelled' || item.status === 'payment_failed';
     const detailCount = item.details?.length || 0;
-
+    const isOnlinePayment = ['momo', 'stripe'].includes(item.payment_method);
+    const remainingSeconds = getRemainingSeconds(item.payment_expires_at, now);
+    const pendingOnline = isOnlinePayment && item.payment_status === 'pending';
+    const paymentExpired = pendingOnline && remainingSeconds !== null && remainingSeconds <= 0;
+    const canContinuePayment = pendingOnline && !paymentExpired && item.payment_pay_url;
+    const canChooseMethod = item.payment_status === 'failed' || paymentExpired;
     const toggleExpand = () => {
         LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
         setExpanded(prev => !prev);
@@ -116,6 +141,54 @@ const OrderCard = ({ item, index }) => {
                         </View>
                     </View>
                 </View>
+
+                {pendingOnline && remainingSeconds !== null && (
+                    <View style={styles.paymentTimerRow}>
+                        <MaterialCommunityIcons
+                            name={paymentExpired ? 'timer-off-outline' : 'timer-outline'}
+                            size={15}
+                            color={paymentExpired ? Colors.primary : Colors.star}
+                        />
+                        <Text style={styles.paymentTimerText}>
+                            {paymentExpired
+                                ? 'Phiên thanh toán đã hết hạn'
+                                : `Còn ${formatRemaining(remainingSeconds)} để tiếp tục thanh toán`}
+                        </Text>
+                    </View>
+                )}
+
+                {canContinuePayment && (
+                    <Button
+                        mode="contained-tonal"
+                        icon="credit-card-refresh-outline"
+                        onPress={() => onPayAgain(item)}
+                        loading={paying}
+                        disabled={paying}
+                        style={styles.paymentActionBtn}
+                        labelStyle={styles.paymentActionLabel}
+                    >
+                        Tiếp tục thanh toán
+                    </Button>
+                )}
+
+                {canChooseMethod && (
+                    <View style={styles.retryMethodBlock}>
+                        <Text style={styles.retryMethodTitle}>Thanh toán lại hoặc đổi phương thức</Text>
+                        <View style={styles.retryMethodRow}>
+                            {retryPaymentMethods.map((method) => (
+                                <TouchableOpacity
+                                    key={method.key}
+                                    activeOpacity={0.75}
+                                    disabled={paying}
+                                    onPress={() => onChangeMethod(item, method.key)}
+                                    style={styles.retryMethodChip}>
+                                    <MaterialCommunityIcons name={method.icon} size={15} color={Colors.primary} />
+                                    <Text style={styles.retryMethodText}>{method.label}</Text>
+                                </TouchableOpacity>
+                            ))}
+                        </View>
+                    </View>
+                )}
 
                 {/* Divider */}
                 {detailCount > 0 && <View style={styles.divider} />}
@@ -175,8 +248,14 @@ const Orders = ({ navigation }) => {
     const [error, setError] = useState('');
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [statusFilter, setStatusFilter] = useState('all');
+    const [payingOrderId, setPayingOrderId] = useState(null);
+    const [now, setNow] = useState(Date.now());
     const spinValue = useRef(new Animated.Value(0)).current;
     const spinAnim = useRef(null);
+
+    const showToast = (message, type = 'error') => {
+        setToast({ visible: true, message, type });
+    };
 
     const startSpin = () => {
         spinValue.setValue(0);
@@ -204,6 +283,11 @@ const Orders = ({ navigation }) => {
         else stopSpin();
         return () => stopSpin();
     }, [refreshing]);
+
+    useEffect(() => {
+        const timer = setInterval(() => setNow(Date.now()), 1000);
+        return () => clearInterval(timer);
+    }, []);
 
     const loadOrders = async (showLoading = true) => {
         if (showLoading) setLoading(true);
@@ -245,7 +329,79 @@ const Orders = ({ navigation }) => {
         ? orders
         : orders.filter((o) => o.status === statusFilter);
 
-    const renderOrder = ({ item, index }) => <OrderCard item={item} index={index} />;
+    const handlePaymentForOrder = async (order, methodOverride = null) => {
+        const selectedMethod = methodOverride || order.payment_method;
+        const isOnlineMethod = ['momo', 'stripe'].includes(selectedMethod);
+
+        if (!methodOverride && order.payment_status === 'pending' && order.payment_pay_url && order.payment_id) {
+            navigation.navigate('PaymentCheckout', {
+                payUrl: order.payment_pay_url,
+                paymentId: order.payment_id,
+                method: order.payment_method,
+                expiresAt: order.payment_expires_at,
+                deeplinkUrl: order.payment_deeplink_url,
+                qrCodeUrl: order.payment_qr_code_url,
+            });
+            return;
+        }
+
+        setPayingOrderId(order.id);
+        try {
+            const res = await authFetch(endpoints['payments'], {
+                method: 'POST',
+                body: JSON.stringify({
+                    order: order.id,
+                    method: selectedMethod,
+                }),
+            });
+
+            if (res.status === 401) {
+                await clearSession();
+                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                return;
+            }
+
+            if (!res.ok) {
+                showToast(getApiErrorMessage(res, 'Không thể khởi tạo lại thanh toán'));
+                return;
+            }
+
+            if (!isOnlineMethod) {
+                showToast('Đã đổi sang thanh toán tiền mặt.', 'success');
+                loadOrders(false);
+                return;
+            }
+
+            if (!res.data?.pay_url) {
+                showToast('Cổng thanh toán chưa trả về URL. Vui lòng thử lại sau.');
+                return;
+            }
+
+            navigation.navigate('PaymentCheckout', {
+                payUrl: res.data.pay_url,
+                paymentId: res.data.id,
+                method: res.data.method || selectedMethod,
+                expiresAt: res.data.expires_at,
+                deeplinkUrl: res.data.deeplink_url,
+                qrCodeUrl: res.data.qr_code_url,
+            });
+        } catch (err) {
+            showToast('Không thể khởi tạo lại thanh toán. Vui lòng thử lại.');
+        } finally {
+            setPayingOrderId(null);
+        }
+    };
+
+    const renderOrder = ({ item, index }) => (
+        <OrderCard
+            item={item}
+            index={index}
+            now={now}
+            onPayAgain={handlePaymentForOrder}
+            onChangeMethod={handlePaymentForOrder}
+            paying={payingOrderId === item.id}
+        />
+    );
 
     if (loading) {
         return <ActivityIndicator size="large" color={Colors.primary} style={{ flex: 1, backgroundColor: Colors.surface }} />;

@@ -108,7 +108,6 @@ const Cart = ({ navigation, route }) => {
                 body: JSON.stringify({
                     order: order.id,
                     method: paymentMethod,
-                    amount: totalAmount,
                 }),
             });
 
@@ -118,25 +117,43 @@ const Cart = ({ navigation, route }) => {
                 return;
             }
 
-            const paymentSaved = paymentRes.ok;
-
             // Online gateway (momo/stripe): BE tra ve pay_url → mo WebView de user thanh toan.
             // Khong show success dialog o day, PaymentCheckout se xu ly tiep.
             const isOnlineGateway = ['momo', 'stripe'].includes(paymentMethod);
-            if (paymentSaved && isOnlineGateway && paymentRes.data?.pay_url) {
+
+            if (!paymentRes.ok) {
+                const message = getApiErrorMessage(paymentRes, 'Không thể ghi nhận thanh toán');
+                if (isOnlineGateway && paymentRes.status >= 500) {
+                    clearCart();
+                    setSuccessMessage(
+                        `Đơn hàng đã được tạo nhưng chưa mở được cổng thanh toán. ${message}. Bạn có thể thanh toán lại trong mục Đơn hàng.`
+                    );
+                    setSuccessDialog(true);
+                    return;
+                }
+                showToast(message);
+                return;
+            }
+
+            if (isOnlineGateway) {
+                if (!paymentRes.data?.pay_url) {
+                    showToast('Cổng thanh toán chưa trả về URL. Vui lòng thử lại trong mục Đơn hàng.');
+                    return;
+                }
                 clearCart();
                 navigation.navigate('PaymentCheckout', {
                     payUrl: paymentRes.data.pay_url,
                     paymentId: paymentRes.data.id,
                     method: paymentMethod,
+                    expiresAt: paymentRes.data.expires_at,
+                    deeplinkUrl: paymentRes.data.deeplink_url,
+                    qrCodeUrl: paymentRes.data.qr_code_url,
                 });
                 return;
             }
 
             clearCart();
-            setSuccessMessage(paymentSaved
-                ? 'Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.'
-                : 'Đơn hàng đã được tạo, nhưng hệ thống chưa ghi nhận thanh toán. Bạn vẫn có thể xem đơn trong lịch sử.');
+            setSuccessMessage('Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.');
             setSuccessDialog(true);
         } catch (err) {
             showToast('Không thể hoàn tất đặt món. Vui lòng thử lại.');
@@ -281,6 +298,13 @@ const Cart = ({ navigation, route }) => {
                                 );
                             })}
                         </ScrollView>
+
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 8, paddingHorizontal: 4 }}>
+                            <MaterialCommunityIcons name="information-outline" size={14} color={Colors.textSecondary} />
+                            <Text style={{ fontSize: 11, color: Colors.textSecondary, flex: 1, lineHeight: 16 }}>
+                                Mô hình tự phục vụ: Vui lòng nhận món tại quầy hoặc thông báo nhân viên số bàn của bạn.
+                            </Text>
+                        </View>
 
                         <View style={styles.summaryBlock}>
                             <Text style={styles.summaryLabel}>Tổng thanh toán</Text>

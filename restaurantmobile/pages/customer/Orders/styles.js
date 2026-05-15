@@ -117,6 +117,60 @@ export default StyleSheet.create({
         letterSpacing: 0.4,
         textTransform: 'uppercase',
     },
+    paymentActionBtn: {
+        marginTop: 14,
+        borderRadius: 14,
+    },
+    paymentActionLabel: {
+        fontSize: 13,
+        fontWeight: '800',
+    },
+    paymentTimerRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        marginTop: 12,
+        paddingHorizontal: 10,
+        paddingVertical: 8,
+        borderRadius: 10,
+        backgroundColor: Colors.surfaceContainerLow,
+    },
+    paymentTimerText: {
+        flex: 1,
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.textSecondary,
+    },
+    retryMethodBlock: {
+        marginTop: 14,
+        gap: 8,
+    },
+    retryMethodTitle: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.text,
+    },
+    retryMethodRow: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        gap: 8,
+    },
+    retryMethodChip: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 6,
+        minHeight: 36,
+        paddingHorizontal: 11,
+        borderRadius: 10,
+        backgroundColor: Colors.primaryLight,
+        borderWidth: 1,
+        borderColor: Colors.primary + '50',
+    },
+    retryMethodText: {
+        fontSize: 12,
+        fontWeight: '800',
+        color: Colors.primary,
+    },
 
     // Divider
     divider: {
