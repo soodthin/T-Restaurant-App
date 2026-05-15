@@ -27,6 +27,7 @@ import ChefHome from '@pages/chef/ChefHome';
 import MyDishes from '@pages/chef/MyDishes';
 import CreateDish from '@pages/chef/CreateDish';
 import ChefReviews from '@pages/chef/ChefReviews';
+import ChefOrders from '@pages/chef/ChefOrders';
 import GuestPromptCard from '@components/GuestPromptCard';
 import Colors from '@styles/colors';
 import { editorialShadow, paperTheme } from '@styles/theme';
@@ -389,6 +390,11 @@ const App = () => (
                         name="MyReviews"
                         component={MyReviews}
                         options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="ChefOrders"
+                        component={ChefOrders}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="ChatList"

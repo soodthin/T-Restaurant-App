@@ -1,0 +1,132 @@
+import { StyleSheet } from 'react-native';
+import Colors from '@styles/colors';
+import { editorialShadow } from '@styles/theme';
+
+export default StyleSheet.create({
+    container: { flex: 1, backgroundColor: Colors.surface },
+    header: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: 10 },
+    headerRow: { flexDirection: 'row', alignItems: 'flex-end', gap: 12 },
+    headerTitle: { fontSize: 26, fontWeight: '800', color: Colors.text, letterSpacing: -0.3 },
+    headerSubtitle: { fontSize: 14, color: Colors.textSecondary, marginTop: 6, lineHeight: 20 },
+    refreshBtn: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLow,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    filterScroll: {
+        gap: 8,
+        paddingTop: 14,
+        paddingRight: 4,
+    },
+    filterChip: {
+        paddingHorizontal: 14,
+        paddingVertical: 8,
+        borderRadius: 9999,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: 'transparent',
+    },
+    filterChipActive: {
+        backgroundColor: Colors.primaryLight,
+        borderColor: Colors.primary,
+    },
+    filterChipText: {
+        fontSize: 12,
+        fontWeight: '700',
+        color: Colors.textSecondary,
+    },
+    filterChipTextActive: {
+        color: Colors.primary,
+    },
+    errorCard: {
+        marginHorizontal: 16,
+        marginTop: 16,
+        marginBottom: 4,
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderRadius: 20,
+        padding: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        ...editorialShadow,
+    },
+    errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
+
+    card: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        marginHorizontal: 16,
+        marginVertical: 6,
+        borderRadius: 24,
+        padding: 18,
+        ...editorialShadow,
+    },
+    cardCancelled: { opacity: 0.7 },
+
+    cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+    orderId: { fontSize: 18, fontWeight: '800', color: Colors.text, letterSpacing: -0.2 },
+    date: { fontSize: 12, color: Colors.textSecondary, marginTop: 4, fontWeight: '500' },
+    badge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 5,
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 9999,
+        marginLeft: 12,
+    },
+    badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.1 },
+
+    divider: {
+        height: 1,
+        backgroundColor: Colors.outlineVariant + '60',
+        marginTop: 14,
+    },
+
+    detailsCard: {
+        marginTop: 12,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 16,
+        padding: 12,
+        gap: 4,
+    },
+    detailRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        paddingVertical: 6,
+        gap: 10,
+    },
+    detailQtyBadge: {
+        backgroundColor: Colors.primaryLight,
+        minWidth: 28,
+        height: 24,
+        paddingHorizontal: 6,
+        borderRadius: 8,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    detailQtyText: { fontSize: 11, fontWeight: '800', color: Colors.primary },
+    detailItem: { flex: 1, fontSize: 13, color: Colors.text, fontWeight: '600' },
+    
+    actionBtn: {
+        marginTop: 16,
+        borderRadius: 14,
+    },
+    actionLabel: {
+        fontSize: 13,
+        fontWeight: '800',
+    },
+
+    empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
+    emptyIconCircle: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: Colors.primaryLight,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    emptyTitle: { fontSize: 22, fontWeight: '800', color: Colors.text, marginTop: 18 },
+    emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, lineHeight: 22, textAlign: 'center' },
+});

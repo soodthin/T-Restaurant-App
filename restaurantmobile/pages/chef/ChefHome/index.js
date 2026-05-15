@@ -457,9 +457,15 @@ const ChefHome = ({ navigation }) => {
                     {/* Items */}
                     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                         <SidebarItem
+                            icon="receipt"
+                            title="Quản lý đơn hàng"
+                            color={Colors.primary}
+                            onPress={navigateThen('ChefOrders')}
+                        />
+                        <SidebarItem
                             icon="silverware-fork-knife"
                             title="Quản lý món"
-                            color={Colors.primary}
+                            color={Colors.tertiary}
                             onPress={navigateThen('MyDishes')}
                         />
                         <SidebarItem
