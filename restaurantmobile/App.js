@@ -4,7 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { View } from 'react-native';
+import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useState, useEffect } from 'react';
 
 import Login from '@pages/auth/Login';
 import Register from '@pages/auth/Register';
@@ -18,6 +19,10 @@ import Orders from '@pages/customer/Orders';
 import MyReviews from '@pages/customer/MyReviews';
 import PaymentCheckout from '@pages/customer/PaymentCheckout';
 import Profile from '@pages/shared/Profile';
+import ChatList from '@pages/shared/ChatList';
+import ChatScreen from '@pages/shared/Chat';
+import { subscribeToTotalUnreadCount } from './configs/chatService';
+import { getStoredUser } from '@configs';
 import ChefHome from '@pages/chef/ChefHome';
 import MyDishes from '@pages/chef/MyDishes';
 import CreateDish from '@pages/chef/CreateDish';
@@ -235,11 +240,96 @@ const ChefTab = () => (
     </Tab.Navigator>
 );
 
-const MainScreen = ({ route }) => {
+const ChatFab = ({ onPress, unreadCount }) => (
+    <TouchableOpacity style={fabStyles.fab} activeOpacity={0.85} onPress={onPress}>
+        <MaterialCommunityIcons name="chat" size={24} color={Colors.onPrimary} />
+        {unreadCount > 0 && (
+            <View style={fabStyles.badge}>
+                <Text style={fabStyles.badgeText}>
+                    {unreadCount > 99 ? '99+' : unreadCount}
+                </Text>
+            </View>
+        )}
+    </TouchableOpacity>
+);
+
+const fabStyles = StyleSheet.create({
+    fab: {
+        position: 'absolute',
+        right: 18,
+        bottom: 88,
+        width: 54,
+        height: 54,
+        borderRadius: 27,
+        backgroundColor: Colors.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
+        elevation: 6,
+        shadowColor: '#271816',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.18,
+        shadowRadius: 8,
+        zIndex: 100,
+    },
+    badge: {
+        position: 'absolute',
+        top: -4,
+        right: -4,
+        backgroundColor: Colors.error,
+        minWidth: 20,
+        height: 20,
+        borderRadius: 10,
+        justifyContent: 'center',
+        alignItems: 'center',
+        paddingHorizontal: 4,
+        borderWidth: 2,
+        borderColor: Colors.surface,
+    },
+    badgeText: {
+        color: '#FFFFFF',
+        fontSize: 10,
+        fontWeight: '800',
+    },
+});
+
+const MainScreen = ({ route, navigation }) => {
     const role = route.params?.role || 'customer';
-    if (role === 'chef') return <ChefTab />;
-    if (role === 'guest') return <GuestTab />;
-    return <CustomerTab />;
+    const showFab = role !== 'guest';
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        let unsub = null;
+        if (showFab) {
+            getStoredUser().then((user) => {
+                if (user) {
+                    unsub = subscribeToTotalUnreadCount(user.id, user.role, (total) => {
+                        setUnreadCount(total);
+                    });
+                }
+            });
+        }
+        return () => {
+            if (unsub) unsub();
+        };
+    }, [showFab]);
+
+    const tabContent = role === 'chef'
+        ? <ChefTab />
+        : role === 'guest'
+            ? <GuestTab />
+            : <CustomerTab />;
+
+    return (
+        <View style={{ flex: 1 }}>
+            {tabContent}
+            {showFab && (
+                <ChatFab
+                    onPress={() => navigation.navigate('ChatList')}
+                    unreadCount={unreadCount}
+                />
+            )}
+        </View>
+    );
 };
 
 const stackScreenOptions = {
@@ -299,6 +389,16 @@ const App = () => (
                         name="MyReviews"
                         component={MyReviews}
                         options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="ChatList"
+                        component={ChatList}
+                        options={{ title: 'Tin nhắn', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="ChatScreen"
+                        component={ChatScreen}
+                        options={{ title: 'Chat', ...stackScreenOptions }}
                     />
                     <Stack.Screen
                         name="PaymentCheckout"
