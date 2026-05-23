@@ -24,6 +24,23 @@ class IsChef(permissions.BasePermission):
         return True
 
 
+class IsCustomer(permissions.BasePermission):
+    """
+    Chi khach hang moi duoc thuc hien cac thao tac dat ban, dat mon,
+    thanh toan va danh gia.
+    """
+
+    def has_permission(self, request, view):
+        user = request.user
+        if not user.is_authenticated:
+            return False
+        if getattr(user, 'role', None) != 'customer':
+            raise PermissionDenied(
+                'Chi tai khoan khach hang moi co quyen thuc hien thao tac nay.'
+            )
+        return True
+
+
 class IsOwner(permissions.BasePermission):
     """
     Chi chinh chu moi duoc sua/xoa; ai cung doc duoc (SAFE_METHODS).

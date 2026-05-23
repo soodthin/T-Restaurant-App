@@ -1,5 +1,5 @@
 from rest_framework import viewsets, generics, permissions, status, filters
-from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
 from django.db.models import Sum, F, Avg, Count, FloatField, Value, DecimalField
@@ -25,7 +25,7 @@ from .serializers import (
     OrderSerializer, OrderDetailSerializer,
     ReviewSerializer, PaymentSerializer
 )
-from .perms import IsChef, IsOwner
+from .perms import IsChef, IsCustomer, IsOwner
 from .paginators import ItemPaginator, ReviewPaginator
 
 
@@ -213,9 +213,11 @@ class DishViewSet(viewsets.ModelViewSet):
     serializer_class = DishSerializer
     pagination_class = ItemPaginator
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    # Search chi theo ten mon. Loc theo category/menu da co query param rieng
-    # (category_id, menu_id) o get_queryset.
-    search_fields = ['name']
+    # Search text theo ten mon/menu/loai/chef; filter ID van nam o get_queryset.
+    search_fields = [
+        'name', 'menu__name', 'category__name',
+        'chef__username', 'chef__first_name', 'chef__last_name',
+    ]
     ordering_fields = ['name', 'price', 'preparation_time', 'avg_rating']
 
     def get_permissions(self):
@@ -294,7 +296,16 @@ class DishViewSet(viewsets.ModelViewSet):
             return Response({'detail': 'Truyen tham so ids'},
                             status=status.HTTP_400_BAD_REQUEST)
         id_list = [int(i) for i in ids.split(',') if i.isdigit()]
-        dishes = self.get_queryset().filter(id__in=id_list)
+        if len(set(id_list)) < 2:
+            return Response({'detail': 'Can it nhat 2 mon de so sanh'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        dishes = list(self.get_queryset().filter(id__in=id_list))
+        if len(dishes) < 2:
+            return Response({'detail': 'Khong du mon hop le de so sanh'},
+                            status=status.HTTP_400_BAD_REQUEST)
+        if len({d.category_id for d in dishes}) > 1:
+            return Response({'detail': 'Chi so sanh cac mon cung loai'},
+                            status=status.HTTP_400_BAD_REQUEST)
         return Response(DishSerializer(dishes, many=True).data)
 
     @action(detail=False, methods=['get'], url_path='my-reviews',
@@ -332,6 +343,11 @@ class TableBookingViewSet(viewsets.ModelViewSet):
     pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
 
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsCustomer()]
+        return [permissions.IsAuthenticated()]
+
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
@@ -339,13 +355,16 @@ class TableBookingViewSet(viewsets.ModelViewSet):
         return TableBooking.objects.filter(customer=user)
 
 
-from django.db import models
-
 class OrderViewSet(viewsets.ModelViewSet):
     queryset = Order.objects.all()
     serializer_class = OrderSerializer
     pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action in ['create', 'add_detail']:
+            return [IsCustomer()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user
@@ -433,11 +452,11 @@ class ReviewViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve']:
             return [permissions.AllowAny()]
         if self.action in ['update', 'partial_update', 'destroy']:
-            return [permissions.IsAuthenticated(), IsOwner()]
-        return [permissions.IsAuthenticated()]
+            return [IsCustomer(), IsOwner()]
+        return [IsCustomer()]
 
     @action(detail=False, methods=['get'], url_path='mine',
-            permission_classes=[permissions.IsAuthenticated])
+            permission_classes=[IsCustomer])
     def mine(self, request):
         # Tat ca review do user hien tai da viet, kem ten + anh mon de FE hien thi.
         reviews = Review.objects.filter(
@@ -466,6 +485,13 @@ class PaymentViewSet(viewsets.ModelViewSet):
     serializer_class = PaymentSerializer
     pagination_class = ItemPaginator
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_permissions(self):
+        if self.action == 'create':
+            return [IsCustomer()]
+        if self.action in ['update', 'partial_update', 'destroy']:
+            return [permissions.IsAdminUser()]
+        return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
         user = self.request.user

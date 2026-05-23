@@ -20,6 +20,11 @@ from .models import (
 PHONE_RE = re.compile(r'^\+?\d{9,15}$')
 USERNAME_RE = re.compile(r'^[A-Za-z0-9_.]{3,30}$')
 ALLOWED_ROLES = {'admin', 'chef', 'customer'}
+REGISTER_ROLES = {'chef', 'customer'}
+
+
+def has_plain_text(value):
+    return bool(re.sub(r'<[^>]+>', '', str(value or '')).strip())
 
 
 class UserSerializer(ModelSerializer):
@@ -59,12 +64,23 @@ class UserSerializer(ModelSerializer):
 
     def validate_phone(self, value):
         if value in (None, ''):
-            return value
+            raise serializers.ValidationError(
+                'So dien thoai khong duoc de trong.')
         cleaned = re.sub(r'\s+', '', value)
         if not PHONE_RE.match(cleaned):
             raise serializers.ValidationError(
                 'Số điện thoại phải gồm 9-15 chữ số, có thể bắt đầu bằng "+".')
         return cleaned
+
+    def validate_address(self, value):
+        if value is None:
+            raise serializers.ValidationError(
+                'Dia chi lien he khong duoc de trong.')
+        value = value.strip()
+        if len(value) < 5:
+            raise serializers.ValidationError(
+                'Dia chi lien he phai co it nhat 5 ky tu.')
+        return value
 
     def validate_password(self, value):
         if value is None:
@@ -76,7 +92,16 @@ class UserSerializer(ModelSerializer):
     def validate_role(self, value):
         if value and value not in ALLOWED_ROLES:
             raise serializers.ValidationError('Vai trò không hợp lệ.')
-        return value or 'customer'
+        role = value or 'customer'
+        request = self.context.get('request')
+        if self.instance is None and role not in REGISTER_ROLES:
+            raise serializers.ValidationError(
+                'Chi duoc dang ky tai khoan khach hang hoac dau bep.')
+        if self.instance is not None and role != self.instance.role:
+            if not request or not request.user.is_staff:
+                raise serializers.ValidationError(
+                    'Khong duoc tu thay doi vai tro tai khoan.')
+        return role
 
     def validate_first_name(self, value):
         if not (value or '').strip():
@@ -87,6 +112,25 @@ class UserSerializer(ModelSerializer):
         if not (value or '').strip():
             raise serializers.ValidationError('Tên không được để trống.')
         return value.strip()
+
+    def validate(self, attrs):
+        if self.instance is None:
+            errors = {}
+            required_fields = {
+                'first_name': 'Ho khong duoc de trong.',
+                'last_name': 'Ten khong duoc de trong.',
+                'email': 'Email khong duoc de trong.',
+                'password': 'Mat khau khong duoc de trong.',
+                'phone': 'So dien thoai khong duoc de trong.',
+                'address': 'Dia chi lien he khong duoc de trong.',
+                'avatar': 'Anh dai dien khong duoc de trong.',
+            }
+            for field, message in required_fields.items():
+                if not attrs.get(field):
+                    errors[field] = message
+            if errors:
+                raise serializers.ValidationError(errors)
+        return attrs
 
     def create(self, validated_data):
         data = validated_data.copy()
@@ -173,6 +217,35 @@ class DishSerializer(ModelSerializer):
                 'Thời gian chuẩn bị tối đa 1440 phút (1 ngày).')
         return value
 
+    def validate_description(self, value):
+        if not has_plain_text(value):
+            raise serializers.ValidationError('Mo ta mon an khong duoc de trong.')
+        return value.strip()
+
+    def validate_ingredients(self, value):
+        if not (value or '').strip():
+            raise serializers.ValidationError('Nguyen lieu khong duoc de trong.')
+        return value.strip()
+
+    def validate(self, attrs):
+        errors = {}
+        image = attrs.get('image') or (self.instance.image if self.instance else None)
+        description = attrs.get('description') if 'description' in attrs else (
+            self.instance.description if self.instance else None
+        )
+        ingredients = attrs.get('ingredients') if 'ingredients' in attrs else (
+            self.instance.ingredients if self.instance else None
+        )
+        if not image:
+            errors['image'] = 'Hinh anh minh hoa khong duoc de trong.'
+        if not has_plain_text(description):
+            errors['description'] = 'Mo ta mon an khong duoc de trong.'
+        if not (ingredients or '').strip():
+            errors['ingredients'] = 'Nguyen lieu khong duoc de trong.'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
     def create(self, validated_data):
         validated_data['chef'] = self.context['request'].user
         # Mon moi LUON tao voi active=False de cho admin duyet noi dung truoc khi hien thi
@@ -237,6 +310,11 @@ class TableBookingSerializer(ModelSerializer):
         if self.instance and 'status' in attrs:
             current = self.instance.status
             new = attrs['status']
+            request = self.context.get('request')
+            if request and not request.user.is_staff and new != current:
+                if not (current == 'pending' and new == 'cancelled'):
+                    raise serializers.ValidationError(
+                        {'status': 'Khach hang chi duoc huy lich dang cho.'})
             allowed = {
                 'pending': {'confirmed', 'cancelled'},
                 'confirmed': {'completed', 'cancelled'},
@@ -325,6 +403,18 @@ class OrderSerializer(ModelSerializer):
         if self.instance and 'status' in attrs:
             current = self.instance.status
             new = attrs['status']
+            request = self.context.get('request')
+            if request and not request.user.is_staff and new != current:
+                customer_allowed = {
+                    'pending': {'cancelled'},
+                    'payment_failed': {'cancelled'},
+                }
+                if getattr(request.user, 'role', None) != 'customer':
+                    raise serializers.ValidationError(
+                        {'status': 'Khong co quyen cap nhat trang thai don hang.'})
+                if new not in customer_allowed.get(current, set()):
+                    raise serializers.ValidationError(
+                        {'status': 'Khach hang chi duoc huy don dang cho hoac thanh toan loi.'})
             allowed = {
                 'pending': {'preparing', 'cancelled'},
                 'paid': {'preparing', 'cancelled'},
