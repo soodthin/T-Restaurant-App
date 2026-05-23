@@ -36,6 +36,8 @@ variables:
   order_id: ""
   review_id: ""
   payment_id: ""
+  compare_ids: ""
+  sample_image_path: 'D:\Project\T-Restaurant-App\docs\stitch\kh_m_ph_m_th_c\screen.png'
 scripts:
   - type: http:beforeRequest
     code: |-

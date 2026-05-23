@@ -1,0 +1,36 @@
+$kind: http-request
+url: "{{base_url}}/api/dishes/"
+method: POST
+body:
+  type: formdata
+  content:
+    - type: text
+      key: name
+      value: Mon thieu anh {{$timestamp}}
+    - type: text
+      key: description
+      value: Mo ta hop le
+    - type: text
+      key: price
+      value: "65000"
+    - type: text
+      key: ingredients
+      value: Bun, thit bo, sa
+    - type: text
+      key: preparation_time
+      value: "25"
+    - type: text
+      key: menu
+      value: "{{menu_id}}"
+    - type: text
+      key: category
+      value: "{{category_id}}"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 400', () => pm.response.to.have.status(400));
+      pm.test('Bao loi image', () => {
+          pm.expect(JSON.stringify(pm.response.json())).to.include('image');
+      });
+    language: text/javascript
+order: 7100

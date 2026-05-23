@@ -16,5 +16,15 @@ scripts:
           pm.test('Có review_count', () => pm.expect(d).to.have.property('review_count'));
           pm.collectionVariables.set('dish_id', d.id);
       }
+      const byCategory = {};
+      items.forEach((d) => {
+          if (!d.category) return;
+          byCategory[d.category] = byCategory[d.category] || [];
+          byCategory[d.category].push(d.id);
+      });
+      const sameCategoryIds = Object.values(byCategory).find((ids) => ids.length >= 2);
+      if (sameCategoryIds) {
+          pm.collectionVariables.set('compare_ids', sameCategoryIds.slice(0, 3).join(','));
+      }
     language: text/javascript
 order: 1000

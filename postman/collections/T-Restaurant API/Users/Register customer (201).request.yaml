@@ -28,6 +28,9 @@ body:
     - type: text
       key: address
       value: 123 Test street
+    - type: file
+      key: avatar
+      src: "{{sample_image_path}}"
 auth:
   type: noauth
 scripts:
@@ -37,6 +40,11 @@ scripts:
       const body = pm.response.json();
       pm.test('Trả id', () => pm.expect(body).to.have.property('id'));
       pm.test('Role = customer', () => pm.expect(body.role).to.eql('customer'));
+      pm.test('Co thong tin lien he va avatar', () => {
+          pm.expect(body.phone).to.not.be.empty;
+          pm.expect(body.address).to.not.be.empty;
+          pm.expect(body.avatar).to.not.be.empty;
+      });
       pm.test('Không lộ password', () => pm.expect(body).to.not.have.property('password'));
       pm.collectionVariables.set('user_id', body.id);
     language: text/javascript

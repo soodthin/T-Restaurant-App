@@ -22,6 +22,15 @@ body:
     - type: text
       key: role
       value: chef
+    - type: text
+      key: phone
+      value: "0900000002"
+    - type: text
+      key: address
+      value: 456 Chef street
+    - type: file
+      key: avatar
+      src: "{{sample_image_path}}"
 auth:
   type: noauth
 scripts:
@@ -30,6 +39,11 @@ scripts:
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Role = chef', () => pm.expect(body.role).to.eql('chef'));
+      pm.test('Co thong tin lien he va avatar', () => {
+          pm.expect(body.phone).to.not.be.empty;
+          pm.expect(body.address).to.not.be.empty;
+          pm.expect(body.avatar).to.not.be.empty;
+      });
       pm.test('Chef mặc định chưa verify', () => pm.expect(body.is_verified).to.eql(false));
     language: text/javascript
 order: 2000

@@ -25,12 +25,20 @@ body:
     - type: text
       key: category
       value: "{{category_id}}"
+    - type: file
+      key: image
+      src: "{{sample_image_path}}"
 scripts:
   - type: afterResponse
     code: |-
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Chef được set tự động', () => pm.expect(body.chef).to.not.be.null);
+      pm.test('Mon co du thong tin bat buoc', () => {
+          pm.expect(body.image).to.not.be.empty;
+          pm.expect(body.description).to.not.be.empty;
+          pm.expect(body.ingredients).to.not.be.empty;
+      });
       pm.collectionVariables.set('dish_id', body.id);
     language: text/javascript
 order: 7000

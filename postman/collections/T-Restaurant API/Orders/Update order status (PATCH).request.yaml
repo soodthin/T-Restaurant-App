@@ -7,12 +7,12 @@ body:
   type: text
   content: |-
     {
-        "status": "preparing"
+        "status": "cancelled"
     }
 scripts:
   - type: afterResponse
     code: |-
       pm.test('Status 200', () => pm.response.to.have.status(200));
-      pm.test('Status = preparing', () => pm.expect(pm.response.json().status).to.eql('preparing'));
+      pm.test('Status = cancelled', () => pm.expect(pm.response.json().status).to.eql('cancelled'));
     language: text/javascript
 order: 6000
