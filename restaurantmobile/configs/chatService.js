@@ -24,6 +24,15 @@ import { database } from './firebaseConfig';
 export const getChatRoomId = (customerId, chefId) =>
     `customer_${customerId}_chef_${chefId}`;
 
+const isChatRole = (role) => role === 'customer' || role === 'chef';
+
+const isCustomerChefPair = (currentUser, otherUser) =>
+    currentUser?.id &&
+    otherUser?.id &&
+    isChatRole(currentUser.role) &&
+    isChatRole(otherUser.role) &&
+    currentUser.role !== otherUser.role;
+
 /**
  * Tao hoac lay phong chat giua 2 user.
  * @param {Object} currentUser - user hien tai (co id, first_name, last_name, avatar, role)
@@ -31,6 +40,9 @@ export const getChatRoomId = (customerId, chefId) =>
  * @returns {string} roomId
  */
 export const getOrCreateChatRoom = async (currentUser, otherUser) => {
+    if (!isCustomerChefPair(currentUser, otherUser)) {
+        throw new Error('Chat chi ho tro giua khach hang va dau bep.');
+    }
     const isCustomer = currentUser.role === 'customer';
     const customerId = isCustomer ? currentUser.id : otherUser.id;
     const chefId = isCustomer ? otherUser.id : currentUser.id;
@@ -77,6 +89,9 @@ export const getOrCreateChatRoom = async (currentUser, otherUser) => {
 export const sendMessage = async (roomId, senderId, senderRole, text) => {
     const trimmed = (text || '').trim();
     if (!trimmed) return;
+    if (!isChatRole(senderRole)) {
+        throw new Error('Vai tro gui tin nhan khong hop le.');
+    }
 
     const messagesRef = ref(database, `chatRooms/${roomId}/messages`);
     const newMsgRef = push(messagesRef);
@@ -162,6 +177,10 @@ export const subscribeToMessages = (roomId, callback) => {
  * @returns {Function} unsubscribe
  */
 export const subscribeToChatRooms = (userId, role, callback) => {
+    if (!isChatRole(role)) {
+        callback([]);
+        return () => {};
+    }
     const roomsRef = ref(database, 'chatRooms');
 
     const unsub = onValue(roomsRef, (snapshot) => {
@@ -200,6 +219,10 @@ export const subscribeToChatRooms = (userId, role, callback) => {
  * Tinh tong so tin nhan chua doc cua tat ca cac phong.
  */
 export const subscribeToTotalUnreadCount = (userId, role, callback) => {
+    if (!isChatRole(role)) {
+        callback(0);
+        return () => {};
+    }
     const roomsRef = ref(database, 'chatRooms');
 
     const unsub = onValue(roomsRef, (snapshot) => {
@@ -235,6 +258,7 @@ export const subscribeToTotalUnreadCount = (userId, role, callback) => {
  * Reset so tin nhan chua doc cua 1 phong khi user vao xem.
  */
 export const resetUnreadCount = async (roomId, role) => {
+    if (!isChatRole(role)) return;
     const infoRef = ref(database, `chatRooms/${roomId}/info`);
     const snapshot = await get(infoRef);
     if (snapshot.exists()) {

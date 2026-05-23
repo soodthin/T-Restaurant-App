@@ -299,7 +299,7 @@ const fabStyles = StyleSheet.create({
 const MainScreen = ({ route, navigation }) => {
     const role = route.params?.role || 'customer';
     const initialScreen = route.params?.initialScreen || 'Home';
-    const showFab = role !== 'guest';
+    const showFab = role === 'customer' || role === 'chef';
     const [unreadCount, setUnreadCount] = useState(0);
 
     useEffect(() => {

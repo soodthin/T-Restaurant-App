@@ -238,6 +238,12 @@ const Home = ({ navigation }) => {
             if (prev.includes(dishId)) {
                 return prev.filter((id) => id !== dishId);
             }
+            const nextDish = dishes.find((dish) => dish.id === dishId);
+            const firstDish = dishes.find((dish) => dish.id === prev[0]);
+            if (firstDish && nextDish && firstDish.category !== nextDish.category) {
+                showToast('Chỉ so sánh các món cùng loại', 'error');
+                return prev;
+            }
             if (prev.length >= 3) {
                 showToast('Ch\u1ec9 n\u00ean so s\u00e1nh t\u1ed1i \u0111a 3 m\u00f3n c\u00f9ng l\u00fac', 'error');
                 return prev;

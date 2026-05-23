@@ -161,8 +161,17 @@ const CreateDish = ({ navigation, route }) => {
         if (dish.name.trim().length < 3) {
             nextErrors.name = 'Tên món cần có ít nhất 3 ký tự.';
         }
+        if (!dish.description.trim()) {
+            nextErrors.description = 'Mô tả món ăn không được để trống.';
+        }
+        if (!image && !editingDish?.image) {
+            nextErrors.image = 'Hãy chọn hình ảnh minh họa cho món ăn.';
+        }
         if (!dish.price || Number(dish.price) <= 0) {
             nextErrors.price = 'Giá món phải lớn hơn 0.';
+        }
+        if (parseIngredients(dish.ingredients).length === 0) {
+            nextErrors.ingredients = 'Hãy thêm ít nhất một nguyên liệu.';
         }
         if (!dish.preparation_time || Number(dish.preparation_time) <= 0) {
             nextErrors.preparation_time = 'Thời gian chuẩn bị phải lớn hơn 0 phút.';
@@ -190,6 +199,7 @@ const CreateDish = ({ navigation, route }) => {
 
         if (!result.canceled) {
             setImage(result.assets[0]);
+            setFieldErrors((prev) => ({ ...prev, image: '' }));
         }
     };
 
@@ -357,6 +367,7 @@ const CreateDish = ({ navigation, route }) => {
                         </View>
                     }
                 </TouchableOpacity>
+                {fieldErrors.image ? <Text style={styles.errorText}>{fieldErrors.image}</Text> : null}
 
                 {/* Section card: Thông tin chính */}
                 <View style={styles.sectionCard}>
@@ -385,6 +396,7 @@ const CreateDish = ({ navigation, route }) => {
                         placeholderTextColor={Colors.placeholder}
                         value={dish.description}
                         onChangeText={(value) => changeField('description', value)}
+                        error={!!fieldErrors.description}
                         multiline
                         numberOfLines={4}
                         outlineStyle={outlineStyle}
@@ -392,6 +404,7 @@ const CreateDish = ({ navigation, route }) => {
                         activeOutlineColor={Colors.primary}
                         textColor={Colors.text}
                     />
+                    {fieldErrors.description ? <Text style={styles.errorText}>{fieldErrors.description}</Text> : null}
 
                     <View style={styles.row}>
                         <View style={styles.halfField}>
@@ -465,6 +478,7 @@ const CreateDish = ({ navigation, route }) => {
                         value={ingredientInput}
                         onChangeText={setIngredientInput}
                         onSubmitEditing={addIngredient}
+                        error={!!fieldErrors.ingredients}
                         returnKeyType="done"
                         blurOnSubmit={false}
                         outlineStyle={outlineStyle}
@@ -479,6 +493,7 @@ const CreateDish = ({ navigation, route }) => {
                             />
                         }
                     />
+                    {fieldErrors.ingredients ? <Text style={styles.errorText}>{fieldErrors.ingredients}</Text> : null}
                     <Text style={styles.ingredientHint}>
                         Nhập từng nguyên liệu rồi bấm dấu <Text style={{ fontWeight: '800' }}>+</Text> hoặc Enter để thêm.
                     </Text>
