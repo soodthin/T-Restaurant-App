@@ -159,8 +159,8 @@ class UserViewSet(viewsets.ViewSet, generics.CreateAPIView,
     @action(detail=False, methods=['get'], url_path='chefs',
             permission_classes=[permissions.AllowAny])
     def chefs(self, request):
-        # Danh sach dau bep da duyet, de FE lam filter "dau bep phu trach"
-        # tren trang kham pha. Tra it field cho nhe payload.
+
+
         qs = User.objects.filter(role='chef', is_verified=True, is_active=True).order_by('first_name', 'last_name', 'username')
         data = [
             {
@@ -213,7 +213,7 @@ class DishViewSet(viewsets.ModelViewSet):
     serializer_class = DishSerializer
     pagination_class = ItemPaginator
     filter_backends = [filters.SearchFilter, filters.OrderingFilter]
-    # Search text theo ten mon/menu/loai/chef; filter ID van nam o get_queryset.
+
     search_fields = [
         'name', 'menu__name', 'category__name',
         'chef__username', 'chef__first_name', 'chef__last_name',
@@ -224,7 +224,7 @@ class DishViewSet(viewsets.ModelViewSet):
         if self.action in ['list', 'retrieve', 'reviews', 'compare']:
             return [permissions.AllowAny()]
         if self.action in ['update', 'partial_update', 'destroy']:
-            # Chef da duyet va dung la chu cua mon do.
+
             return [IsChef(), IsOwner()]
         return [IsChef()]
 
@@ -234,8 +234,8 @@ class DishViewSet(viewsets.ModelViewSet):
             avg_rating=Coalesce(Avg('reviews__rating'), Value(0.0), output_field=FloatField()),
             review_count=Count('reviews', distinct=True),
         )
-        # Chef can thay ca mon active=False khi (a) ?my=true hoac (b) PATCH/DELETE
-        # mon cua minh. Cac context khac chi tra ve mon active=True.
+
+
         is_chef_owner_action = (
             user.is_authenticated
             and getattr(user, 'role', None) == 'chef'
@@ -247,32 +247,32 @@ class DishViewSet(viewsets.ModelViewSet):
         if not is_chef_owner_action:
             qs = qs.filter(active=True)
         params = self.request.query_params
-        # loc theo category_id neu co truyen
+
         cat_id = params.get('category_id')
         if cat_id:
             qs = qs.filter(category_id=cat_id)
         menu_id = params.get('menu_id')
         if menu_id:
             qs = qs.filter(menu_id=menu_id)
-        # loc theo khoang gia
+
         price_min = params.get('price_min')
         if price_min:
             qs = qs.filter(price__gte=price_min)
         price_max = params.get('price_max')
         if price_max:
             qs = qs.filter(price__lte=price_max)
-        # loc theo thoi gian chuan bi (phut)
+
         prep_min = params.get('prep_min')
         if prep_min:
             qs = qs.filter(preparation_time__gte=prep_min)
         prep_max = params.get('prep_max')
         if prep_max:
             qs = qs.filter(preparation_time__lte=prep_max)
-        # loc theo dau bep phu trach (de tai yeu cau)
+
         chef_id = params.get('chef_id')
         if chef_id:
             qs = qs.filter(chef_id=chef_id)
-        # neu la chef dang dang nhap, chi hien mon cua chef do
+
         if (self.request.user.is_authenticated
                 and self.request.user.role == 'chef'
                 and self.action == 'list'
@@ -311,22 +311,22 @@ class DishViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='my-reviews',
             permission_classes=[IsChef])
     def my_reviews(self, request):
-        # Tat ca review cho cac mon do chef hien tai phu trach.
+
         reviews = Review.objects.filter(
             dish__chef=request.user
         ).select_related('customer', 'dish').order_by('-created_date')
-        # loc theo so sao chinh xac (1..5)
+
         rating = request.query_params.get('rating')
         if rating and rating.isdigit():
             reviews = reviews.filter(rating=int(rating))
-        # loc theo mon cu the cua chef
+
         dish_id = request.query_params.get('dish')
         if dish_id and dish_id.isdigit():
             reviews = reviews.filter(dish_id=int(dish_id))
         p = ReviewPaginator()
         page = p.paginate_queryset(reviews, request)
         data = ReviewSerializer(page if page is not None else reviews, many=True).data
-        # bo sung ten mon vao moi review de FE hien thi
+
         review_map = {r.id: r for r in (page if page is not None else reviews)}
         for item in data:
             review = review_map.get(item['id'])
@@ -394,9 +394,8 @@ class OrderViewSet(viewsets.ModelViewSet):
         serializer = OrderDetailSerializer(data=request.data, context={'request': request})
         serializer.is_valid(raise_exception=True)
         serializer.save(order=order)
-        # Khong dung order.details.all() vi get_queryset co prefetch_related('details__dish'),
-        # cache details rong tu luc get_object() — detail vua save khong vao cache → sum = 0.
-        # Truy van truc tiep de bypass cache.
+
+
         order.total_amount = sum(
             d.unit_price * d.quantity
             for d in OrderDetail.objects.filter(order=order)
@@ -420,24 +419,24 @@ class OrderViewSet(viewsets.ModelViewSet):
             order = Order.objects.get(pk=pk)
         except Order.DoesNotExist:
             return Response({'detail': 'Không tìm thấy đơn hàng.'}, status=status.HTTP_404_NOT_FOUND)
-            
+
         if not order.details.filter(dish__chef=request.user).exists():
             return Response({'detail': 'Đơn hàng này không có món của bạn.'}, status=status.HTTP_403_FORBIDDEN)
-            
+
         new_status = request.data.get('status')
         if not new_status:
             return Response({'detail': 'Vui lòng cung cấp trạng thái mới.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         current = order.status
         allowed = {
             'pending': {'preparing'},
             'paid': {'preparing'},
             'preparing': {'served'},
         }
-        
+
         if new_status not in allowed.get(current, set()):
             return Response({'detail': f'Không thể chuyển trạng thái từ {current} sang {new_status}.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
         order.status = new_status
         order.save(update_fields=['status', 'updated_date'])
         return Response(OrderSerializer(order).data)
@@ -458,7 +457,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='mine',
             permission_classes=[IsCustomer])
     def mine(self, request):
-        # Tat ca review do user hien tai da viet, kem ten + anh mon de FE hien thi.
+
         reviews = Review.objects.filter(
             customer=request.user
         ).select_related('dish').order_by('-created_date')
@@ -518,7 +517,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             if stale:
                 _expire_payment_if_needed(stale)
 
-        # Tao payment qua serializer (validate order, set amount tu order.total_amount).
+
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         payment = serializer.save()
@@ -527,8 +526,7 @@ class PaymentViewSet(viewsets.ModelViewSet):
             payment.id, payment.order_id, payment.method, payment.amount,
         )
 
-        # Dispatcher theo cong thanh toan. Cash khong can goi gateway, danh dau pending
-        # cho nha hang xac nhan. Online gateway tao session/payUrl roi tra ve cho FE.
+
         if payment.method == 'momo':
             from .momo import create_momo_payment
             attempt = PaymentAttempt.objects.create(
@@ -578,8 +576,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
                 attempt.pay_url = result.get('pay_url')
                 if not attempt.pay_url:
                     raise RuntimeError('Stripe khong tra ve Checkout URL')
-                # Luu session_id de webhook tra cuu Payment (Stripe khong gui
-                # Payment.id ve, chi gui session.id va metadata).
+
+
                 attempt.gateway_request_id = result['session_id']
                 attempt.gateway_order_id = result['session_id']
                 attempt.save(update_fields=[
@@ -605,12 +603,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=['post'], url_path='cancel')
     def cancel(self, request, pk=None):
-        """User chu dong huy thanh toan tu app (vd: dong WebView).
 
-        Idempotent: chi mark failed neu dang pending. Dam bao webhook 'completed'
-        chay sau (race) khong bi ghi de — webhook se thay payment.failed va bo qua
-        sync, hoac neu webhook chay truoc thi cancel nay khong lam gi.
-        """
+
         payment = self.get_object()
         if payment.status != 'pending':
             return Response(
@@ -632,17 +626,8 @@ class PaymentViewSet(viewsets.ModelViewSet):
 @csrf_exempt
 @require_POST
 def momo_ipn(request):
-    """Webhook MoMo callback ve sau khi user thanh toan xong tren cong MoMo.
 
-    Dung raw Django view (khong dung DRF @api_view) de dam bao request.body
-    khong bi consume truoc — nhat quan voi stripe_webhook.
-    Verify chu ky → cap nhat Payment.status va transaction_id.
-    MoMo chi can HTTP 204.
 
-    Audit: moi event log vao WebhookEvent (raw payload + ket qua xu ly) phuc vu
-    minh bach tai chinh. Idempotency theo event_id de tranh xu ly trung khi MoMo
-    retry.
-    """
     from .momo import verify_ipn_signature
 
     try:
@@ -660,11 +645,11 @@ def momo_ipn(request):
     sig_valid = verify_ipn_signature(data)
     request_id = data.get('requestId') or ''
     result_code = data.get('resultCode')
-    # MoMo khong co event_id, ta build tu requestId + resultCode (deterministic
-    # cho cung 1 event, retry cua MoMo se trung).
+
+
     event_id = f'momo:{request_id}:{result_code}'
 
-    # Idempotency check: neu da xu ly roi → tra 204 ngay, log nhu duplicate.
+
     if WebhookEvent.objects.filter(event_id=event_id).exists():
         WebhookEvent.objects.create(
             event_id=f'{event_id}:dup:{timezone.now().timestamp()}',
@@ -710,7 +695,7 @@ def momo_ipn(request):
         return JsonResponse({'detail': 'Payment not found'}, status=404)
 
     if str(result_code) == '0':
-        # Luu transId thuc te tu MoMo de tra cuu doi soat sau nay.
+
         trans_id = data.get('transId')
         payment = _mark_attempt_completed(attempt, trans_id)
         logger.info('[momo_ipn] Payment %d completed (transId=%s)', payment.id, trans_id)
@@ -737,15 +722,8 @@ def momo_ipn(request):
 
 
 def _sync_order_status_from_payment(payment):
-    """Chuyen order.status theo ket qua payment online.
 
-    Chi auto-transition tu trang thai 'pending' (don moi tao, chua co ai dong vao):
-    - completed → paid neu order con pending/payment_failed. Case payment_failed
-      cover race: user bam huy/dong WebView truoc khi webhook success ve.
-    - failed → payment_failed chi khi order con pending.
-    Cac trang thai khac (preparing/served/cancelled) khong dong vao de tranh
-    ghi de logic chef/admin.
-    """
+
     order = payment.order
     if payment.status == 'completed' and order.status in ('pending', 'payment_failed'):
         order.status = 'paid'
@@ -757,10 +735,8 @@ def _sync_order_status_from_payment(payment):
 
 
 def momo_redirect(request):
-    """Trang HTML toi gian MoMo redirect ve sau khi user thanh toan.
 
-    FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
-    """
+
     data = request.GET.dict()
     request_id = data.get('requestId') or ''
     momo_order_id = data.get('orderId') or ''
@@ -810,27 +786,17 @@ def momo_redirect(request):
 @csrf_exempt
 @require_POST
 def stripe_webhook(request):
-    """Webhook Stripe gui ve khi co event tren Checkout Session.
 
-    QUAN TRONG: Phai dung raw Django view (khong dung DRF @api_view) vi Stripe
-    SDK can doc request.body nguyen ban de verify signature. DRF @api_view se
-    consume body stream khi parse request.data → request.body tra ve rong →
-    construct_webhook_event() crash voi "cannot access body after reading from
-    request's data stream".
 
-    Verify signature qua header `Stripe-Signature` → cap nhat Payment.status
-    dua tren event type. Lang nghe `checkout.session.completed` (success) va
-    `checkout.session.expired` (timeout/cancel).
-    """
     from .stripe_gw import construct_webhook_event
 
-    # Doc body TRUOC — truoc khi bat ky middleware/parser nao dong vao.
+
     payload = request.body
     sig_header = request.META.get('HTTP_STRIPE_SIGNATURE', '')
     try:
         event = construct_webhook_event(payload, sig_header)
     except Exception as e:
-        # Stripe se retry neu nhan 400 → giup phuc hoi neu transient.
+
         logger.warning('[stripe_webhook] Signature verification failed: %s', e)
         WebhookEvent.objects.create(
             event_id=f'stripe:invalid:{timezone.now().timestamp()}',
@@ -840,13 +806,13 @@ def stripe_webhook(request):
         )
         return JsonResponse({'detail': f'Invalid webhook: {e}'}, status=400)
 
-    event_id = event.id  # Stripe luon gui evt_xxx unique
+    event_id = event.id
     event_type = event.type
     session = event.data.object
     session_id = session.id
     raw_payload = json.loads(payload.decode('utf-8'))
 
-    # Idempotency: Stripe co the retry → check event_id da xu ly chua.
+
     if WebhookEvent.objects.filter(event_id=event_id).exists():
         WebhookEvent.objects.create(
             event_id=f'{event_id}:dup:{timezone.now().timestamp()}',
@@ -866,8 +832,8 @@ def stripe_webhook(request):
         )
         payment = attempt.payment
     except PaymentAttempt.DoesNotExist:
-        # Stripe co the gui webhook truoc khi session.id kip luu vao DB —
-        # tra 200 de Stripe khong retry vo han, va vi day la edge case hiem.
+
+
         logger.info('[stripe_webhook] Payment not found for session=%s (race condition)', session_id)
         WebhookEvent.objects.create(
             event_id=event_id, provider='stripe', event_type=event_type,
@@ -876,7 +842,7 @@ def stripe_webhook(request):
         return HttpResponse(status=200)
 
     if event_type == 'checkout.session.completed' and getattr(session, 'payment_status', None) == 'paid':
-        # Luu payment_intent thuc te de doi soat sau nay.
+
         intent = getattr(session, 'payment_intent', None)
         payment = _mark_attempt_completed(attempt, intent)
         logger.info('[stripe_webhook] Payment %d completed (intent=%s)', payment.id, intent)
@@ -900,16 +866,8 @@ def stripe_webhook(request):
 
 
 def stripe_return(request):
-    """Trang HTML Stripe redirect ve sau khi user hoan tat (hoac huy) thanh toan.
 
-    FE WebView phat hien URL nay → dong webview → poll /payments/{id}/ de biet ket qua.
-    Stripe gui them query `status=success|cancel` (xem STRIPE_SUCCESS_URL/CANCEL_URL).
 
-    Neu user click "Cancel" tren trang Stripe → query co `status=cancel&session_id=...`
-    → mark Payment failed ngay, khong cho user / FE phai cho 30 phut tu Stripe expired
-    webhook. Chi mark khi payment van pending de tranh ghi de webhook completed
-    (truong hop user thanh toan thanh cong roi van bam Cancel — race hiem nhung co the).
-    """
     if request.GET.get('status') == 'cancel':
         session_id = request.GET.get('session_id')
         if session_id:
@@ -953,8 +911,8 @@ def _series_for_chef(user, period, since):
         order__created_date__gte=since,
     ).annotate(bucket=trunc('order__created_date')).values('bucket').annotate(
         orders=Sum('quantity'),
-        # output_field bat buoc khi nhan F-expression Decimal x Integer tren MySQL,
-        # neu khong Django se raise FieldError luc evaluate aggregate.
+
+
         revenue=Sum(F('unit_price') * F('quantity'), output_field=DecimalField(max_digits=14, decimal_places=2)),
     ).order_by('bucket')
     return [
@@ -1001,14 +959,14 @@ class StatsView(generics.GenericAPIView):
         data = {}
 
         period = _parse_period(request)
-        # mac dinh nhin lai 90 ngay (du de xem theo ngay/tuan/thang)
+
         days = int(request.query_params.get('days') or 90)
         since = timezone.now() - timedelta(days=days)
 
         if user.role == 'chef' and user.is_verified:
             dishes = Dish.objects.filter(chef=user)
             order_details = OrderDetail.objects.filter(dish__chef=user)
-            # Khai bao output_field cho phep nhan Decimal*Int de tranh FieldError tren MySQL.
+
             revenue_expr = Sum(
                 F('unit_price') * F('quantity'),
                 output_field=DecimalField(max_digits=14, decimal_places=2),
@@ -1017,7 +975,7 @@ class StatsView(generics.GenericAPIView):
             data['total_orders'] = order_details.aggregate(
                 total=Sum('quantity'))['total'] or 0
             data['revenue'] = order_details.aggregate(total=revenue_expr)['total'] or 0
-            # doanh thu va so suat theo tung mon
+
             data['by_dish'] = list(
                 order_details.values('dish_id', 'dish__name').annotate(
                     orders=Sum('quantity'),
@@ -1027,7 +985,7 @@ class StatsView(generics.GenericAPIView):
                     ),
                 ).order_by('-revenue')
             )
-            # bieu do theo ngay/tuan/thang
+
             data['series'] = _series_for_chef(user, period, since)
             data['period'] = period
 

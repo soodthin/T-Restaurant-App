@@ -28,15 +28,14 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const statusConfig = {
     pending: { label: 'Chờ xử lý', color: Colors.star, icon: 'clock-outline' },
-    paid: { label: 'Đã xác nhận', color: Colors.success, icon: 'check-decagram' }, // Đổi từ "Đã thanh toán" để tránh trùng với Payment Status
+    paid: { label: 'Đã xác nhận', color: Colors.success, icon: 'check-decagram' },
     payment_failed: { label: 'Hủy (Lỗi TT)', color: Colors.primary, icon: 'cash-remove' },
     preparing: { label: 'Đang chuẩn bị', color: Colors.tertiary, icon: 'chef-hat' },
     served: { label: 'Đã phục vụ', color: Colors.success, icon: 'check-circle-outline' },
     cancelled: { label: 'Đã hủy', color: Colors.primary, icon: 'close-circle-outline' },
 };
 
-// Filter chip ordering follow workflow: tat ca → cho xu ly → da thanh toan →
-// dang chuan bi → da phuc vu → loi thanh toan → da huy.
+
 const filterOptions = [
     { key: 'all', label: 'Tất cả' },
     { key: 'pending', label: 'Chờ xử lý' },
@@ -107,7 +106,7 @@ const OrderCard = ({ item, index, now, onPayAgain, onChangeMethod, paying }) => 
     return (
         <FadeInUp delay={index * 60} duration={400}>
             <View style={[styles.card, isCancelled && styles.cardCancelled]}>
-                {/* Header: ID + Status badge */}
+
                 <View style={styles.cardHeaderRow}>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.orderId}>{`Đơn #${item.id}`}</Text>
@@ -121,7 +120,7 @@ const OrderCard = ({ item, index, now, onPayAgain, onChangeMethod, paying }) => 
                     </View>
                 </View>
 
-                {/* Summary row: amount left, payment right */}
+
                 <View style={styles.summaryRow}>
                     <View style={styles.summaryAmount}>
                         <Text style={styles.summaryLabel}>{`Tổng tiền`}</Text>
@@ -190,10 +189,10 @@ const OrderCard = ({ item, index, now, onPayAgain, onChangeMethod, paying }) => 
                     </View>
                 )}
 
-                {/* Divider */}
+
                 {detailCount > 0 && <View style={styles.divider} />}
 
-                {/* Details toggle */}
+
                 {detailCount > 0 && (
                     <TouchableOpacity
                         activeOpacity={0.7}
@@ -217,7 +216,7 @@ const OrderCard = ({ item, index, now, onPayAgain, onChangeMethod, paying }) => 
                     </TouchableOpacity>
                 )}
 
-                {/* Expanded details */}
+
                 {expanded && detailCount > 0 && (
                     <View style={styles.detailsCard}>
                         {item.details.map((detail) => (

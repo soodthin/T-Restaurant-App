@@ -3,10 +3,7 @@ from rest_framework.exceptions import PermissionDenied
 
 
 class IsChef(permissions.BasePermission):
-    """
-    Cho phep dau bep da duoc admin duyet.
-    Phan biet thong diep loi de UI hien thi tieng Viet de hieu cho user.
-    """
+
 
     def has_permission(self, request, view):
         user = request.user
@@ -25,10 +22,7 @@ class IsChef(permissions.BasePermission):
 
 
 class IsCustomer(permissions.BasePermission):
-    """
-    Chi khach hang moi duoc thuc hien cac thao tac dat ban, dat mon,
-    thanh toan va danh gia.
-    """
+
 
     def has_permission(self, request, view):
         user = request.user
@@ -42,9 +36,7 @@ class IsCustomer(permissions.BasePermission):
 
 
 class IsOwner(permissions.BasePermission):
-    """
-    Chi chinh chu moi duoc sua/xoa; ai cung doc duoc (SAFE_METHODS).
-    """
+
 
     def has_object_permission(self, request, view, obj):
         if request.method in permissions.SAFE_METHODS:

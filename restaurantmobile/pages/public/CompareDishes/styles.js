@@ -1,7 +1,7 @@
 import { StyleSheet, Platform } from 'react-native';
 import Colors from '@styles/colors';
 
-// Shadow nhẹ cho card data (giống `shadow-sm` trong mockup web).
+
 const cellShadow = Platform.select({
     ios: {
         shadowColor: '#271816',
@@ -21,7 +21,7 @@ export default StyleSheet.create({
         paddingBottom: 24,
     },
 
-    // === Hàng ảnh — float, không có card bg ===
+
     imageRow: {
         flexDirection: 'row',
         gap: 8,
@@ -58,7 +58,7 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
 
-    // === Hàng tên — transparent ===
+
     nameRow: {
         flexDirection: 'row',
         gap: 8,
@@ -78,7 +78,7 @@ export default StyleSheet.create({
         minHeight: 36,
     },
 
-    // === Hàng giá trị — white card có border + shadow nhẹ ===
+
     row: {
         flexDirection: 'row',
         gap: 8,
@@ -106,7 +106,7 @@ export default StyleSheet.create({
         ...cellShadow,
     },
 
-    // === Header tiêu chí ===
+
     criteriaHeader: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -123,7 +123,7 @@ export default StyleSheet.create({
         marginLeft: 6,
     },
 
-    // === Giá trị trong cell ===
+
     value: {
         fontSize: 15,
         fontWeight: '800',
@@ -145,7 +145,7 @@ export default StyleSheet.create({
         justifyContent: 'center',
     },
 
-    // === Best badge ===
+
     bestBadge: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -164,7 +164,7 @@ export default StyleSheet.create({
         marginLeft: 3,
     },
 
-    // === Nguyên liệu preview ===
+
     ingredientPreview: {
         width: '100%',
         alignItems: 'stretch',
@@ -202,14 +202,14 @@ export default StyleSheet.create({
         paddingVertical: 8,
     },
 
-    // === Nút thêm vào giỏ ===
+
     buttonRow: { marginTop: 10 },
     btnCell: { flex: 1 },
     cartBtn: { width: '100%', borderRadius: 12 },
     cartBtnContent: { paddingVertical: 2 },
     cartBtnLabel: { fontSize: 13, fontWeight: '800', marginVertical: 6, marginHorizontal: 0 },
 
-    // === Dialog ===
+
     dialog: {
         backgroundColor: Colors.card,
         borderRadius: 24,
@@ -242,7 +242,7 @@ export default StyleSheet.create({
         lineHeight: 21,
     },
 
-    // === Error state ===
+
     actionBtn: { marginTop: 18, borderRadius: 20 },
     centerState: {
         flex: 1,

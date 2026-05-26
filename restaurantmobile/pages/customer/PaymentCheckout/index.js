@@ -8,13 +8,12 @@ import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import Colors from '@styles/colors';
 import styles from './styles';
 
-// Detect khi cong thanh toan redirect ve URL minh dat → biet user da xong thao tac,
-// chuyen sang man hinh poll status. Cover ca MoMo va Stripe.
+
 const isRedirectUrl = (url) =>
     url && (url.includes('/api/momo/redirect') || url.includes('/api/stripe/return'));
 
 const POLL_INTERVAL_MS = 2000;
-const POLL_MAX_TRIES = 45;  // 45 tries × 2s = ~90s max, đủ cho Render cold start
+const POLL_MAX_TRIES = 45;
 
 const METHOD_TITLES = {
     momo: 'Thanh toán MoMo',
@@ -104,7 +103,7 @@ const PaymentCheckout = ({ route, navigation }) => {
                 }
             }
         } catch (_) {
-            // Network error — tiep tuc poll
+
         }
 
         if (triesRef.current >= POLL_MAX_TRIES) {
@@ -327,13 +326,13 @@ const PaymentCheckout = ({ route, navigation }) => {
                 onCancel={() => setConfirmCancel(false)}
                 onConfirm={async () => {
                     setConfirmCancel(false);
-                    // Bao BE mark failed luon (thay vi cho 30 phut Stripe expired hoac
-                    // never voi MoMo). BE idempotent: 400 neu da thanh toan xong → bo qua.
+
+
                     if (paymentId) {
                         try {
                             await authFetch(endpoints['payment-cancel'](paymentId), { method: 'POST' });
                         } catch (_) {
-                            // Network error — ke ca khong call duoc thi user van quay lai duoc
+
                         }
                     }
                     goToOrders();

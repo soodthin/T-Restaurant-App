@@ -117,8 +117,7 @@ const Cart = ({ navigation, route }) => {
                 return;
             }
 
-            // Online gateway (momo/stripe): BE tra ve pay_url → mo WebView de user thanh toan.
-            // Khong show success dialog o day, PaymentCheckout se xu ly tiep.
+
             const isOnlineGateway = ['momo', 'stripe'].includes(paymentMethod);
 
             if (!paymentRes.ok) {

@@ -10,7 +10,7 @@ const GALLERY_ITEM_W = (SCREEN_W - 32 - GALLERY_GAP) / 2;
 export default StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.surface },
 
-    // Hero carousel
+
     hero: {
         width: SCREEN_W,
         height: HERO_HEIGHT,
@@ -61,7 +61,7 @@ export default StyleSheet.create({
         backgroundColor: Colors.onPrimary,
     },
 
-    // Floating back button
+
     backBtn: {
         position: 'absolute',
         left: 16,
@@ -74,7 +74,7 @@ export default StyleSheet.create({
         ...editorialShadow,
     },
 
-    // Info card overlapping hero
+
     infoCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginTop: -28,
@@ -108,7 +108,7 @@ export default StyleSheet.create({
         fontWeight: '600',
     },
 
-    // Stats row
+
     statsRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -146,7 +146,7 @@ export default StyleSheet.create({
         fontWeight: '500',
     },
 
-    // Sections
+
     section: {
         paddingTop: 24,
         paddingHorizontal: 16,
@@ -178,7 +178,7 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
 
-    // Branch card
+
     branchCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 20,
@@ -258,7 +258,7 @@ export default StyleSheet.create({
     },
     branchBtnText: { fontSize: 13, fontWeight: '800', letterSpacing: 0.2 },
 
-    // Gallery
+
     gallery: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -280,7 +280,7 @@ export default StyleSheet.create({
         height: '100%',
     },
 
-    // Bottom CTA
+
     bottomBar: {
         position: 'absolute',
         left: 0,
@@ -309,7 +309,7 @@ export default StyleSheet.create({
         letterSpacing: 0.4,
     },
 
-    // Lightbox
+
     lightbox: {
         flex: 1,
         backgroundColor: '#000',

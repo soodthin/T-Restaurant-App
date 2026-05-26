@@ -19,7 +19,7 @@ export default StyleSheet.create({
         backgroundColor: Colors.surface,
     },
 
-    // Center state (loadError / not verified)
+
     centerState: {
         flex: 1,
         backgroundColor: Colors.surface,
@@ -43,7 +43,7 @@ export default StyleSheet.create({
     },
     stateBtn: { marginTop: 18 },
 
-    // Hero
+
     hero: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 24,
@@ -85,7 +85,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Inline error banner (load lỗi)
+
     inlineError: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -103,7 +103,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // Section label (above image picker / preview)
+
     sectionLabel: {
         fontSize: 13,
         fontWeight: '800',
@@ -114,7 +114,7 @@ export default StyleSheet.create({
         letterSpacing: -0.2,
     },
 
-    // Image picker
+
     imagePicker: {
         borderRadius: 24,
         overflow: 'hidden',
@@ -159,7 +159,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Section card (Thông tin chính, Phân loại)
+
     sectionCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 24,
@@ -175,7 +175,7 @@ export default StyleSheet.create({
         letterSpacing: -0.3,
     },
 
-    // Inputs + labels
+
     label: {
         fontSize: 10,
         fontWeight: '800',
@@ -208,7 +208,7 @@ export default StyleSheet.create({
         flex: 1,
     },
 
-    // Ingredient chips (list nguyen lieu)
+
     ingredientChipsWrap: {
         flexDirection: 'row',
         flexWrap: 'wrap',
@@ -242,7 +242,7 @@ export default StyleSheet.create({
         fontStyle: 'italic',
     },
 
-    // Chip selection (menu / category)
+
     chipRow: {
         paddingVertical: 4,
         paddingRight: 4,
@@ -269,7 +269,7 @@ export default StyleSheet.create({
         color: Colors.onPrimary,
     },
 
-    // Preview compact card
+
     previewCompact: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -335,7 +335,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Sticky bottom CTA
+
     bottomBar: {
         position: 'absolute',
         left: 0,

@@ -173,7 +173,7 @@ const DishDetail = ({ route, navigation }) => {
         );
     }
 
-    // Backend dùng RichTextField → trả HTML có entity Việt; cần strip để hiển thị plain.
+
     const cleanDescription = stripHtml(dish.description);
     const cleanIngredients = stripHtml(dish.ingredients);
     const ingredientsList = cleanIngredients
@@ -255,7 +255,7 @@ const DishDetail = ({ route, navigation }) => {
                                             </Text>
                                         </View>
                                     </View>
-                                    
+
                                     {currentUser && currentUser.role !== 'chef' && (
                                         <View style={styles.chatChefAction}>
                                             <MaterialCommunityIcons name="message-text-outline" size={20} color={Colors.onPrimary} />
@@ -382,7 +382,7 @@ const DishDetail = ({ route, navigation }) => {
                 contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
             />
 
-            {/* Chef khong dat hang nen an thanh cong cu them gio. */}
+
             {currentUser?.role !== 'chef' && (
                 <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 16) }]}>
                     <View style={styles.stepper}>

@@ -13,7 +13,7 @@ const cardShadow = Platform.select({
 });
 
 export default StyleSheet.create({
-    // === Tab segment ===
+
     tabBar: {
         flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLow,
@@ -45,7 +45,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Form layout ===
+
     formContent: {
         paddingHorizontal: 20,
         paddingTop: 14,
@@ -59,7 +59,7 @@ export default StyleSheet.create({
         textTransform: 'uppercase',
     },
 
-    // === Date/Time picker side-by-side ===
+
     dateTimeRow: {
         flexDirection: 'row',
         gap: 12,
@@ -81,7 +81,7 @@ export default StyleSheet.create({
         fontWeight: '700',
     },
 
-    // === Suggested times horizontal scroll ===
+
     suggestedScroll: {
         gap: 8,
         paddingRight: 4,
@@ -108,7 +108,7 @@ export default StyleSheet.create({
         color: Colors.onPrimary,
     },
 
-    // === Stepper số khách compact pill ===
+
     stepperPill: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -143,7 +143,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // === Sticky bottom bar ===
+
     bottomBar: {
         position: 'absolute',
         left: 0,
@@ -159,7 +159,7 @@ export default StyleSheet.create({
         borderRadius: 16,
     },
 
-    // === History card ===
+
     bookingCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 20,
@@ -254,7 +254,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Empty state ===
+
     empty: {
         alignItems: 'center',
         marginTop: 60,

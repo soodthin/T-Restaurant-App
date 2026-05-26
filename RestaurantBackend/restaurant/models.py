@@ -94,10 +94,10 @@ class TableBooking(ModelBase):
 class Order(ModelBase):
     ORDER_STATUSES = [
         ('pending', 'Pending'),
-        # Online payment thanh cong → webhook tu chuyen pending → paid.
-        # Cash khong qua trang thai nay (chef accept truc tiep tu pending).
+
+
         ('paid', 'Paid'),
-        # Online payment that bai → webhook tu chuyen pending → payment_failed.
+
         ('payment_failed', 'Payment Failed'),
         ('preparing', 'Preparing'),
         ('served', 'Served'),
@@ -158,7 +158,7 @@ class Payment(models.Model):
     transaction_id = models.CharField(max_length=255, null=True, blank=True)
     gateway_request_id = models.CharField(max_length=255, null=True, blank=True)
     gateway_order_id = models.CharField(max_length=255, null=True, blank=True)
-    # URL thanh toan tu cong (vi du payUrl tu MoMo). FE mo trong WebView.
+
     pay_url = models.URLField(max_length=500, null=True, blank=True)
     deeplink_url = models.URLField(max_length=500, null=True, blank=True)
     qr_code_url = models.URLField(max_length=500, null=True, blank=True)
@@ -180,13 +180,8 @@ class Payment(models.Model):
 
 
 class PaymentAttempt(models.Model):
-    """Moi lan mo cong thanh toan la mot attempt rieng de doi soat tai chinh.
 
-    Payment la trang thai hien tai cua don hang. PaymentAttempt giu tung
-    session/request gateway cu the: Stripe Checkout Session, MoMo requestId,
-    payUrl/deeplink/QR va ket qua webhook. Nho vay admin khong mat lich su khi
-    khach het han 10 phut roi doi phuong thuc thanh toan.
-    """
+
     PAYMENT_METHODS = Payment.PAYMENT_METHODS
     PAYMENT_STATUSES = Payment.PAYMENT_STATUSES
 
@@ -217,14 +212,8 @@ class PaymentAttempt(models.Model):
 
 
 class WebhookEvent(models.Model):
-    """Audit log moi event tu cong thanh toan (MoMo IPN / Stripe webhook).
 
-    Muc dich:
-    - Minh bach tai chinh: chung minh moi state change cua Payment deu co evidence
-      tu gateway (raw payload + signature verify result).
-    - Idempotency: gateway co the retry → check event_id de tranh xu ly trung.
-    - Debug: xem duoc payload thuc te khi gateway report khac DB (hiem khi xay ra).
-    """
+
     PROVIDERS = [('momo', 'MoMo'), ('stripe', 'Stripe')]
     RESULTS = [
         ('updated', 'Da cap nhat payment'),
@@ -234,7 +223,7 @@ class WebhookEvent(models.Model):
         ('invalid_payload', 'Payload loi'),
     ]
 
-    # Stripe gui evt.id, MoMo khong co → ta build "{requestId}:{resultCode}".
+
     event_id = models.CharField(max_length=255, unique=True)
     payment = models.ForeignKey(Payment, on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name='webhook_events')

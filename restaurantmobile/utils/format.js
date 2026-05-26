@@ -36,8 +36,7 @@ export const getInitialLetter = (value, fallback = '?') => {
 
 export const sanitizeNumberInput = (value) => String(value || '').replace(/[^\d]/g, '');
 
-// Backend lưu mô tả/ingredients qua RichTextField (CKEditor) → HTML có entity Việt Nam
-// (ví dụ "&aacute;" cho "á"). Gỡ tag và decode entity để hiển thị plain text trên RN.
+
 const NAMED_ENTITY_MAP = {
     amp: '&', lt: '<', gt: '>', quot: '"', apos: "'", nbsp: ' ',
     aacute: 'á', Aacute: 'Á', agrave: 'à', Agrave: 'À',

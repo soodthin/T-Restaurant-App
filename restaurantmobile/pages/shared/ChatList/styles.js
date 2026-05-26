@@ -14,7 +14,7 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
 
-    // Header
+
     header: {
         paddingHorizontal: 18,
         paddingTop: 18,
@@ -33,7 +33,7 @@ export default StyleSheet.create({
         lineHeight: 20,
     },
 
-    // Chat item
+
     chatItem: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -131,7 +131,7 @@ export default StyleSheet.create({
         fontWeight: '800',
     },
 
-    // Empty state
+
     empty: {
         alignItems: 'center',
         marginTop: 60,

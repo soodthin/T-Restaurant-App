@@ -49,7 +49,7 @@ const CreateDish = ({ navigation, route }) => {
 
     const [dish, setDish] = useState(() => editingDish ? {
         name: editingDish.name || '',
-        // Strip HTML tu RichTextField de form khong hien tag/entity tho.
+
         description: stripHtml(editingDish.description),
         price: editingDish.price ? String(editingDish.price) : '',
         ingredients: stripHtml(editingDish.ingredients),
@@ -68,7 +68,7 @@ const CreateDish = ({ navigation, route }) => {
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
     const [confirm, setConfirm] = useState(false);
     const [successDialog, setSuccessDialog] = useState(false);
-    // Ô nhập tạm cho chip nguyên liệu (chưa add vào dish.ingredients).
+
     const [ingredientInput, setIngredientInput] = useState('');
 
     const showToast = useCallback((message, type = 'error') => {
@@ -130,8 +130,7 @@ const CreateDish = ({ navigation, route }) => {
         setFieldErrors((prev) => ({ ...prev, [field]: '' }));
     };
 
-    // Backend luu ingredients dang CSV "bot banh mi, bo sua, ..." - giu nguyen format,
-    // chi doi UX nhap tu textarea sang chip de tranh user go sai.
+
     const parseIngredients = (raw) => (raw || '')
         .split(',')
         .map((s) => s.trim())
@@ -140,7 +139,7 @@ const CreateDish = ({ navigation, route }) => {
     const addIngredient = () => {
         const v = ingredientInput.trim();
         if (!v) return;
-        // Cho phep paste "a, b, c" → tach thanh nhieu chip cung luc.
+
         const newItems = v.split(',').map((s) => s.trim()).filter(Boolean);
         const list = parseIngredients(dish.ingredients);
         for (const item of newItems) {
@@ -322,7 +321,7 @@ const CreateDish = ({ navigation, route }) => {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}>
 
-                {/* Hero card */}
+
                 <FadeInDown duration={500} style={styles.hero}>
                     <View style={styles.heroRow}>
                         <View style={{ flex: 1 }}>
@@ -349,7 +348,7 @@ const CreateDish = ({ navigation, route }) => {
                     </View> :
                     null}
 
-                {/* Section: Hình ảnh */}
+
                 <Text style={styles.sectionLabel}>Hình ảnh minh họa</Text>
                 <TouchableOpacity
                     style={[styles.imagePicker, !previewImageUri && styles.imagePickerDashed]}
@@ -369,7 +368,7 @@ const CreateDish = ({ navigation, route }) => {
                 </TouchableOpacity>
                 {fieldErrors.image ? <Text style={styles.errorText}>{fieldErrors.image}</Text> : null}
 
-                {/* Section card: Thông tin chính */}
+
                 <View style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Thông tin chính</Text>
 
@@ -449,7 +448,7 @@ const CreateDish = ({ navigation, route }) => {
                     </View>
                 </View>
 
-                {/* Section card: Nguyên liệu & Phân loại */}
+
                 <View style={styles.sectionCard}>
                     <Text style={styles.sectionTitle}>Nguyên liệu & Phân loại</Text>
 
@@ -553,7 +552,7 @@ const CreateDish = ({ navigation, route }) => {
                     {fieldErrors.category ? <Text style={styles.errorText}>{fieldErrors.category}</Text> : null}
                 </View>
 
-                {/* Preview compact */}
+
                 <Text style={[styles.sectionLabel, { marginTop: 24 }]}>Thẻ hiển thị trên app</Text>
                 <View style={styles.previewCompact}>
                     <View style={styles.previewThumb}>
@@ -584,7 +583,7 @@ const CreateDish = ({ navigation, route }) => {
                 </View>
             </ScrollView>
 
-            {/* Sticky footer CTA */}
+
             <View style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 14) }]}>
                 <TouchableOpacity
                     activeOpacity={0.85}

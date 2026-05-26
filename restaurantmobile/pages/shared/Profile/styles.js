@@ -29,7 +29,7 @@ export default StyleSheet.create({
     container: {},
     loading: { flex: 1, backgroundColor: Colors.surface },
 
-    // === Cover ===
+
     cover: {
         height: 150,
         backgroundColor: Colors.primary,
@@ -61,7 +61,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // === Avatar floating overlap ===
+
     avatarWrap: {
         marginTop: -50,
         marginLeft: 24,
@@ -101,7 +101,7 @@ export default StyleSheet.create({
         borderColor: Colors.surface,
     },
 
-    // === Profile header (name + badges) ===
+
     profileHeader: {
         paddingHorizontal: 24,
         paddingTop: 14,
@@ -153,7 +153,7 @@ export default StyleSheet.create({
         fontWeight: '800',
     },
 
-    // === Section label ===
+
     cardLabel: {
         fontSize: 11,
         fontWeight: '800',
@@ -164,7 +164,7 @@ export default StyleSheet.create({
         paddingHorizontal: 4,
     },
 
-    // === Contact card ===
+
     contactCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,
@@ -215,7 +215,7 @@ export default StyleSheet.create({
         marginTop: 4,
     },
 
-    // === Menu section ===
+
     menuSection: {
         marginHorizontal: 16,
         marginBottom: 18,
@@ -252,7 +252,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // === Logout ===
+
     logoutBtn: {
         marginHorizontal: 16,
         flexDirection: 'row',
@@ -269,7 +269,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Cancel link ===
+
     cancelLinkBtn: {
         alignSelf: 'center',
         paddingVertical: 12,
@@ -282,7 +282,7 @@ export default StyleSheet.create({
         textDecorationLine: 'underline',
     },
 
-    // === Empty / center state ===
+
     centerState: {
         flex: 1,
         backgroundColor: Colors.surface,

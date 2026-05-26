@@ -43,7 +43,7 @@ const styles = StyleSheet.create({
     },
     radioActive: { borderColor: Colors.primary },
     radioDot: { width: 12, height: 12, borderRadius: 6, backgroundColor: Colors.primary },
-    // Inline dropdown (thay list radio dai)
+
     selectRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -69,7 +69,7 @@ const styles = StyleSheet.create({
         borderWidth: 1.5,
         backgroundColor: Colors.primary + '12',
     },
-    // Khi active: an label, value wrap chiem het row de hien gia tri day du
+
     selectRowValueWrapActive: {
         flex: 1,
         maxWidth: '100%',
@@ -77,11 +77,11 @@ const styles = StyleSheet.create({
     },
     selectRowValueActive: { fontSize: 15, fontWeight: '700', flexShrink: 1 },
 
-    // 2-column row cho cap select rang gon (Khoang gia + Thoi gian)
+
     dualRow: { flexDirection: 'row', gap: 10 },
     dualCol: { flex: 1 },
 
-    // Top bar cua sheet (title + nut Xoa bo loc)
+
     sheetTopBar: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -100,7 +100,7 @@ const styles = StyleSheet.create({
     },
     clearAllText: { fontSize: 13, fontWeight: '700', color: Colors.onPrimary },
 
-    // Sub-modal cho dropdown — gioi han chieu cao 60% de tranh chen sheet chinh
+
     subSheetContainer: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderTopLeftRadius: 28,

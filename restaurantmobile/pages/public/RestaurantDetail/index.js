@@ -21,7 +21,7 @@ import styles from './styles';
 
 const { width: SCREEN_W } = Dimensions.get('window');
 
-// Khi backend bổ sung endpoint /api/restaurant/, thay khối này bằng API call.
+
 const RESTAURANT_DATA = {
     name: 'SAIGON SAVORY',
     tagline: 'Ẩm thực Sài Gòn đích thực',
@@ -104,16 +104,16 @@ const HeroCarousel = ({ photos, onPhotoPress }) => {
                     </TouchableOpacity>
                 )}
             />
-            {/* Bottom dim overlay for legibility */}
+
             <View pointerEvents="none" style={styles.heroOverlay} />
 
-            {/* Counter pill */}
+
             <View style={styles.heroCounter}>
                 <MaterialCommunityIcons name="image-multiple" size={12} color={Colors.onPrimary} />
                 <Text style={styles.heroCounterText}>{`${index + 1} / ${photos.length}`}</Text>
             </View>
 
-            {/* Page dots */}
+
             <View style={styles.heroDots}>
                 {photos.map((_, i) => (
                     <View
@@ -194,7 +194,7 @@ const PhotoLightbox = ({ visible, photos, startIndex, onClose }) => {
     const flatRef = useRef(null);
     const [index, setIndex] = useState(startIndex || 0);
 
-    // Đồng bộ index khi mở lại với ảnh khác.
+
     useEffect(() => {
         if (visible) setIndex(startIndex || 0);
     }, [visible, startIndex]);
@@ -245,8 +245,8 @@ const RestaurantDetail = ({ navigation }) => {
     const closeLightbox = () => setLightbox({ visible: false, startIndex: 0 });
 
     const goBooking = async () => {
-        // Chua dang nhap (guest) -> di thang qua Login kem toast, tranh truong hop
-        // route den Booking roi authFetch tra 401 moi reset, gay flash man hinh.
+
+
         const token = await getStoredToken();
         if (!token) {
             navigation.navigate('Login', {
@@ -258,7 +258,7 @@ const RestaurantDetail = ({ navigation }) => {
         navigation.navigate('Main', { screen: 'Booking' });
     };
 
-    // Gallery photos = phần còn lại sau hero (lấy max 6 ảnh để 2x3 grid)
+
     const galleryPhotos = data.photos.slice(0, 6);
 
     return (
@@ -267,10 +267,10 @@ const RestaurantDetail = ({ navigation }) => {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={{ paddingBottom: 120 }}
             >
-                {/* Hero carousel */}
+
                 <HeroCarousel photos={data.photos} onPhotoPress={openLightbox} />
 
-                {/* Floating back button overlay */}
+
                 <TouchableOpacity
                     activeOpacity={0.8}
                     onPress={() => navigation.goBack()}
@@ -279,7 +279,7 @@ const RestaurantDetail = ({ navigation }) => {
                     <MaterialCommunityIcons name="arrow-left" size={22} color={Colors.text} />
                 </TouchableOpacity>
 
-                {/* Info card overlapping hero */}
+
                 <FadeInDown duration={500} style={styles.infoCard}>
                     <View style={styles.cuisinePill}>
                         <MaterialCommunityIcons name="silverware-fork-knife" size={11} color={Colors.primary} />
@@ -288,7 +288,7 @@ const RestaurantDetail = ({ navigation }) => {
                     <Text style={styles.name}>{data.name}</Text>
                     <Text style={styles.tagline}>{data.tagline}</Text>
 
-                    {/* Stats row */}
+
                     <View style={styles.statsRow}>
                         <StatBlock
                             icon="star"
@@ -315,7 +315,7 @@ const RestaurantDetail = ({ navigation }) => {
                     <Text style={styles.description}>{data.description}</Text>
                 </FadeInDown>
 
-                {/* Branches section */}
+
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View>
@@ -334,7 +334,7 @@ const RestaurantDetail = ({ navigation }) => {
                     ))}
                 </View>
 
-                {/* Gallery section */}
+
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View>
@@ -364,7 +364,7 @@ const RestaurantDetail = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Sticky bottom CTA */}
+
             <FadeIn duration={400} style={[styles.bottomBar, { paddingBottom: Math.max(insets.bottom, 12) }]}>
                 <TouchableOpacity
                     activeOpacity={0.85}

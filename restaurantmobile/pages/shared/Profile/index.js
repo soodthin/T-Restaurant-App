@@ -270,7 +270,7 @@ const Profile = ({ navigation }) => {
                 keyboardShouldPersistTaps="handled"
                 showsVerticalScrollIndicator={false}>
 
-                {/* Hero: cover with optional blurred avatar overlay */}
+
                 <View style={styles.cover}>
                     {avatarUri ?
                         <Image
@@ -297,7 +297,7 @@ const Profile = ({ navigation }) => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Avatar floating overlap */}
+
                 <View style={styles.avatarWrap}>
                     {avatarUri ?
                         <Image source={{ uri: avatarUri }} style={styles.avatar} /> :
@@ -317,7 +317,7 @@ const Profile = ({ navigation }) => {
                     }
                 </View>
 
-                {/* Profile name + role badges */}
+
                 <View style={styles.profileHeader}>
                     <Text style={styles.name}>{getDisplayName(user, user.username)}</Text>
                     <Text style={styles.usernameHint}>@{user.username}</Text>
@@ -347,7 +347,7 @@ const Profile = ({ navigation }) => {
                     </View>
                 </View>
 
-                {/* Contact details card */}
+
                 <View style={styles.contactCard}>
                     <Text style={styles.cardLabel}>Thông tin liên hệ</Text>
 
@@ -395,7 +395,7 @@ const Profile = ({ navigation }) => {
                     />
                 </View>
 
-                {/* Action menus */}
+
                 {!editing && actionMenus.length > 0 && (
                     <View style={styles.menuSection}>
                         <Text style={styles.cardLabel}>Hoạt động & quản lý</Text>
@@ -421,7 +421,7 @@ const Profile = ({ navigation }) => {
                     </View>
                 )}
 
-                {/* Cancel link in edit mode */}
+
                 {editing && (
                     <TouchableOpacity
                         style={styles.cancelLinkBtn}
@@ -431,7 +431,7 @@ const Profile = ({ navigation }) => {
                     </TouchableOpacity>
                 )}
 
-                {/* Logout */}
+
                 {!editing && (
                     <TouchableOpacity
                         style={styles.logoutBtn}

@@ -12,15 +12,7 @@ import {
 } from 'firebase/database';
 import { database } from './firebaseConfig';
 
-// =====================================================================
-// Chat Service — doc/ghi Firebase Realtime Database cho tinh nang chat.
-// =====================================================================
 
-/**
- * Tao roomId chuan tu customerId va chefId.
- * Format: "customer_{cId}_chef_{chefId}" dam bao moi cap customer-chef
- * chi co duy nhat 1 phong chat.
- */
 export const getChatRoomId = (customerId, chefId) =>
     `customer_${customerId}_chef_${chefId}`;
 
@@ -33,12 +25,7 @@ const isCustomerChefPair = (currentUser, otherUser) =>
     isChatRole(otherUser.role) &&
     currentUser.role !== otherUser.role;
 
-/**
- * Tao hoac lay phong chat giua 2 user.
- * @param {Object} currentUser - user hien tai (co id, first_name, last_name, avatar, role)
- * @param {Object} otherUser   - user doi dien
- * @returns {string} roomId
- */
+
 export const getOrCreateChatRoom = async (currentUser, otherUser) => {
     if (!isCustomerChefPair(currentUser, otherUser)) {
         throw new Error('Chat chi ho tro giua khach hang va dau bep.');
@@ -81,11 +68,7 @@ export const getOrCreateChatRoom = async (currentUser, otherUser) => {
     return roomId;
 };
 
-/**
- * Gui tin nhan vao phong chat.
- * Push message moi vao /chatRooms/{roomId}/messages/
- * va cap nhat lastMessage + lastMessageAt trong /info.
- */
+
 export const sendMessage = async (roomId, senderId, senderRole, text) => {
     const trimmed = (text || '').trim();
     if (!trimmed) return;
@@ -104,7 +87,7 @@ export const sendMessage = async (roomId, senderId, senderRole, text) => {
         createdAt: now,
     });
 
-    // Cap nhat lastMessage tren room info de ChatList hien thi.
+
     const infoRef = ref(database, `chatRooms/${roomId}/info`);
     const infoSnap = await get(infoRef);
     if (infoSnap.exists()) {
@@ -123,11 +106,7 @@ export const sendMessage = async (roomId, senderId, senderRole, text) => {
     }
 };
 
-/**
- * Lang nghe tin nhan moi trong phong chat (realtime).
- * Goi callback moi khi co message moi duoc push.
- * @returns {Function} unsubscribe — goi de huy listener.
- */
+
 export const subscribeToMessages = (roomId, callback) => {
     const messagesRef = ref(database, `chatRooms/${roomId}/messages`);
     const q = query(messagesRef, orderByChild('createdAt'));
@@ -138,7 +117,7 @@ export const subscribeToMessages = (roomId, callback) => {
 
     get(q).then((snapshot) => {
         if (!isSubscribed) return;
-        
+
         const data = snapshot.val();
         if (data) {
             Object.entries(data).forEach(([key, msg]) => {
@@ -148,11 +127,11 @@ export const subscribeToMessages = (roomId, callback) => {
         }
         callback([...allMessages]);
 
-        // Sau khi load xong, moi gan listener de nhung tin nhan moi
+
         childAddedUnsub = onChildAdded(q, (childSnap) => {
             if (!isSubscribed) return;
             const msg = { id: childSnap.key, ...childSnap.val() };
-            // Tranh duplicate voi initial load
+
             if (!allMessages.find((m) => m.id === msg.id)) {
                 allMessages.push(msg);
                 allMessages.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
@@ -161,7 +140,7 @@ export const subscribeToMessages = (roomId, callback) => {
         });
     });
 
-    // Tra ve unsubscribe function.
+
     return () => {
         isSubscribed = false;
         if (childAddedUnsub) {
@@ -170,12 +149,7 @@ export const subscribeToMessages = (roomId, callback) => {
     };
 };
 
-/**
- * Lang nghe danh sach phong chat cua user (theo role).
- * Customer thay cac room co customerId === userId.
- * Chef thay cac room co chefId === userId.
- * @returns {Function} unsubscribe
- */
+
 export const subscribeToChatRooms = (userId, role, callback) => {
     if (!isChatRole(role)) {
         callback([]);
@@ -207,7 +181,7 @@ export const subscribeToChatRooms = (userId, role, callback) => {
             }
         });
 
-        // Sap xep theo tin nhan moi nhat.
+
         rooms.sort((a, b) => (b.lastMessageAt || 0) - (a.lastMessageAt || 0));
         callback(rooms);
     });
@@ -215,9 +189,7 @@ export const subscribeToChatRooms = (userId, role, callback) => {
     return () => off(roomsRef, 'value', unsub);
 };
 
-/**
- * Tinh tong so tin nhan chua doc cua tat ca cac phong.
- */
+
 export const subscribeToTotalUnreadCount = (userId, role, callback) => {
     if (!isChatRole(role)) {
         callback(0);
@@ -254,9 +226,7 @@ export const subscribeToTotalUnreadCount = (userId, role, callback) => {
     return () => off(roomsRef, 'value', unsub);
 };
 
-/**
- * Reset so tin nhan chua doc cua 1 phong khi user vao xem.
- */
+
 export const resetUnreadCount = async (roomId, role) => {
     if (!isChatRole(role)) return;
     const infoRef = ref(database, `chatRooms/${roomId}/info`);
@@ -273,7 +243,7 @@ export const resetUnreadCount = async (roomId, role) => {
     }
 };
 
-// Helper: lay ten hien thi tu user object.
+
 const _getDisplayName = (user) => {
     const full = `${user.first_name || ''} ${user.last_name || ''}`.trim();
     return full || user.username || `User #${user.id}`;

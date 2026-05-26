@@ -6,7 +6,7 @@ class Command(BaseCommand):
     help = 'Seed sample data for restaurant app'
 
     def handle(self, *args, **options):
-        # Migration: đổi tên record cũ (không dấu) sang tên mới (có dấu) nếu tồn tại.
+
         category_renames = {
             'Khai vi': 'Khai vị',
             'Mon chinh': 'Món chính',
@@ -39,7 +39,7 @@ class Command(BaseCommand):
         for old, new in dish_renames.items():
             Dish.objects.filter(name=old).update(name=new)
 
-        # Chef
+
         chef, created = User.objects.get_or_create(
             username='chef_minh',
             defaults={
@@ -52,7 +52,7 @@ class Command(BaseCommand):
                 'address': '371 Nguyễn Kiệm, Gò Vấp',
             },
         )
-        # Cập nhật chef đã tồn tại (last_name + address có thể đang lưu không dấu).
+
         if not created:
             User.objects.filter(username='chef_minh').update(
                 last_name='Nguyễn',
@@ -63,14 +63,14 @@ class Command(BaseCommand):
             chef.save()
             self.stdout.write(self.style.SUCCESS('Created chef: chef_minh'))
 
-        # Categories
+
         cat_names = ['Khai vị', 'Món chính', 'Món nước', 'Tráng miệng', 'Đồ uống']
         cats = {}
         for name in cat_names:
             obj, _ = FoodCategory.objects.get_or_create(name=name)
             cats[name] = obj
 
-        # Menus
+
         menu_main, _ = Menu.objects.get_or_create(
             name='Thực đơn chính',
             defaults={'description': 'Các món ăn chính của nhà hàng'},
@@ -80,7 +80,7 @@ class Command(BaseCommand):
             defaults={'description': 'Nước uống và món tráng miệng'},
         )
 
-        # Dishes
+
         dishes_data = [
             {
                 'name': 'Phở Bò Sài Gòn',
@@ -183,7 +183,7 @@ class Command(BaseCommand):
             if created:
                 count += 1
 
-        # Sample customers de tao review.
+
         sample_customers = [
             {
                 'username': 'customer_an',
@@ -221,7 +221,7 @@ class Command(BaseCommand):
                 user.save()
             customers.append(user)
 
-        # Reviews mau: moi customer danh gia mot vai mon.
+
         reviews_data = [
             ('customer_an',   'Phở Bò Sài Gòn',         5, 'Nước dùng đậm đà, bánh phở dai. Đúng vị Sài Gòn xưa.'),
             ('customer_an',   'Cơm Tấm Sườn Bì Chả',     5, 'Sườn nướng cháy cạnh thơm phức, cơm tấm dẻo. Quá ngon!'),

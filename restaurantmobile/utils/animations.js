@@ -1,12 +1,7 @@
 import { useEffect, useRef } from 'react';
 import { Animated as RNAnimated, View } from 'react-native';
 
-/**
- * Animated wrapper components using React Native's built-in Animated API.
- * Drop-in replacements for react-native-reanimated layout animations.
- */
 
-// FadeInDown: fades in while sliding up from below
 export const FadeInDown = ({ delay = 0, duration = 500, distance = 30, style, children }) => {
     const opacity = useRef(new RNAnimated.Value(0)).current;
     const translateY = useRef(new RNAnimated.Value(distance)).current;
@@ -28,7 +23,7 @@ export const FadeInDown = ({ delay = 0, duration = 500, distance = 30, style, ch
     );
 };
 
-// FadeInUp: fades in while sliding down from above
+
 export const FadeInUp = ({ delay = 0, duration = 500, distance = 30, style, children }) => {
     const opacity = useRef(new RNAnimated.Value(0)).current;
     const translateY = useRef(new RNAnimated.Value(-distance)).current;
@@ -50,7 +45,7 @@ export const FadeInUp = ({ delay = 0, duration = 500, distance = 30, style, chil
     );
 };
 
-// FadeInRight: fades in while sliding from right
+
 export const FadeInRight = ({ delay = 0, duration = 400, distance = 40, style, children }) => {
     const opacity = useRef(new RNAnimated.Value(0)).current;
     const translateX = useRef(new RNAnimated.Value(distance)).current;
@@ -72,7 +67,7 @@ export const FadeInRight = ({ delay = 0, duration = 400, distance = 40, style, c
     );
 };
 
-// FadeIn: simple opacity fade
+
 export const FadeIn = ({ delay = 0, duration = 400, style, children }) => {
     const opacity = useRef(new RNAnimated.Value(0)).current;
 
@@ -90,7 +85,7 @@ export const FadeIn = ({ delay = 0, duration = 400, style, children }) => {
     );
 };
 
-// ScaleIn: zoom in with fade
+
 export const ScaleIn = ({ delay = 0, duration = 400, style, children }) => {
     const opacity = useRef(new RNAnimated.Value(0)).current;
     const scale = useRef(new RNAnimated.Value(0.85)).current;
@@ -112,5 +107,5 @@ export const ScaleIn = ({ delay = 0, duration = 400, style, children }) => {
     );
 };
 
-// Stagger helper: calculates delay for list items
+
 export const stagger = (index, baseDelay = 60) => baseDelay * index;

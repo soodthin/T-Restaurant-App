@@ -89,7 +89,7 @@ const ChefOrders = ({ navigation }) => {
                 alert(getApiErrorMessage(res, 'Không thể cập nhật trạng thái.'));
                 return;
             }
-            // Update local state
+
             setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o));
         } catch (err) {
             alert('Đã xảy ra lỗi mạng.');
@@ -101,8 +101,8 @@ const ChefOrders = ({ navigation }) => {
     const renderOrder = ({ item, index }) => {
         const conf = statusConfig[item.status] || statusConfig.pending;
         const isCancelled = ['cancelled', 'payment_failed'].includes(item.status);
-        
-        // Show action buttons based on status
+
+
         const canStartCooking = ['pending', 'paid'].includes(item.status);
         const canFinishCooking = item.status === 'preparing';
 
@@ -174,8 +174,8 @@ const ChefOrders = ({ navigation }) => {
         );
     };
 
-    const filteredOrders = filter === 'all' 
-        ? orders 
+    const filteredOrders = filter === 'all'
+        ? orders
         : orders.filter(o => o.status === filter);
 
     return (
@@ -246,7 +246,7 @@ const ChefOrders = ({ navigation }) => {
                                 </View>
                                 <Text style={styles.emptyTitle}>Chưa có đơn hàng nào</Text>
                                 <Text style={styles.emptyText}>
-                                    {filter === 'all' 
+                                    {filter === 'all'
                                         ? 'Các đơn hàng có chứa món của bạn sẽ hiển thị tại đây.'
                                         : 'Không có đơn hàng nào phù hợp với bộ lọc hiện tại.'}
                                 </Text>

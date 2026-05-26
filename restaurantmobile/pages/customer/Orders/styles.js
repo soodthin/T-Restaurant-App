@@ -54,7 +54,7 @@ export default StyleSheet.create({
     },
     errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
 
-    // Card
+
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,
@@ -65,7 +65,7 @@ export default StyleSheet.create({
     },
     cardCancelled: { opacity: 0.7 },
 
-    // Card header
+
     cardHeaderRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
     orderId: { fontSize: 18, fontWeight: '800', color: Colors.text, letterSpacing: -0.2 },
     date: { fontSize: 12, color: Colors.textSecondary, marginTop: 4, fontWeight: '500' },
@@ -80,7 +80,7 @@ export default StyleSheet.create({
     },
     badgeText: { fontSize: 11, fontWeight: '700', letterSpacing: 0.1 },
 
-    // Summary row (amount + payment side by side)
+
     summaryRow: {
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -172,14 +172,14 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // Divider
+
     divider: {
         height: 1,
         backgroundColor: Colors.outlineVariant + '60',
         marginTop: 14,
     },
 
-    // Details toggle
+
     detailsToggle: {
         marginTop: 12,
         flexDirection: 'row',
@@ -203,7 +203,7 @@ export default StyleSheet.create({
     },
     detailsTogglePillText: { fontSize: 11, fontWeight: '700', color: Colors.textSecondary },
 
-    // Details (expanded)
+
     detailsCard: {
         marginTop: 12,
         backgroundColor: Colors.surfaceContainerLow,
@@ -230,7 +230,7 @@ export default StyleSheet.create({
     detailItem: { flex: 1, fontSize: 13, color: Colors.text, fontWeight: '600' },
     detailPrice: { fontSize: 12, color: Colors.textSecondary, fontWeight: '700' },
 
-    // Empty state
+
     empty: { alignItems: 'center', marginTop: 40, paddingHorizontal: 32 },
     emptyIconCircle: {
         width: 72,

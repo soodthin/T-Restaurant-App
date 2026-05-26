@@ -80,8 +80,8 @@ const Booking = ({ navigation, route }) => {
 
     useFocusEffect(useCallback(() => {
         loadBookings(true);
-        // Nếu được điều hướng kèm initialTab (ví dụ từ Profile → "Lịch sử đặt bàn"),
-        // đổi tab tương ứng rồi xoá param để lần focus sau không bị giữ lại.
+
+
         if (route.params?.initialTab) {
             setTab(route.params.initialTab);
             navigation.setParams({ initialTab: undefined });
@@ -247,7 +247,7 @@ const Booking = ({ navigation, route }) => {
             style={{ flex: 1, backgroundColor: Colors.surface }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 
-            {/* Tab segment */}
+
             <View style={styles.tabBar}>
                 <TouchableOpacity
                     style={[styles.tabBtn, tab === 'new' && styles.tabBtnActive]}
@@ -281,7 +281,7 @@ const Booking = ({ navigation, route }) => {
                         showsVerticalScrollIndicator={false}>
 
                         <FadeIn duration={300}>
-                            {/* Ngày + Giờ side-by-side */}
+
                             <View style={styles.dateTimeRow}>
                                 <View style={{ flex: 1 }}>
                                     <Text style={styles.fieldLabel}>NGÀY</Text>
@@ -305,7 +305,7 @@ const Booking = ({ navigation, route }) => {
                                 </View>
                             </View>
 
-                            {/* Suggested times — horizontal scroll */}
+
                             <Text style={[styles.fieldLabel, { marginTop: 22 }]}>KHUNG GIỜ GỢI Ý</Text>
                             <ScrollView
                                 horizontal
@@ -337,7 +337,7 @@ const Booking = ({ navigation, route }) => {
                                 />
                             }
 
-                            {/* Stepper số khách compact */}
+
                             <Text style={[styles.fieldLabel, { marginTop: 22 }]}>SỐ LƯỢNG KHÁCH</Text>
                             <View style={styles.stepperPill}>
                                 <TouchableOpacity
@@ -355,7 +355,7 @@ const Booking = ({ navigation, route }) => {
                                 </TouchableOpacity>
                             </View>
 
-                            {/* Note */}
+
                             <Text style={[styles.fieldLabel, { marginTop: 22 }]}>GHI CHÚ THÊM</Text>
                             <TextInput
                                 mode="outlined"
@@ -374,7 +374,7 @@ const Booking = ({ navigation, route }) => {
                         </FadeIn>
                     </ScrollView>
 
-                    {/* Sticky bottom confirm button */}
+
                     <View style={[styles.bottomBar, { paddingBottom: tabBarHeight + 16 }]}>
                         <Button
                             mode="contained"

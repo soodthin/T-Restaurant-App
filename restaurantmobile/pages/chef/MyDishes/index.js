@@ -70,8 +70,7 @@ const MyDishes = ({ navigation }) => {
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
     }, [navigation]);
 
-    // Server-side search như Home: dùng `?search=` của DRF SearchFilter (search_fields:
-    // name, chef__*, category__name, menu__name) để tận dụng collation DB cho dấu Việt.
+
     const buildDishUrl = (q) => {
         const params = ['my=true'];
         if (q && q.trim()) params.push(`search=${encodeURIComponent(q.trim())}`);
@@ -113,17 +112,15 @@ const MyDishes = ({ navigation }) => {
         }
     }, [resetToLogin, search]);
 
-    // Chỉ show ActivityIndicator full-screen ở lần load đầu tiên. Lần focus sau
-    // (vd vuốt back từ DishDetail), reload silently bằng refreshing để giữ list,
-    // tránh chớp loading gây giật giao diện.
+
     const hasLoadedRef = useRef(false);
     useFocusEffect(useCallback(() => {
         loadData(!hasLoadedRef.current, search);
         hasLoadedRef.current = true;
-        // eslint-disable-next-line react-hooks/exhaustive-deps
+
     }, []));
 
-    // Debounce search 350ms (giống Home).
+
     const lastSearchedRef = useRef('');
     useEffect(() => {
         if (search === lastSearchedRef.current) return;

@@ -111,7 +111,7 @@ const CompareDishes = ({ route, navigation }) => {
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
                 <FadeIn duration={300}>
-                    {/* Hàng ảnh — float (không có card bg) */}
+
                     <View style={styles.imageRow}>
                         {dishes.map((dish) => (
                             <View key={`img-${dish.id}`} style={styles.imageCellWrap}>
@@ -132,7 +132,7 @@ const CompareDishes = ({ route, navigation }) => {
                         ))}
                     </View>
 
-                    {/* Hàng tên — float (không có card bg) */}
+
                     <View style={styles.nameRow}>
                         {dishes.map((dish) => (
                             <View key={`name-${dish.id}`} style={styles.nameCell}>
@@ -141,7 +141,7 @@ const CompareDishes = ({ route, navigation }) => {
                         ))}
                     </View>
 
-                    {/* Giá */}
+
                     <View style={styles.criteriaHeader}>
                         <MaterialCommunityIcons name="tag-outline" size={14} color={Colors.primary} />
                         <Text style={styles.criteriaLabel}>{'Giá'}</Text>
@@ -160,7 +160,7 @@ const CompareDishes = ({ route, navigation }) => {
                         })}
                     </View>
 
-                    {/* Thời gian phục vụ */}
+
                     <View style={styles.criteriaHeader}>
                         <MaterialCommunityIcons name="clock-outline" size={14} color={Colors.tertiary} />
                         <Text style={styles.criteriaLabel}>{'Thời gian phục vụ'}</Text>
@@ -179,7 +179,7 @@ const CompareDishes = ({ route, navigation }) => {
                         })}
                     </View>
 
-                    {/* Đánh giá */}
+
                     <View style={styles.criteriaHeader}>
                         <MaterialCommunityIcons name="star-outline" size={14} color={Colors.star} />
                         <Text style={styles.criteriaLabel}>{'Đánh giá'}</Text>
@@ -209,7 +209,7 @@ const CompareDishes = ({ route, navigation }) => {
                         })}
                     </View>
 
-                    {/* Nguyên liệu chính */}
+
                     <View style={styles.criteriaHeader}>
                         <MaterialCommunityIcons name="leaf" size={14} color={Colors.success} />
                         <Text style={styles.criteriaLabel}>{'Nguyên liệu chính'}</Text>
@@ -244,7 +244,7 @@ const CompareDishes = ({ route, navigation }) => {
                         })}
                     </View>
 
-                    {/* Nút thêm vào giỏ */}
+
                     <View style={[styles.row, styles.buttonRow]}>
                         {dishes.map((dish) => (
                             <View key={`btn-${dish.id}`} style={styles.btnCell}>

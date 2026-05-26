@@ -1,7 +1,7 @@
 import { initializeApp, getApps } from 'firebase/app';
 import { getDatabase } from 'firebase/database';
 
-// Firebase config — T-Restaurant-App project.
+
 const firebaseConfig = {
     apiKey: 'AIzaSyD2vZtq9q-LEhMjFZekBmoNf0qXWr3_obc',
     authDomain: 't-restaurant-app.firebaseapp.com',
@@ -13,10 +13,10 @@ const firebaseConfig = {
     measurementId: 'G-HV0D036CYQ',
 };
 
-// Khoi tao Firebase app (tranh duplicate khi hot reload).
+
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 
-// Export database instance de chatService dung.
+
 export const database = getDatabase(app);
 
 export default app;

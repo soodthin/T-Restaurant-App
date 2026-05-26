@@ -4,8 +4,7 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Colors from '@styles/colors';
 import styles from './styles';
 
-// Preset buckets cho range filter (giá / thời gian phục vụ).
-// `min`/`max` = null nghĩa là khong rang buoc dau do.
+
 const PRICE_BUCKETS = [
     { key: 'all', label: 'Tất cả', min: null, max: null },
     { key: 'lt50', label: 'Dưới 50.000đ', min: null, max: 50000 },
@@ -23,8 +22,7 @@ const PREP_BUCKETS = [
     { key: 'gt60', label: 'Trên 60 phút', min: 60, max: null },
 ];
 
-// Map giá trị min/max hiện tại (props) ve bucket key. Neu khong khop preset
-// nao (data cu lan vao), tra ve null de SelectRow hien "Tùy chỉnh".
+
 const findBucketKey = (buckets, currentMin, currentMax) => {
     const norm = (v) => (v === '' || v === null || v === undefined ? null : Number(v));
     const cMin = norm(currentMin);
@@ -33,8 +31,7 @@ const findBucketKey = (buckets, currentMin, currentMax) => {
     return matched ? matched.key : null;
 };
 
-// Inline dropdown — thay cho list radio dai. Tap → mo sub-modal liet ke option
-// dang radio. Sub-modal nho hon sheet chinh, hien tu duoi len.
+
 const SelectRow = ({ label, valueLabel, options, selectedKey, onChange, active = false }) => {
     const [open, setOpen] = useState(false);
     return (
@@ -110,7 +107,7 @@ const FilterSheet = ({
         return full || chef.username;
     };
 
-    // Build options cho 4 SelectRow. "Tat ca" = key null.
+
     const sortChoices = sortOptions.map((o) => ({ key: o.key, label: o.label }));
     const currentSortLabel = sortChoices.find((o) => o.key === ordering)?.label || 'Mặc định';
 

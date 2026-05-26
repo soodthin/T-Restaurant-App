@@ -53,7 +53,7 @@ const ChefReviews = ({ navigation }) => {
             const items = Array.isArray(data) ? data : (data.results || []);
             setDishOptions(items.map((d) => ({ id: d.id, name: d.name })));
         } catch (err) {
-            // im lang, picker chi la phu kien
+
         }
     }, []);
 

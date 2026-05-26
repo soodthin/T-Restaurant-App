@@ -17,7 +17,7 @@ export default StyleSheet.create({
         backgroundColor: Colors.surface,
     },
 
-    // Hero
+
     hero: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -43,7 +43,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Summary
+
     summaryRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -72,7 +72,7 @@ export default StyleSheet.create({
         fontWeight: '500',
     },
 
-    // Search
+
     searchbar: {
         marginTop: 12,
         marginBottom: 4,
@@ -87,7 +87,7 @@ export default StyleSheet.create({
         minHeight: 0,
     },
 
-    // Error
+
     errorCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -114,7 +114,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Dish card (compact horizontal)
+
     card: {
         flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLowest,
@@ -183,7 +183,7 @@ export default StyleSheet.create({
         fontWeight: '700',
         color: Colors.text,
     },
-    // Badge "Chờ duyệt" cho món chưa được admin active.
+
     pendingChip: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -199,7 +199,7 @@ export default StyleSheet.create({
         color: Colors.star,
         letterSpacing: 0.2,
     },
-    // Footer + actions trên cùng 1 hàng
+
     footerRow: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -223,7 +223,7 @@ export default StyleSheet.create({
         height: 28,
     },
 
-    // Empty
+
     empty: {
         alignItems: 'center',
         backgroundColor: Colors.surfaceContainerLowest,

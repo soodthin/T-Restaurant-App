@@ -35,8 +35,8 @@ class DishAdmin(admin.ModelAdmin):
 
 
 class UserAdmin(DjangoUserAdmin):
-    # giu nguyen toan bo logic chuan cua DjangoUserAdmin (hash mat khau, change form rieng)
-    # va bo sung cot custom + action duyet dau bep
+
+
     list_display = ['id', 'username', 'email', 'role', 'is_verified', 'is_staff']
     list_filter = ['role', 'is_verified', 'is_staff', 'is_active']
     actions = ['verify_chefs', 'unverify_chefs']
@@ -181,15 +181,12 @@ class PaymentAdmin(admin.ModelAdmin):
 
     @admin.action(description='Xuat CSV giao dich (doi soat)')
     def export_csv(self, request, queryset):
-        """Xuat danh sach payment ra CSV de doi soat voi MoMo/Stripe Dashboard.
 
-        Truong xuat ra: id, order_id, customer, method, status, amount,
-        transaction_id, created_date. Encode UTF-8 BOM de Excel mo dung tieng Viet.
-        """
+
         response = HttpResponse(content_type='text/csv; charset=utf-8-sig')
         ts = timezone.now().strftime('%Y%m%d_%H%M%S')
         response['Content-Disposition'] = f'attachment; filename="payments_{ts}.csv"'
-        response.write('﻿')  # BOM cho Excel mo dung tieng Viet
+        response.write('﻿')
         writer = csv.writer(response)
         writer.writerow([
             'ID', 'Order ID', 'Customer', 'Method', 'Status', 'Amount (VND)',
@@ -217,7 +214,7 @@ class PaymentAdmin(admin.ModelAdmin):
 
 
 class PaymentAttemptAdmin(admin.ModelAdmin):
-    """Lich su tung lan mo cong thanh toan, phuc vu doi soat tai chinh."""
+
     list_display = [
         'id', 'payment', 'method', 'status', 'amount',
         'gateway_request_id', 'transaction_id', 'expires_at', 'paid_at',
@@ -247,11 +244,8 @@ class PaymentAttemptAdmin(admin.ModelAdmin):
 
 
 class WebhookEventAdmin(admin.ModelAdmin):
-    """Audit log cong thanh toan — read-only, khong cho admin tao/sua/xoa.
 
-    Day la evidence cua moi state change tu gateway → khong duoc phep chinh sua
-    de bao toan tinh minh bach.
-    """
+
     list_display = ['id', 'created_date', 'provider', 'event_type',
                     'payment', 'attempt', 'signature_valid', 'result']
     list_filter = ['provider', 'result', 'signature_valid', 'created_date']

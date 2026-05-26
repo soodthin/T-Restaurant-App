@@ -1,8 +1,3 @@
-"""Helper goi MoMo Payment Gateway (sandbox/test).
-
-Doc tham khao: https://developers.momo.vn/v3/vi/docs/payment/api/wallet/onetime
-Su dung public test credentials (xem settings.MOMO_*) — du de demo, khong tru tien that.
-"""
 import hashlib
 import hmac
 import json
@@ -13,7 +8,7 @@ from django.conf import settings
 
 
 def _sign(raw: str) -> str:
-    """HMAC-SHA256 voi secret key, tra ve hex string."""
+
     return hmac.new(
         settings.MOMO_SECRET_KEY.encode('utf-8'),
         raw.encode('utf-8'),
@@ -38,18 +33,14 @@ def _ensure_configured():
 
 
 def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
-    """Tao giao dich MoMo, tra ve dict {pay_url, request_id, order_id_momo}.
 
-    `order_id` la id Order trong he thong cua minh. MoMo yeu cau orderId unique
-    moi lan tao request, nen ta append uuid vao de tranh trung khi user retry.
-    """
+
     _ensure_configured()
     request_id = str(uuid.uuid4())
     momo_order_id = f"order-{order_id}-{uuid.uuid4().hex[:8]}"
     extra_data = ''
-    # captureWallet la flow API v2 cu nhung tuong thich voi public sandbox creds
-    # (MOMO/F8BBA842ECF85/...). payWithMethod (v3) yeu cau creds prod co whitelist
-    # phuong thuc nen tra 400 voi creds test.
+
+
     request_type = 'captureWallet'
 
     raw_signature = (
@@ -89,8 +80,8 @@ def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
         headers={'Content-Type': 'application/json'},
         timeout=20,
     )
-    # Khong dung raise_for_status() vi no nuot mat body — can body de biet
-    # MoMo phan nan gi (vd "Invalid signature", "Amount khong hop le").
+
+
     if not res.ok:
         raise RuntimeError(f'MoMo HTTP {res.status_code}: {res.text[:300]}')
     body = res.json()
@@ -111,7 +102,7 @@ def create_momo_payment(order_id: int, amount: int, order_info: str = ''):
 
 
 def verify_ipn_signature(data: dict) -> bool:
-    """Verify chu ky tu IPN MoMo gui ve. Tra ve True neu hop le."""
+
     signature = data.get('signature', '')
     raw = (
         f"accessKey={settings.MOMO_ACCESS_KEY}"

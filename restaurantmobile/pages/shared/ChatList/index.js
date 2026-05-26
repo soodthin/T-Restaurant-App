@@ -33,7 +33,7 @@ const formatLastTime = (timestamp) => {
 
 const ChatRoomItem = ({ room, currentUser, index, onPress }) => {
     const isCustomer = currentUser?.role === 'customer';
-    // Hien thi thong tin nguoi doi dien.
+
     const otherName = isCustomer ? room.chefName : room.customerName;
     const otherAvatar = isCustomer ? room.chefAvatar : room.customerAvatar;
     const otherId = isCustomer ? room.chefId : room.customerId;
@@ -87,8 +87,8 @@ const ChatRoomItem = ({ room, currentUser, index, onPress }) => {
                             </Text>
                         </View>
                         <View style={styles.messageRow}>
-                            <Text 
-                                style={[styles.lastMessage, unreadCount > 0 && styles.lastMessageUnread]} 
+                            <Text
+                                style={[styles.lastMessage, unreadCount > 0 && styles.lastMessageUnread]}
                                 numberOfLines={1}>
                                 {room.lastMessage || 'Chưa có tin nhắn'}
                             </Text>
@@ -152,7 +152,7 @@ const ChatList = ({ navigation }) => {
 
     const onRefresh = () => {
         setRefreshing(true);
-        // subscribeToChatRooms da la realtime, refresh chi de trigger UI feedback.
+
         setTimeout(() => setRefreshing(false), 600);
     };
 

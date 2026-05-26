@@ -132,8 +132,7 @@ const Home = ({ navigation }) => {
         loadDishes(1, '', null, null, '');
     }, []);
 
-    // Debounce search: gõ keyword → tự fetch sau 350ms.
-    // Dùng ref để tránh fetch khi onRefresh / refresh đã set search rồi.
+
     const lastSearchedRef = useRef('');
     useEffect(() => {
         if (search === lastSearchedRef.current) return;
@@ -193,8 +192,7 @@ const Home = ({ navigation }) => {
                 Apis.get(endpoints['chefs']),
             ]);
 
-            // Cập nhật state TẤT CẢ cùng 1 lượt sau khi API trả về,
-            // để UI (compare FAB, filter, search...) reset đồng bộ với data mới.
+
             lastSearchedRef.current = '';
             setSearch('');
             setCatId(null);
@@ -227,7 +225,7 @@ const Home = ({ navigation }) => {
                 setChefs(Array.isArray(chefData) ? chefData : chefData.results || []);
             }
         } catch (err) {
-            // Silent — không che màn hình lỗi khi pull-to-refresh.
+
         } finally {
             setRefreshing(false);
         }

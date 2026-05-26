@@ -37,8 +37,8 @@ const formatDateSeparator = (timestamp) => {
 };
 
 const shouldShowDateSeparator = (messages, index) => {
-    // Messages da duoc sort theo createdAt tang dan, nhung FlatList inverted
-    // nen index 0 la tin cuoi cung. Ta kiem tra theo thu tu that cua array.
+
+
     const realIndex = messages.length - 1 - index;
     if (realIndex === 0) return true;
     const current = messages[realIndex];
@@ -73,7 +73,7 @@ const Chat = ({ route, navigation }) => {
     const flatListRef = useRef(null);
     const unsubRef = useRef(null);
 
-    // Set header title
+
     useEffect(() => {
         const name = otherUser
             ? (getDisplayName(otherUser, otherUser.username) || `User #${otherUser.id}`)
@@ -96,7 +96,7 @@ const Chat = ({ route, navigation }) => {
         });
     }, [otherUser, navigation]);
 
-    // Load current user va khoi tao room
+
     useFocusEffect(
         useCallback(() => {
             let cancelled = false;
@@ -117,10 +117,10 @@ const Chat = ({ route, navigation }) => {
                     if (cancelled) return;
                     setRoomId(rid);
 
-                    // Reset unread count khi vao room
+
                     await resetUnreadCount(rid, user.role);
 
-                    // Subscribe realtime messages
+
                     unsubRef.current = subscribeToMessages(rid, (msgs) => {
                         if (!cancelled) {
                             setMessages(msgs);
@@ -153,14 +153,14 @@ const Chat = ({ route, navigation }) => {
         try {
             await sendMessage(roomId, currentUser.id, currentUser.role, text);
         } catch (err) {
-            // Neu gui that bai, tra lai text vao input.
+
             setInputText(text);
         } finally {
             setSending(false);
         }
     };
 
-    // Data cho FlatList inverted: reverse de tin moi nhat o duoi.
+
     const invertedMessages = [...messages].reverse();
 
     const renderMessage = ({ item, index }) => {
@@ -222,7 +222,7 @@ const Chat = ({ route, navigation }) => {
                 }
             />
 
-            {/* Input bar */}
+
             <View style={styles.inputBar}>
                 <View style={styles.inputWrap}>
                     <RNTextInput

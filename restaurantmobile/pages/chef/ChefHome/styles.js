@@ -19,7 +19,7 @@ export default StyleSheet.create({
         backgroundColor: Colors.surface,
     },
 
-    // App bar
+
     appBar: {
         backgroundColor: Colors.surfaceContainerLowest,
         flexDirection: 'row',
@@ -44,7 +44,7 @@ export default StyleSheet.create({
         letterSpacing: -0.2,
     },
 
-    // Error
+
     errorCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -71,7 +71,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Warning banner (chưa verified)
+
     warningCard: {
         flexDirection: 'row',
         alignItems: 'flex-start',
@@ -120,7 +120,7 @@ export default StyleSheet.create({
         letterSpacing: 0.2,
     },
 
-    // Stats grid
+
     statsRow: {
         flexDirection: 'row',
         gap: 10,
@@ -155,7 +155,7 @@ export default StyleSheet.create({
         letterSpacing: -0.4,
     },
 
-    // Revenue full-width
+
     revenueCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 18,
@@ -193,7 +193,7 @@ export default StyleSheet.create({
         opacity: 0.6,
     },
 
-    // Create CTA button
+
     createBtn: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -226,7 +226,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Section title
+
     sectionTitle: {
         fontSize: 17,
         fontWeight: '800',
@@ -236,7 +236,7 @@ export default StyleSheet.create({
         marginTop: 4,
     },
 
-    // Custom segmented period selector
+
     periodSegment: {
         flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLow,
@@ -264,7 +264,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // Chart card
+
     chartCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 18,
@@ -319,7 +319,7 @@ export default StyleSheet.create({
         paddingVertical: 16,
     },
 
-    // Drawer
+
     backdrop: {
         backgroundColor: '#00000066',
     },
@@ -394,7 +394,7 @@ export default StyleSheet.create({
         letterSpacing: 0.2,
     },
 
-    // Sidebar items
+
     sidebarItem: {
         flexDirection: 'row',
         alignItems: 'center',

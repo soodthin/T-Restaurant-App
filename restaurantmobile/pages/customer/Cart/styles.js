@@ -26,7 +26,7 @@ const sheetShadow = Platform.select({
 export default StyleSheet.create({
     container: { flex: 1, backgroundColor: Colors.surface },
 
-    // === Header card ===
+
     headerCard: {
         backgroundColor: Colors.surfaceContainerLowest,
         paddingHorizontal: 24,
@@ -54,7 +54,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Item card ===
+
     itemCard: {
         flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLowest,
@@ -118,7 +118,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Stepper pill ===
+
     stepperPill: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -145,7 +145,7 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // === Bottom sheet ===
+
     bottomSheet: {
         position: 'absolute',
         left: 0,
@@ -169,7 +169,7 @@ export default StyleSheet.create({
         marginBottom: 14,
     },
 
-    // === Payment chips ===
+
     paymentScroll: {
         gap: 10,
         paddingRight: 4,
@@ -198,7 +198,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // === Summary ===
+
     summaryBlock: {
         flexDirection: 'row',
         justifyContent: 'space-between',
@@ -224,12 +224,12 @@ export default StyleSheet.create({
         letterSpacing: -0.3,
     },
 
-    // === Checkout button ===
+
     checkoutBtn: {
         borderRadius: 16,
     },
 
-    // === Empty state ===
+
     emptyWrap: {
         flex: 1,
         justifyContent: 'center',
@@ -259,7 +259,7 @@ export default StyleSheet.create({
         lineHeight: 20,
     },
 
-    // === Guest prompt ===
+
     guestPrompt: { paddingTop: 4 },
     guestPromptIcon: {
         width: 56,

@@ -2,7 +2,7 @@ import { Platform } from 'react-native';
 import { MD3LightTheme } from 'react-native-paper';
 import Colors from './colors';
 
-// Editorial shadow - ambient lighting, not structural
+
 export const editorialShadow = Platform.select({
     ios: {
         shadowColor: '#271816',
@@ -16,19 +16,19 @@ export const editorialShadow = Platform.select({
     default: {},
 });
 
-// Glassmorphic style for floating elements
+
 export const glassmorphic = {
-    backgroundColor: Colors.surface + 'CC', // 80% opacity
+    backgroundColor: Colors.surface + 'CC',
 };
 
-// Lacquered gradient colors (for LinearGradient or manual)
+
 export const lacquerGradient = {
     colors: [Colors.primary, Colors.primaryContainer],
     start: { x: 0, y: 0 },
     end: { x: 1, y: 1 },
 };
 
-// Border radius presets
+
 export const Radius = {
     sm: 4,
     md: 8,
@@ -40,7 +40,7 @@ export const Radius = {
     full: 9999,
 };
 
-// Spacing scale
+
 export const Space = {
     xs: 4,
     sm: 8,
@@ -51,7 +51,7 @@ export const Space = {
     '3xl': 32,
 };
 
-// React Native Paper theme
+
 export const paperTheme = {
     ...MD3LightTheme,
     colors: {

@@ -104,8 +104,7 @@ const ChefHome = ({ navigation }) => {
                 return;
             }
 
-            // User và stats là 2 nguồn dữ liệu độc lập — set user trước để UI hiển thị
-            // đúng trạng thái xác minh ngay cả khi stats fail.
+
             if (userRes.ok) {
                 setUser(userRes.data);
                 await storeUser(userRes.data);
@@ -119,7 +118,7 @@ const ChefHome = ({ navigation }) => {
                 setError(getApiErrorMessage(statsRes, 'Không thể tải bảng điều khiển bếp'));
             }
 
-            // Nếu cả user và stats đều fail, ưu tiên báo lỗi user.
+
             if (!userRes.ok && !statsRes.ok) {
                 setError(getApiErrorMessage(userRes, 'Không thể tải thông tin đầu bếp'));
             }
@@ -193,7 +192,7 @@ const ChefHome = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* Top App Bar */}
+
             <View style={[styles.appBar, { paddingTop: insets.top + 8 }]}>
                 <TouchableOpacity
                     activeOpacity={0.7}
@@ -236,8 +235,7 @@ const ChefHome = ({ navigation }) => {
                     </View> :
                     null}
 
-                {/* Warning banner — chỉ hiện khi đã có user và chưa verified.
-                    Banner kèm action "Mở hồ sơ" để gộp 2 chỗ alert làm 1, tránh trùng lặp. */}
+
                 {user && !isVerified && (
                     <FadeInDown duration={400} style={styles.warningCard}>
                         <View style={styles.warningStripe} />
@@ -264,7 +262,7 @@ const ChefHome = ({ navigation }) => {
                     </FadeInDown>
                 )}
 
-                {/* Stats grid 2 cột */}
+
                 <FadeInDown duration={500} style={styles.statsRow}>
                     <View style={styles.statCard}>
                         <View style={[styles.statIcon, { backgroundColor: Colors.primary + '16' }]}>
@@ -290,7 +288,7 @@ const ChefHome = ({ navigation }) => {
                     </View>
                 </FadeInDown>
 
-                {/* Revenue full-width */}
+
                 <FadeInDown duration={500} style={styles.revenueCard}>
                     <View style={{ zIndex: 1 }}>
                         <Text style={styles.revenueEyebrow}>Tổng doanh thu hiện có</Text>
@@ -307,8 +305,7 @@ const ChefHome = ({ navigation }) => {
                     />
                 </FadeInDown>
 
-                {/* Create dish CTA — chỉ hiện khi đã verified.
-                    Khi chưa verified, warning banner phía trên đã có link "Mở hồ sơ" rồi. */}
+
                 {isVerified && (
                     <TouchableOpacity
                         activeOpacity={0.85}
@@ -327,10 +324,10 @@ const ChefHome = ({ navigation }) => {
                     </TouchableOpacity>
                 )}
 
-                {/* Chart section */}
+
                 <Text style={styles.sectionTitle}>Doanh thu theo thời gian</Text>
 
-                {/* Custom segmented period selector */}
+
                 <View style={styles.periodSegment}>
                     {['day', 'week', 'month'].map((p) => {
                         const active = p === period;
@@ -377,7 +374,7 @@ const ChefHome = ({ navigation }) => {
                     )}
                 </View>
 
-                {/* Top dishes (giữ từ logic cũ) */}
+
                 <Text style={styles.sectionTitle}>Top món theo doanh thu</Text>
                 <View style={styles.chartCard}>
                     {topDishes.length === 0 ? (
@@ -408,7 +405,7 @@ const ChefHome = ({ navigation }) => {
                 </View>
             </ScrollView>
 
-            {/* Sidebar drawer (Modal overlay toàn màn hình) */}
+
             <Modal
                 visible={drawerOpen}
                 transparent
@@ -426,7 +423,7 @@ const ChefHome = ({ navigation }) => {
                         { transform: [{ translateX: drawerX }] },
                     ]}
                 >
-                    {/* Header drawer */}
+
                     <View style={[styles.drawerHeader, { paddingTop: insets.top + 24 }]}>
                         <TouchableOpacity
                             activeOpacity={0.7}
@@ -454,7 +451,7 @@ const ChefHome = ({ navigation }) => {
                         </View>
                     </View>
 
-                    {/* Items */}
+
                     <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
                         <SidebarItem
                             icon="receipt"

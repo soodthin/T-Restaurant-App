@@ -43,7 +43,7 @@ class UserSerializer(ModelSerializer):
         if not USERNAME_RE.match(value):
             raise serializers.ValidationError(
                 'Tên đăng nhập 3-30 ký tự, chỉ chữ/số/_/.')
-        # Khi tao moi: phai unique. Khi update: cho phep giu nguyen username.
+
         qs = User.objects.filter(username__iexact=value)
         if self.instance:
             qs = qs.exclude(pk=self.instance.pk)
@@ -248,9 +248,8 @@ class DishSerializer(ModelSerializer):
 
     def create(self, validated_data):
         validated_data['chef'] = self.context['request'].user
-        # Mon moi LUON tao voi active=False de cho admin duyet noi dung truoc khi hien thi
-        # cong khai cho khach. Chef van thay/sua/xoa duoc mon cua minh qua ?my=true
-        # (xem DishViewSet.get_queryset).
+
+
         validated_data['active'] = False
         return super().create(validated_data)
 
@@ -291,7 +290,7 @@ class TableBookingSerializer(ModelSerializer):
         if value <= timezone.now():
             raise serializers.ValidationError(
                 'Thời gian đặt bàn phải ở tương lai.')
-        # Khong cho dat truoc qua xa (90 ngay) de tranh spam.
+
         if value > timezone.now() + timezone.timedelta(days=90):
             raise serializers.ValidationError(
                 'Chỉ được đặt bàn trong vòng 90 ngày tới.')
@@ -306,7 +305,7 @@ class TableBookingSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs):
-        # Khi cap nhat trang thai, chi cho phep cac chuyen trang thai hop le.
+
         if self.instance and 'status' in attrs:
             current = self.instance.status
             new = attrs['status']
@@ -337,7 +336,7 @@ class OrderDetailSerializer(ModelSerializer):
     class Meta:
         model = OrderDetail
         fields = ['id', 'dish', 'dish_name', 'quantity', 'unit_price']
-        read_only_fields = ['unit_price']  # Server tu set theo dish.price
+        read_only_fields = ['unit_price']
 
     def get_dish_name(self, obj):
         return obj.dish.name if obj.dish else None
@@ -356,7 +355,7 @@ class OrderDetailSerializer(ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Lay unit_price tu dish (chong gian lan gia o client).
+
         dish = validated_data['dish']
         validated_data['unit_price'] = dish.price
         return super().create(validated_data)
@@ -396,10 +395,8 @@ class OrderSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs):
-        # Chi cho phep chuyen trang thai theo huong xuoi.
-        # paid/payment_failed la trang thai do webhook tu chuyen, khong nen cho
-        # client transition truc tiep — nhung cho phep tu paid/payment_failed →
-        # cancelled (admin/customer huy don) va paid → preparing (chef accept).
+
+
         if self.instance and 'status' in attrs:
             current = self.instance.status
             new = attrs['status']
@@ -522,7 +519,7 @@ class ReviewSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs):
-        # Khi tao moi, tranh trung review (1 user / 1 dish).
+
         if not self.instance:
             request = self.context.get('request')
             dish = attrs.get('dish')
@@ -572,9 +569,8 @@ class PaymentSerializer(ModelSerializer):
         return value
 
     def create(self, validated_data):
-        # Server tu set amount = total_amount cua order de chong gian lan.
-        # refresh_from_db: phong stale cache neu add-detail vua xay ra trong
-        # request truoc — bao dam doc total_amount moi nhat.
+
+
         order = validated_data['order']
         order.refresh_from_db()
         if order.total_amount <= 0:

@@ -20,9 +20,9 @@ urlpatterns = [
     path('admin/', admin_site.urls),
     path('api/', include('restaurant.urls')),
     re_path(r'^ckeditor/', include('ckeditor_uploader.urls')),
-    # OAuth2 endpoints
+
     path('o/', include('oauth2_provider.urls', namespace='oauth2_provider')),
-    # Swagger va Redoc
+
     re_path(r'^swagger(?P<format>\.json|\.yaml)$',
             schema_view.without_ui(cache_timeout=0), name='schema-json'),
     re_path(r'^swagger/$',

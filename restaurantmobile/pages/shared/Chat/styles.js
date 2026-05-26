@@ -14,7 +14,7 @@ export default StyleSheet.create({
         alignItems: 'center',
     },
 
-    // Header avatar
+
     headerAvatar: {
         marginRight: 4,
     },
@@ -34,7 +34,7 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // Message list
+
     messageList: {
         flex: 1,
     },
@@ -43,7 +43,7 @@ export default StyleSheet.create({
         paddingVertical: 16,
     },
 
-    // Date separator
+
     dateSeparator: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -62,7 +62,7 @@ export default StyleSheet.create({
         paddingHorizontal: 12,
     },
 
-    // Bubble
+
     bubbleRow: {
         flexDirection: 'row',
         marginBottom: 6,
@@ -110,7 +110,7 @@ export default StyleSheet.create({
         color: Colors.textSecondary,
     },
 
-    // Input bar
+
     inputBar: {
         flexDirection: 'row',
         alignItems: 'flex-end',
@@ -149,12 +149,12 @@ export default StyleSheet.create({
         backgroundColor: Colors.surfaceContainerHigh,
     },
 
-    // Empty state
+
     emptyContainer: {
         alignItems: 'center',
         paddingHorizontal: 40,
         paddingVertical: 60,
-        // Inverted FlatList: empty component hien nguoc, transform lai.
+
         transform: [{ scaleY: -1 }],
     },
     emptyIconCircle: {

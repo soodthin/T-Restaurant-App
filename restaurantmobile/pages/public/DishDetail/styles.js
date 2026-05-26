@@ -8,7 +8,7 @@ export default StyleSheet.create({
     imagePlaceholder: { backgroundColor: Colors.surfaceContainerLow, justifyContent: 'center', alignItems: 'center' },
     headerActions: {
         position: 'absolute',
-        top: 48, // approximate for safe area
+        top: 48,
         left: 16,
         right: 16,
         flexDirection: 'row',
@@ -24,12 +24,12 @@ export default StyleSheet.create({
         alignItems: 'center',
         ...editorialShadow,
     },
-    infoBox: { 
-        marginTop: -32, 
-        backgroundColor: Colors.surface, 
-        borderTopLeftRadius: 32, 
-        borderTopRightRadius: 32, 
-        paddingTop: 24, 
+    infoBox: {
+        marginTop: -32,
+        backgroundColor: Colors.surface,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingTop: 24,
         paddingHorizontal: 20,
         paddingBottom: 24,
     },
@@ -41,7 +41,7 @@ export default StyleSheet.create({
     },
     name: { fontSize: 26, fontWeight: '800', color: Colors.text, flex: 1, lineHeight: 32 },
     price: { fontSize: 24, color: Colors.primary, fontWeight: '800' },
-    
+
     quickStatsRow: { flexDirection: 'row', alignItems: 'center', marginTop: 12, gap: 16 },
     ratingBadge: {
         flexDirection: 'row',
@@ -62,7 +62,7 @@ export default StyleSheet.create({
     prepTimeText: { fontSize: 14, fontWeight: '600', color: Colors.textSecondary },
 
     desc: { fontSize: 14, color: Colors.textSecondary, marginTop: 16, lineHeight: 22 },
-    
+
     chatChefCard: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -107,7 +107,7 @@ export default StyleSheet.create({
 
     sectionContainer: { marginTop: 20 },
     sectionTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginBottom: 12 },
-    
+
     ingredientGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
     ingredientChip: {
         flexDirection: 'row',
@@ -121,7 +121,7 @@ export default StyleSheet.create({
         gap: 6,
     },
     ingredientText: { fontSize: 14, color: Colors.text, fontWeight: '500' },
-    
+
     divider: { height: 1, backgroundColor: Colors.surfaceContainerLow, marginVertical: 20 },
 
     writeReviewCard: {
@@ -132,7 +132,7 @@ export default StyleSheet.create({
         borderColor: Colors.surfaceContainerLow,
     },
     starRow: { flexDirection: 'row', justifyContent: 'center', marginBottom: 16, gap: 8 },
-    
+
     reviewItem: {
         padding: 16,
         backgroundColor: Colors.surfaceContainerLowest,
@@ -158,10 +158,10 @@ export default StyleSheet.create({
     },
     reviewStarText: { color: Colors.star, fontWeight: '800', fontSize: 12 },
     reviewComment: { color: Colors.textSecondary, fontSize: 14, lineHeight: 22 },
-    
+
     emptyReview: { alignItems: 'center', paddingVertical: 20 },
     emptyReviewText: { fontSize: 14, color: Colors.textSecondary, marginTop: 10, textAlign: 'center' },
-    
+
     bottomBar: {
         position: 'absolute',
         left: 0,
@@ -169,13 +169,13 @@ export default StyleSheet.create({
         bottom: 0,
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.surface, // Solid background to prevent overlap issues
+        backgroundColor: Colors.surface,
         borderTopWidth: 1,
         borderTopColor: Colors.surfaceContainerLow,
         paddingHorizontal: 16,
         paddingTop: 16,
-        paddingBottom: 24, // Fallback, will be overridden by insets in index.js
-        gap: 12, // Reduced gap to give more room to the button
+        paddingBottom: 24,
+        gap: 12,
         elevation: 8,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: -3 },
@@ -200,13 +200,13 @@ export default StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center',
         paddingVertical: 14,
-        paddingHorizontal: 8, // Reduced horizontal padding
-        gap: 4, // Reduced gap between icon and text
+        paddingHorizontal: 8,
+        gap: 4,
     },
     cartBtnText: {
         color: Colors.onPrimary,
         fontWeight: '700',
-        fontSize: 14, // Slightly smaller font
+        fontSize: 14,
     },
     cartBtnDivider: {
         width: 4,
@@ -218,7 +218,7 @@ export default StyleSheet.create({
     cartBtnPrice: {
         color: Colors.onPrimary,
         fontWeight: '800',
-        fontSize: 14, // Slightly smaller font
+        fontSize: 14,
     },
     centerState: {
         flex: 1,

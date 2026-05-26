@@ -19,14 +19,13 @@ const Login = ({ navigation, route }) => {
 
     const showToast = (message, type = 'error') => setToast({ visible: true, message, type });
 
-    // Khi navigate vao Login kem flashMessage (vi du tu RestaurantDetail "Dat ban ngay"
-    // ma chua dang nhap), hien toast ngay khi mount de user biet ly do bi yeu cau dang nhap.
+
     useEffect(() => {
         const flash = route?.params?.flashMessage;
         if (flash) {
             const flashType = route?.params?.flashType || 'error';
             showToast(flash, flashType);
-            // Reset param de neu user navigate qua lai khong show lai toast.
+
             navigation.setParams({ flashMessage: undefined, flashType: undefined });
         }
     }, [route?.params?.flashMessage]);

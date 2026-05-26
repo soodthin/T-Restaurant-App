@@ -1,13 +1,13 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// === Cấu hình kết nối server ===
+
 export const BASE_URL = 'https://t-restaurant.onrender.com';
 
 export const CLIENT_ID = 'restaurant_client_id';
 export const CLIENT_SECRET = 'restaurant_client_secret';
 
-// === Danh sách endpoints API ===
+
 export const endpoints = {
     'login': '/o/token/',
     'current-user': '/api/users/current-user/',
@@ -32,18 +32,17 @@ export const endpoints = {
     'stats': '/api/stats/',
 };
 
-// === HTTP client (axios) ===
+
 const SESSION_STORAGE_KEYS = ['token', 'user', 'customer_cart_items'];
 
-// Cấu hình chung: không throw theo HTTP status để call site tự kiểm tra res.status / res.ok.
-// Timeout 45s đủ chịu Render free tier cold start (~30-50s wake up sau khi sleep).
+
 const baseConfig = {
     baseURL: BASE_URL,
     timeout: 45000,
     validateStatus: () => true,
 };
 
-// Gắn .ok vào response để call site dùng cú pháp giống fetch (res.ok).
+
 const attachOk = (instance) => {
     instance.interceptors.response.use((res) => {
         res.ok = res.status >= 200 && res.status < 300;
@@ -52,16 +51,16 @@ const attachOk = (instance) => {
     return instance;
 };
 
-// Apis dùng cho các endpoint công khai (không cần token).
+
 export const Apis = attachOk(axios.create(baseConfig));
 
-// Trả về axios instance kèm token (theo phong cách slide).
+
 export const authApis = (token) => attachOk(axios.create({
     ...baseConfig,
     headers: token ? { Authorization: `Bearer ${token}` } : {},
 }));
 
-// === Helpers session ===
+
 export const clearSession = async () => {
     await AsyncStorage.multiRemove(SESSION_STORAGE_KEYS);
 };
@@ -83,13 +82,13 @@ export const getStoredUser = async () => {
     }
 };
 
-// === Trích thông điệp lỗi từ response ===
+
 const HTML_RESPONSE_RE = /<\s*(?:!doctype|html|head|body|title|h\d|p|div|script)\b/i;
 
 const extractMessage = (payload) => {
     if (!payload) return '';
     if (typeof payload === 'string') {
-        // Server-side error pages (Django DEBUG=False trả HTML 500) — không cho leak ra UI.
+
         if (HTML_RESPONSE_RE.test(payload)) return '';
         return payload;
     }
@@ -110,8 +109,7 @@ export const getApiErrorMessage = (res, fallback = 'Đã có lỗi xảy ra') =>
     return fallback;
 };
 
-// === Wrapper giữ chữ ký fetch để call site đổi ít nhất ===
-// Trả về axios response (có res.data, res.status, res.ok).
+
 export const authFetch = async (url, options = {}) => {
     const token = await getStoredToken();
 
@@ -122,13 +120,13 @@ export const authFetch = async (url, options = {}) => {
     }
 
     let data = options.body;
-    // Body string JSON từ call site cũ (JSON.stringify(...)) → parse về object cho axios serialize lại.
-    // FormData giữ nguyên để axios tự đặt Content-Type multipart.
+
+
     if (typeof data === 'string') {
         try {
             data = JSON.parse(data);
         } catch (err) {
-            // Giữ nguyên nếu không phải JSON hợp lệ.
+
         }
     }
 
@@ -146,5 +144,5 @@ export const authFetch = async (url, options = {}) => {
     return res;
 };
 
-// Default export: Apis (khớp pattern slide ecourse).
+
 export default Apis;
