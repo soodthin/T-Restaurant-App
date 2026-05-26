@@ -1,13 +1,14 @@
 import csv
 import json
+from collections import defaultdict
+from decimal import Decimal
 from datetime import timedelta
 
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
 from django.core.serializers.json import DjangoJSONEncoder
-from django.db.models import Count, Sum, F
-from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
+from django.db.models import Count, Sum, F, DecimalField
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
 from django.urls import path, reverse
@@ -71,11 +72,28 @@ class UserAdmin(DjangoUserAdmin):
                           level=messages.WARNING)
 
 
-PERIOD_TRUNC = {
-    'day': TruncDay,
-    'week': TruncWeek,
-    'month': TruncMonth,
-}
+PERIOD_OPTIONS = {'day', 'week', 'month'}
+
+
+def _bucket_date(value, period):
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    if period == 'month':
+        return value.date().replace(day=1)
+    if period == 'week':
+        return (value - timedelta(days=value.weekday())).date()
+    return value.date()
+
+
+def _format_series(series, period):
+    result = []
+    for bucket, value in sorted(series.items()):
+        if period == 'month':
+            label = bucket.strftime('%m/%Y')
+        else:
+            label = bucket.strftime('%d/%m/%Y')
+        result.append({'label': label, 'value': value})
+    return result
 
 
 class RestaurantAdminSite(admin.AdminSite):
@@ -94,47 +112,42 @@ class RestaurantAdminSite(admin.AdminSite):
 
     def dish_stats(self, request):
         period = request.GET.get('period', 'day')
-        if period not in PERIOD_TRUNC:
+        if period not in PERIOD_OPTIONS:
             period = 'day'
         try:
             days = max(1, min(365, int(request.GET.get('days', '30'))))
         except (TypeError, ValueError):
             days = 30
         since = timezone.now() - timedelta(days=days)
-        trunc = PERIOD_TRUNC[period]
 
         category_stats = list(
             FoodCategory.objects.annotate(count=Count('dishes')).values('id', 'name', 'count')
         )
 
-        booking_series = list(
+        booking_series = defaultdict(int)
+        for created_date in (
             TableBooking.objects.filter(created_date__gte=since)
-            .annotate(bucket=trunc('created_date'))
-            .values('bucket').annotate(count=Count('id'))
-            .order_by('bucket')
-        )
-        revenue_series = list(
-            Payment.objects.filter(status='completed', paid_at__gte=since)
-            .annotate(bucket=trunc('paid_at'))
-            .values('bucket').annotate(total=Sum('amount'))
-            .order_by('bucket')
-        )
+            .values_list('created_date', flat=True)
+        ):
+            booking_series[_bucket_date(created_date, period)] += 1
 
-        def fmt(series, key):
-            return [
-                {
-                    'label': r['bucket'].strftime('%d/%m/%Y') if r['bucket'] else '',
-                    'value': r[key] or 0,
-                }
-                for r in series
-            ]
+        revenue_series = defaultdict(Decimal)
+        for paid_at, amount in (
+            Payment.objects.filter(status='completed', paid_at__gte=since)
+            .values_list('paid_at', 'amount')
+        ):
+            if paid_at:
+                revenue_series[_bucket_date(paid_at, period)] += amount or Decimal('0')
 
         top_dishes = list(
             OrderDetail.objects.filter(order__created_date__gte=since)
             .values('dish_id', 'dish__name')
             .annotate(
                 orders=Sum('quantity'),
-                revenue=Sum(F('unit_price') * F('quantity')),
+                revenue=Sum(
+                    F('unit_price') * F('quantity'),
+                    output_field=DecimalField(max_digits=14, decimal_places=2),
+                ),
             )
             .order_by('-revenue')[:10]
         )
@@ -163,11 +176,11 @@ class RestaurantAdminSite(admin.AdminSite):
             ],
             'days_options': [7, 30, 90, 180, 365],
             'category_stats': category_stats,
-            'booking_series': fmt(booking_series, 'count'),
-            'revenue_series': fmt(revenue_series, 'total'),
+            'booking_series': _format_series(booking_series, period),
+            'revenue_series': _format_series(revenue_series, period),
             'category_stats_json': json.dumps(category_stats, cls=DjangoJSONEncoder),
-            'booking_series_json': json.dumps(fmt(booking_series, 'count'), cls=DjangoJSONEncoder),
-            'revenue_series_json': json.dumps(fmt(revenue_series, 'total'), cls=DjangoJSONEncoder),
+            'booking_series_json': json.dumps(_format_series(booking_series, period), cls=DjangoJSONEncoder),
+            'revenue_series_json': json.dumps(_format_series(revenue_series, period), cls=DjangoJSONEncoder),
             'top_dishes': top_dishes,
             'totals': totals,
         }

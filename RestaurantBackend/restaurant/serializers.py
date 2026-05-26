@@ -1,6 +1,6 @@
 import re
 
-from django.db.models import Avg
+from django.db.models import Avg, Sum
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import (
@@ -21,6 +21,11 @@ PHONE_RE = re.compile(r'^\+?\d{9,15}$')
 USERNAME_RE = re.compile(r'^[A-Za-z0-9_.]{3,30}$')
 ALLOWED_ROLES = {'admin', 'chef', 'customer'}
 REGISTER_ROLES = {'chef', 'customer'}
+ACTIVE_BOOKING_STATUSES = {'pending', 'confirmed'}
+MAX_ACTIVE_BOOKINGS_PER_CUSTOMER = 3
+BOOKING_DUPLICATE_WINDOW = timezone.timedelta(hours=2)
+BOOKING_CAPACITY_WINDOW = timezone.timedelta(minutes=90)
+BOOKING_MAX_GUESTS_PER_WINDOW = 50
 
 
 def has_plain_text(value):
@@ -305,24 +310,64 @@ class TableBookingSerializer(ModelSerializer):
         return value
 
     def validate(self, attrs):
+        request = self.context.get('request')
+        user = getattr(request, 'user', None)
 
-        if self.instance and 'status' in attrs:
-            current = self.instance.status
-            new = attrs['status']
-            request = self.context.get('request')
-            if request and not request.user.is_staff and new != current:
-                if not (current == 'pending' and new == 'cancelled'):
+        if self.instance:
+            if request and not request.user.is_staff:
+                edited_fields = set(attrs.keys()) - {'status'}
+                if edited_fields:
                     raise serializers.ValidationError(
-                        {'status': 'Khach hang chi duoc huy lich dang cho.'})
-            allowed = {
-                'pending': {'confirmed', 'cancelled'},
-                'confirmed': {'completed', 'cancelled'},
-                'cancelled': set(),
-                'completed': set(),
-            }
-            if new != current and new not in allowed.get(current, set()):
+                        'Khách hàng chỉ được hủy lịch đặt bàn. Vui lòng tạo lịch mới nếu cần đổi thông tin.')
+
+            if 'status' in attrs:
+                current = self.instance.status
+                new = attrs['status']
+                if request and not request.user.is_staff and new != current:
+                    if not (current == 'pending' and new == 'cancelled'):
+                        raise serializers.ValidationError(
+                            {'status': 'Khách hàng chỉ được hủy lịch đang chờ.'})
+                allowed = {
+                    'pending': {'confirmed', 'cancelled'},
+                    'confirmed': {'completed', 'cancelled'},
+                    'cancelled': set(),
+                    'completed': set(),
+                }
+                if new != current and new not in allowed.get(current, set()):
+                    raise serializers.ValidationError(
+                        {'status': f'Không thể chuyển từ "{current}" sang "{new}".'})
+            return attrs
+
+        booking_date = attrs.get('booking_date')
+        guests = attrs.get('guests') or 0
+        if not booking_date:
+            return attrs
+
+        if user and user.is_authenticated and not user.is_staff:
+            active_bookings = TableBooking.objects.filter(
+                customer=user,
+                status__in=ACTIVE_BOOKING_STATUSES,
+                booking_date__gte=timezone.now(),
+            )
+            if active_bookings.count() >= MAX_ACTIVE_BOOKINGS_PER_CUSTOMER:
                 raise serializers.ValidationError(
-                    {'status': f'Không thể chuyển từ "{current}" sang "{new}".'})
+                    'Bạn chỉ được có tối đa 3 lịch đặt bàn đang hoạt động.')
+
+            duplicate_start = booking_date - BOOKING_DUPLICATE_WINDOW
+            duplicate_end = booking_date + BOOKING_DUPLICATE_WINDOW
+            if active_bookings.filter(booking_date__range=(duplicate_start, duplicate_end)).exists():
+                raise serializers.ValidationError(
+                    'Bạn đã có lịch đặt bàn gần thời điểm này. Vui lòng dùng lịch cũ hoặc chọn giờ khác.')
+
+        capacity_start = booking_date - BOOKING_CAPACITY_WINDOW
+        capacity_end = booking_date + BOOKING_CAPACITY_WINDOW
+        booked_guests = TableBooking.objects.filter(
+            status__in=ACTIVE_BOOKING_STATUSES,
+            booking_date__range=(capacity_start, capacity_end),
+        ).aggregate(total=Sum('guests'))['total'] or 0
+        if booked_guests + guests > BOOKING_MAX_GUESTS_PER_WINDOW:
+            raise serializers.ValidationError(
+                'Khung giờ này đã đủ chỗ, vui lòng chọn thời gian khác.')
         return attrs
 
     def create(self, validated_data):

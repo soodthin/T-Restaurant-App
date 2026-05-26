@@ -2,13 +2,16 @@ from rest_framework import viewsets, generics, permissions, status, filters
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser
 from rest_framework.response import Response
+from rest_framework.throttling import UserRateThrottle
 from django.db.models import Sum, F, Avg, Count, FloatField, Value, DecimalField
-from django.db.models.functions import Coalesce, TruncDay, TruncWeek, TruncMonth
+from django.db.models.functions import Coalesce
 from django.http import HttpResponse, JsonResponse
 from django.utils import timezone
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from collections import defaultdict
 from datetime import timedelta
+from decimal import Decimal
 import json
 import logging
 
@@ -31,6 +34,10 @@ from .paginators import ItemPaginator, ReviewPaginator
 
 ONLINE_PAYMENT_METHODS = {'momo', 'stripe'}
 PAYMENT_ATTEMPT_TTL = timedelta(minutes=10)
+
+
+class BookingCreateThrottle(UserRateThrottle):
+    scope = 'booking_create'
 
 
 def _payment_expires_at(method):
@@ -347,6 +354,11 @@ class TableBookingViewSet(viewsets.ModelViewSet):
         if self.action == 'create':
             return [IsCustomer()]
         return [permissions.IsAuthenticated()]
+
+    def get_throttles(self):
+        if self.action == 'create':
+            return [BookingCreateThrottle()]
+        return super().get_throttles()
 
     def get_queryset(self):
         user = self.request.user
@@ -905,62 +917,69 @@ def stripe_return(request):
     )
 
 
-PERIOD_TRUNC = {
-    'day': TruncDay,
-    'week': TruncWeek,
-    'month': TruncMonth,
-}
+PERIOD_OPTIONS = {'day', 'week', 'month'}
 
 
 def _parse_period(request, default='day'):
     period = request.query_params.get('period', default)
-    if period not in PERIOD_TRUNC:
+    if period not in PERIOD_OPTIONS:
         period = default
     return period
 
 
+def _bucket_date(value, period):
+    if timezone.is_aware(value):
+        value = timezone.localtime(value)
+    if period == 'month':
+        return value.date().replace(day=1)
+    if period == 'week':
+        return (value - timedelta(days=value.weekday())).date()
+    return value.date()
+
+
 def _series_for_chef(user, period, since):
-    trunc = PERIOD_TRUNC[period]
-    qs = OrderDetail.objects.filter(
+    buckets = defaultdict(lambda: {'orders': 0, 'revenue': Decimal('0')})
+    rows = OrderDetail.objects.filter(
         dish__chef=user,
         order__created_date__gte=since,
-    ).annotate(bucket=trunc('order__created_date')).values('bucket').annotate(
-        orders=Sum('quantity'),
-
-
-        revenue=Sum(F('unit_price') * F('quantity'), output_field=DecimalField(max_digits=14, decimal_places=2)),
-    ).order_by('bucket')
+    ).values_list('order__created_date', 'quantity', 'unit_price')
+    for created_date, quantity, unit_price in rows:
+        bucket = _bucket_date(created_date, period)
+        qty = quantity or 0
+        buckets[bucket]['orders'] += qty
+        buckets[bucket]['revenue'] += (unit_price or Decimal('0')) * qty
     return [
         {
-            'period': row['bucket'].date().isoformat() if row['bucket'] else None,
-            'orders': row['orders'] or 0,
-            'revenue': row['revenue'] or 0,
+            'period': bucket.isoformat(),
+            'orders': values['orders'],
+            'revenue': values['revenue'],
         }
-        for row in qs
+        for bucket, values in sorted(buckets.items())
     ]
 
 
 def _series_for_admin(period, since):
-    trunc = PERIOD_TRUNC[period]
-    bookings = TableBooking.objects.filter(
-        created_date__gte=since,
-    ).annotate(bucket=trunc('created_date')).values('bucket').annotate(
-        count=Count('id'),
-    ).order_by('bucket')
-    revenue = Payment.objects.filter(
-        status='completed', paid_at__gte=since,
-    ).annotate(bucket=trunc('paid_at')).values('bucket').annotate(
-        total=Sum('amount'),
-    ).order_by('bucket')
+    booking_map = defaultdict(int)
+    for created_date in (
+        TableBooking.objects.filter(created_date__gte=since)
+        .values_list('created_date', flat=True)
+    ):
+        booking_map[_bucket_date(created_date, period)] += 1
 
-    booking_map = {row['bucket']: row['count'] for row in bookings}
-    revenue_map = {row['bucket']: row['total'] for row in revenue}
+    revenue_map = defaultdict(Decimal)
+    for paid_at, amount in (
+        Payment.objects.filter(status='completed', paid_at__gte=since)
+        .values_list('paid_at', 'amount')
+    ):
+        if paid_at:
+            revenue_map[_bucket_date(paid_at, period)] += amount or Decimal('0')
+
     keys = sorted(set(booking_map) | set(revenue_map))
     return [
         {
-            'period': k.date().isoformat() if k else None,
+            'period': k.isoformat(),
             'bookings': booking_map.get(k, 0),
-            'revenue': revenue_map.get(k, 0) or 0,
+            'revenue': revenue_map.get(k, Decimal('0')),
         }
         for k in keys
     ]
