@@ -96,6 +96,11 @@ def _format_series(series, period):
     return result
 
 
+def _format_vnd(value):
+    amount = int(value or 0)
+    return f"{amount:,}".replace(',', '.') + ' đ'
+
+
 class RestaurantAdminSite(admin.AdminSite):
     site_header = 'T-Restaurant'
 
@@ -151,6 +156,8 @@ class RestaurantAdminSite(admin.AdminSite):
             )
             .order_by('-revenue')[:10]
         )
+        for dish in top_dishes:
+            dish['revenue_display'] = _format_vnd(dish['revenue'])
 
         totals = {
             'dishes': Dish.objects.count(),
@@ -163,10 +170,11 @@ class RestaurantAdminSite(admin.AdminSite):
             'pending_payments': Payment.objects.filter(status='pending').count(),
             'failed_payments': Payment.objects.filter(status='failed').count(),
         }
+        totals['revenue_display'] = _format_vnd(totals['revenue'])
 
         ctx = {
             **self.each_context(request),
-            'title': 'Báo cáo tổng quan',
+            'title': 'Thống kê hệ thống',
             'period': period,
             'days': days,
             'period_options': [

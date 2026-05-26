@@ -2,87 +2,207 @@
 
 {% block content %}
 <style>
-    .stats-toolbar { margin: 12px 0 24px; padding: 12px; background: #f4f4f4; border-radius: 6px; }
-    .stats-toolbar label { margin-right: 8px; font-weight: 600; }
-    .stats-toolbar select { margin-right: 18px; padding: 4px 8px; }
-    .totals-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 28px; }
-    .totals-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 14px; }
-    .totals-card .label { font-size: 12px; text-transform: uppercase; color: #666; }
-    .totals-card .value { font-size: 22px; font-weight: 700; color: #222; margin-top: 4px; }
-    .charts-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px; }
-    .chart-card { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; }
-    .chart-card h3 { margin-top: 0; font-size: 14px; color: #444; }
-    .top-dishes { background: #fff; border: 1px solid #ddd; border-radius: 6px; padding: 16px; margin-bottom: 28px; }
-    .top-dishes table { width: 100%; border-collapse: collapse; }
-    .top-dishes th, .top-dishes td { text-align: left; padding: 8px 6px; border-bottom: 1px solid #eee; }
-    .top-dishes th { font-size: 12px; text-transform: uppercase; color: #666; }
-    @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+    .stats-page {
+        max-width: 1280px;
+    }
+    .stats-toolbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        gap: 12px 18px;
+        margin: 0 0 20px;
+        padding: 14px;
+        background: var(--darkened-bg);
+        border: 1px solid var(--hairline-color);
+        border-radius: 4px;
+    }
+    .stats-field {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+    .stats-toolbar label,
+    .totals-card .label,
+    .top-dishes th {
+        color: var(--body-quiet-color);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: .02em;
+        text-transform: uppercase;
+    }
+    .stats-toolbar select {
+        min-width: 180px;
+        height: 34px;
+        padding: 5px 10px;
+        color: var(--body-fg);
+        background: var(--body-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 4px;
+    }
+    .stats-toolbar button {
+        height: 34px;
+        padding: 0 14px;
+        color: var(--button-fg);
+        background: var(--button-bg);
+        border: 1px solid var(--button-bg);
+        border-radius: 4px;
+        font-weight: 600;
+        cursor: pointer;
+    }
+    .totals-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+        gap: 12px;
+        margin-bottom: 20px;
+    }
+    .totals-card,
+    .chart-card,
+    .top-dishes {
+        background: var(--darkened-bg);
+        border: 1px solid var(--hairline-color);
+        border-radius: 4px;
+    }
+    .totals-card {
+        padding: 14px 16px;
+    }
+    .totals-card .value {
+        margin-top: 8px;
+        color: var(--body-fg);
+        font-size: 24px;
+        font-weight: 700;
+        line-height: 1.15;
+    }
+    .charts-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    .chart-card,
+    .top-dishes {
+        padding: 16px;
+    }
+    .chart-card h2,
+    .top-dishes h2 {
+        margin: 0 0 14px;
+        color: var(--body-fg);
+        font-size: 15px;
+        font-weight: 700;
+    }
+    .chart-body {
+        position: relative;
+        height: 280px;
+    }
+    .top-dishes {
+        margin-bottom: 20px;
+        overflow-x: auto;
+    }
+    .top-dishes table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+    .top-dishes th,
+    .top-dishes td {
+        padding: 10px 8px;
+        text-align: left;
+        border-bottom: 1px solid var(--hairline-color);
+        color: var(--body-fg);
+    }
+    .top-dishes th:last-child,
+    .top-dishes td:last-child {
+        text-align: right;
+    }
+    .top-dishes tbody tr:last-child td {
+        border-bottom: 0;
+    }
+    .top-dishes td.empty-row {
+        color: var(--body-quiet-color);
+        text-align: center;
+    }
+    @media (max-width: 900px) {
+        .charts-grid {
+            grid-template-columns: 1fr;
+        }
+        .stats-toolbar select {
+            min-width: 150px;
+        }
+    }
 </style>
 
-<h1>Báo cáo tổng quan hệ thống</h1>
+<div class="stats-page">
+    <form method="get" class="stats-toolbar">
+        <div class="stats-field">
+            <label for="period">Đơn vị</label>
+            <select id="period" name="period">
+                {% for value, label in period_options %}
+                <option value="{{ value }}" {% if value == period %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
 
-<form method="get" class="stats-toolbar">
-    <label>Đơn vị</label>
-    <select name="period">
-        {% for value, label in period_options %}
-        <option value="{{ value }}" {% if value == period %}selected{% endif %}>{{ label }}</option>
-        {% endfor %}
-    </select>
+        <div class="stats-field">
+            <label for="days">Khoảng thời gian</label>
+            <select id="days" name="days">
+                {% for d in days_options %}
+                <option value="{{ d }}" {% if d == days %}selected{% endif %}>{{ d }} ngày gần nhất</option>
+                {% endfor %}
+            </select>
+        </div>
 
-    <label>Khoảng thời gian</label>
-    <select name="days">
-        {% for d in days_options %}
-        <option value="{{ d }}" {% if d == days %}selected{% endif %}>{{ d }} ngày gần nhất</option>
-        {% endfor %}
-    </select>
+        <button type="submit">Cập nhật</button>
+    </form>
 
-    <button type="submit">Cập nhật</button>
-</form>
-
-<div class="totals-grid">
-    <div class="totals-card"><div class="label">Tổng món</div><div class="value">{{ totals.dishes }}</div></div>
-    <div class="totals-card"><div class="label">Tổng đặt bàn</div><div class="value">{{ totals.bookings }}</div></div>
-    <div class="totals-card"><div class="label">Tổng đơn</div><div class="value">{{ totals.orders }}</div></div>
-    <div class="totals-card"><div class="label">Tổng người dùng</div><div class="value">{{ totals.users }}</div></div>
-    <div class="totals-card"><div class="label">Chef chờ duyệt</div><div class="value">{{ totals.chefs_pending }}</div></div>
-    <div class="totals-card"><div class="label">Doanh thu đã thanh toán</div><div class="value">{{ totals.revenue }}</div></div>
-</div>
-
-<div class="charts-grid">
-    <div class="chart-card">
-        <h3>Tần suất đặt bàn</h3>
-        <canvas id="bookingChart"></canvas>
+    <div class="totals-grid">
+        <div class="totals-card"><div class="label">Tổng món</div><div class="value">{{ totals.dishes }}</div></div>
+        <div class="totals-card"><div class="label">Tổng đặt bàn</div><div class="value">{{ totals.bookings }}</div></div>
+        <div class="totals-card"><div class="label">Tổng đơn</div><div class="value">{{ totals.orders }}</div></div>
+        <div class="totals-card"><div class="label">Tổng người dùng</div><div class="value">{{ totals.users }}</div></div>
+        <div class="totals-card"><div class="label">Chef chờ duyệt</div><div class="value">{{ totals.chefs_pending }}</div></div>
+        <div class="totals-card"><div class="label">Doanh thu đã thanh toán</div><div class="value">{{ totals.revenue_display }}</div></div>
     </div>
-    <div class="chart-card">
-        <h3>Doanh thu</h3>
-        <canvas id="revenueChart"></canvas>
+
+    <div class="charts-grid">
+        <div class="chart-card">
+            <h2>Tần suất đặt bàn</h2>
+            <div class="chart-body">
+                <canvas id="bookingChart"></canvas>
+            </div>
+        </div>
+        <div class="chart-card">
+            <h2>Doanh thu</h2>
+            <div class="chart-body">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
     </div>
-</div>
 
-<div class="top-dishes">
-    <h3>Top 10 món doanh thu cao nhất ({{ days }} ngày)</h3>
-    <table>
-        <thead>
-            <tr><th>#</th><th>Món</th><th>Suất bán</th><th>Doanh thu</th></tr>
-        </thead>
-        <tbody>
-            {% for d in top_dishes %}
-            <tr>
-                <td>{{ forloop.counter }}</td>
-                <td>{{ d.dish__name }}</td>
-                <td>{{ d.orders }}</td>
-                <td>{{ d.revenue }}</td>
-            </tr>
-            {% empty %}
-            <tr><td colspan="4">Chưa có dữ liệu trong khoảng thời gian này.</td></tr>
-            {% endfor %}
-        </tbody>
-    </table>
-</div>
+    <div class="top-dishes">
+        <h2>Top 10 món theo doanh thu ({{ days }} ngày)</h2>
+        <table>
+            <thead>
+                <tr><th>#</th><th>Món</th><th>Suất bán</th><th>Doanh thu</th></tr>
+            </thead>
+            <tbody>
+                {% for d in top_dishes %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ d.dish__name }}</td>
+                    <td>{{ d.orders }}</td>
+                    <td>{{ d.revenue_display }}</td>
+                </tr>
+                {% empty %}
+                <tr><td class="empty-row" colspan="4">Chưa có dữ liệu trong khoảng thời gian này.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
-<div class="chart-card">
-    <h3>Số món theo danh mục</h3>
-    <canvas id="categoryChart"></canvas>
+    <div class="chart-card">
+        <h2>Số món theo danh mục</h2>
+        <div class="chart-body">
+            <canvas id="categoryChart"></canvas>
+        </div>
+    </div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -90,8 +210,18 @@
     const bookingSeries = {{ booking_series_json|safe }};
     const revenueSeries = {{ revenue_series_json|safe }};
     const categoryStats = {{ category_stats_json|safe }};
+    const adminStyles = getComputedStyle(document.documentElement);
+    const chartTextColor = adminStyles.getPropertyValue('--body-fg').trim() || '#333333';
+    const chartGridColor = adminStyles.getPropertyValue('--hairline-color').trim() || 'rgba(127, 127, 127, .25)';
 
-    const renderLine = (canvasId, dataset, label, color) => {
+    Chart.defaults.color = chartTextColor;
+    Chart.defaults.borderColor = chartGridColor;
+
+    const numberFormatter = new Intl.NumberFormat('vi-VN');
+    const formatNumber = (value) => numberFormatter.format(Number(value) || 0);
+    const formatCurrency = (value) => `${formatNumber(value)} đ`;
+
+    const renderLine = (canvasId, dataset, label, color, backgroundColor, tickFormatter = formatNumber) => {
         const ctx = document.getElementById(canvasId);
         new Chart(ctx, {
             type: 'line',
@@ -101,18 +231,37 @@
                     label: label,
                     data: dataset.map(item => Number(item.value) || 0),
                     borderColor: color,
-                    backgroundColor: color + '33',
+                    backgroundColor: backgroundColor,
+                    pointRadius: 3,
                     fill: true,
                     tension: 0.25,
                 }],
             },
-            options: { scales: { y: { beginAtZero: true } } },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { labels: { boxWidth: 28 } },
+                    tooltip: {
+                        callbacks: {
+                            label: (context) => `${context.dataset.label}: ${tickFormatter(context.parsed.y)}`,
+                        },
+                    },
+                },
+                scales: {
+                    x: { grid: { color: chartGridColor } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: chartGridColor },
+                        ticks: { callback: tickFormatter },
+                    },
+                },
+            },
         });
     };
 
     window.onload = function () {
-        renderLine('bookingChart', bookingSeries, 'Lượt đặt bàn', '#1976d2');
-        renderLine('revenueChart', revenueSeries, 'Doanh thu', '#2e7d32');
+        renderLine('bookingChart', bookingSeries, 'Lượt đặt bàn', '#417690', 'rgba(65, 118, 144, 0.16)');
+        renderLine('revenueChart', revenueSeries, 'Doanh thu', '#5f8f63', 'rgba(95, 143, 99, 0.16)', formatCurrency);
 
         new Chart(document.getElementById('categoryChart'), {
             type: 'bar',
@@ -121,10 +270,25 @@
                 datasets: [{
                     label: 'Số món',
                     data: categoryStats.map(c => c.count),
-                    backgroundColor: '#ed6c02',
+                    backgroundColor: 'rgba(65, 118, 144, 0.55)',
+                    borderColor: '#417690',
+                    borderWidth: 1,
                 }],
             },
-            options: { scales: { y: { beginAtZero: true } } },
+            options: {
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                },
+                scales: {
+                    x: { grid: { display: false } },
+                    y: {
+                        beginAtZero: true,
+                        grid: { color: chartGridColor },
+                        ticks: { callback: formatNumber },
+                    },
+                },
+            },
         });
     };
 </script>
