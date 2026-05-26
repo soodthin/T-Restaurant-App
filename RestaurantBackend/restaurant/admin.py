@@ -1,14 +1,16 @@
 import csv
+import json
 from datetime import timedelta
 
 from django import forms
 from django.contrib import admin, messages
 from django.contrib.auth.admin import UserAdmin as DjangoUserAdmin
+from django.core.serializers.json import DjangoJSONEncoder
 from django.db.models import Count, Sum, F
 from django.db.models.functions import TruncDay, TruncWeek, TruncMonth
 from django.http import HttpResponse
 from django.template.response import TemplateResponse
-from django.urls import path
+from django.urls import path, reverse
 from django.utils import timezone
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
@@ -79,6 +81,12 @@ PERIOD_TRUNC = {
 class RestaurantAdminSite(admin.AdminSite):
     site_header = 'T-Restaurant'
 
+    def each_context(self, request):
+        context = super().each_context(request)
+        context['admin_index_url'] = reverse(f'{self.name}:index')
+        context['stats_url'] = reverse(f'{self.name}:dish-stats')
+        return context
+
     def get_urls(self):
         return [
             path('dish-stats/', self.admin_view(self.dish_stats), name='dish-stats'),
@@ -145,18 +153,21 @@ class RestaurantAdminSite(admin.AdminSite):
 
         ctx = {
             **self.each_context(request),
-            'title': 'Bao cao tong quan',
+            'title': 'Báo cáo tổng quan',
             'period': period,
             'days': days,
             'period_options': [
-                ('day', 'Theo ngay'),
-                ('week', 'Theo tuan'),
-                ('month', 'Theo thang'),
+                ('day', 'Theo ngày'),
+                ('week', 'Theo tuần'),
+                ('month', 'Theo tháng'),
             ],
             'days_options': [7, 30, 90, 180, 365],
             'category_stats': category_stats,
             'booking_series': fmt(booking_series, 'count'),
             'revenue_series': fmt(revenue_series, 'total'),
+            'category_stats_json': json.dumps(category_stats, cls=DjangoJSONEncoder),
+            'booking_series_json': json.dumps(fmt(booking_series, 'count'), cls=DjangoJSONEncoder),
+            'revenue_series_json': json.dumps(fmt(revenue_series, 'total'), cls=DjangoJSONEncoder),
             'top_dishes': top_dishes,
             'totals': totals,
         }

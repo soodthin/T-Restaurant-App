@@ -369,8 +369,8 @@ class OrderViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         user = self.request.user
         if user.is_staff:
-            return Order.objects.select_related('payment').prefetch_related('details__dish')
-        return Order.objects.filter(customer=user).select_related('payment').prefetch_related('details__dish')
+            return Order.objects.select_related('booking', 'payment').prefetch_related('details__dish')
+        return Order.objects.filter(customer=user).select_related('booking', 'payment').prefetch_related('details__dish')
 
     def list(self, request, *args, **kwargs):
         _expire_stale_payments_for_user(request.user)
@@ -406,7 +406,7 @@ class OrderViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['get'], url_path='chef-orders', permission_classes=[IsChef])
     def chef_orders(self, request):
         qs = Order.objects.filter(details__dish__chef=request.user).distinct().order_by('-created_date')
-        qs = qs.select_related('payment').prefetch_related('details__dish')
+        qs = qs.select_related('booking', 'payment').prefetch_related('details__dish')
         p = self.pagination_class()
         page = p.paginate_queryset(qs, request)
         if page is not None:
@@ -429,13 +429,28 @@ class OrderViewSet(viewsets.ModelViewSet):
 
         current = order.status
         allowed = {
-            'pending': {'preparing'},
-            'paid': {'preparing'},
-            'preparing': {'served'},
+            'pending': {'preparing', 'cancelled'},
+            'paid': {'preparing', 'cancelled'},
+            'preparing': {'served', 'cancelled'},
         }
 
         if new_status not in allowed.get(current, set()):
             return Response({'detail': f'Không thể chuyển trạng thái từ {current} sang {new_status}.'}, status=status.HTTP_400_BAD_REQUEST)
+
+        if current == 'pending' and new_status == 'preparing':
+            try:
+                payment = order.payment
+            except Payment.DoesNotExist:
+                payment = None
+            if (
+                payment
+                and payment.method in ONLINE_PAYMENT_METHODS
+                and payment.status != 'completed'
+            ):
+                return Response(
+                    {'detail': 'Đơn thanh toán online phải hoàn tất thanh toán trước khi bắt đầu nấu.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         order.status = new_status
         order.save(update_fields=['status', 'updated_date'])
@@ -960,10 +975,13 @@ class StatsView(generics.GenericAPIView):
 
         period = _parse_period(request)
 
-        days = int(request.query_params.get('days') or 90)
+        try:
+            days = max(1, min(365, int(request.query_params.get('days') or 90)))
+        except (TypeError, ValueError):
+            days = 90
         since = timezone.now() - timedelta(days=days)
 
-        if user.role == 'chef' and user.is_verified:
+        if user.role == 'chef':
             dishes = Dish.objects.filter(chef=user)
             order_details = OrderDetail.objects.filter(dish__chef=user)
 

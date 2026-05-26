@@ -1,0 +1,32 @@
+{% extends "admin/base.html" %}
+{% load i18n %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<div id="site-name">
+    <a href="{{ admin_index_url|default:'../' }}">{{ site_header|default:_('Django administration') }}</a>
+</div>
+{% endblock %}
+
+{% block nav-global %}
+<style>
+    .stats-admin-link {
+        display: inline-flex;
+        align-items: center;
+        min-height: 32px;
+        padding: 0 12px;
+        border-radius: 4px;
+        background: #264b5d;
+        color: #fff !important;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    .stats-admin-link:hover {
+        background: #417690;
+    }
+</style>
+{% if user.is_active and user.is_staff %}
+<a class="stats-admin-link" href="{{ stats_url|default:'dish-stats/' }}">Thống kê hệ thống</a>
+{% endif %}
+{% endblock %}

@@ -363,6 +363,11 @@ class OrderDetailSerializer(ModelSerializer):
 
 class OrderSerializer(ModelSerializer):
     details = OrderDetailSerializer(many=True, read_only=True)
+    service_type = SerializerMethodField()
+    service_label = SerializerMethodField()
+    booking_date = SerializerMethodField()
+    booking_guests = SerializerMethodField()
+    booking_status = SerializerMethodField()
     payment_method = SerializerMethodField()
     payment_status = SerializerMethodField()
     payment_id = SerializerMethodField()
@@ -376,7 +381,8 @@ class OrderSerializer(ModelSerializer):
     class Meta:
         model = Order
         fields = [
-            'id', 'customer', 'booking', 'status',
+            'id', 'customer', 'booking', 'service_type', 'service_label',
+            'booking_date', 'booking_guests', 'booking_status', 'status',
             'total_amount', 'details', 'payment_method', 'payment_status',
             'payment_id', 'payment_pay_url', 'payment_deeplink_url',
             'payment_qr_code_url', 'payment_expires_at', 'payment_paid_at',
@@ -392,6 +398,9 @@ class OrderSerializer(ModelSerializer):
         if request and value.customer_id != request.user.id:
             raise serializers.ValidationError(
                 'Lịch đặt bàn này không thuộc về bạn.')
+        if value.status in {'cancelled', 'completed'}:
+            raise serializers.ValidationError(
+                'Chỉ có thể chọn lịch đặt bàn đang chờ xác nhận hoặc đã xác nhận.')
         return value
 
     def validate(self, attrs):
@@ -428,6 +437,29 @@ class OrderSerializer(ModelSerializer):
     def create(self, validated_data):
         validated_data['customer'] = self.context['request'].user
         return super().create(validated_data)
+
+    def get_service_type(self, obj):
+        return 'table' if obj.booking_id else 'counter'
+
+    def get_service_label(self, obj):
+        if obj.booking_id:
+            return 'Phục vụ theo lịch đặt bàn'
+        return 'Lấy tại quầy'
+
+    def get_booking_date(self, obj):
+        if obj.booking:
+            return obj.booking.booking_date
+        return None
+
+    def get_booking_guests(self, obj):
+        if obj.booking:
+            return obj.booking.guests
+        return None
+
+    def get_booking_status(self, obj):
+        if obj.booking:
+            return obj.booking.status
+        return None
 
     def get_payment_method(self, obj):
         payment = self._get_payment(obj)

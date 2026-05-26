@@ -19,38 +19,38 @@
     @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
 </style>
 
-<h1>Bao cao tong quan he thong</h1>
+<h1>Báo cáo tổng quan hệ thống</h1>
 
 <form method="get" class="stats-toolbar">
-    <label>Don vi</label>
+    <label>Đơn vị</label>
     <select name="period">
         {% for value, label in period_options %}
         <option value="{{ value }}" {% if value == period %}selected{% endif %}>{{ label }}</option>
         {% endfor %}
     </select>
 
-    <label>Khoang thoi gian</label>
+    <label>Khoảng thời gian</label>
     <select name="days">
         {% for d in days_options %}
-        <option value="{{ d }}" {% if d == days %}selected{% endif %}>{{ d }} ngay gan nhat</option>
+        <option value="{{ d }}" {% if d == days %}selected{% endif %}>{{ d }} ngày gần nhất</option>
         {% endfor %}
     </select>
 
-    <button type="submit">Cap nhat</button>
+    <button type="submit">Cập nhật</button>
 </form>
 
 <div class="totals-grid">
-    <div class="totals-card"><div class="label">Tong mon</div><div class="value">{{ totals.dishes }}</div></div>
-    <div class="totals-card"><div class="label">Tong dat ban</div><div class="value">{{ totals.bookings }}</div></div>
-    <div class="totals-card"><div class="label">Tong don</div><div class="value">{{ totals.orders }}</div></div>
-    <div class="totals-card"><div class="label">Tong nguoi dung</div><div class="value">{{ totals.users }}</div></div>
-    <div class="totals-card"><div class="label">Chef cho duyet</div><div class="value">{{ totals.chefs_pending }}</div></div>
-    <div class="totals-card"><div class="label">Doanh thu (da TT)</div><div class="value">{{ totals.revenue }}</div></div>
+    <div class="totals-card"><div class="label">Tổng món</div><div class="value">{{ totals.dishes }}</div></div>
+    <div class="totals-card"><div class="label">Tổng đặt bàn</div><div class="value">{{ totals.bookings }}</div></div>
+    <div class="totals-card"><div class="label">Tổng đơn</div><div class="value">{{ totals.orders }}</div></div>
+    <div class="totals-card"><div class="label">Tổng người dùng</div><div class="value">{{ totals.users }}</div></div>
+    <div class="totals-card"><div class="label">Chef chờ duyệt</div><div class="value">{{ totals.chefs_pending }}</div></div>
+    <div class="totals-card"><div class="label">Doanh thu đã thanh toán</div><div class="value">{{ totals.revenue }}</div></div>
 </div>
 
 <div class="charts-grid">
     <div class="chart-card">
-        <h3>Tan suat dat ban</h3>
+        <h3>Tần suất đặt bàn</h3>
         <canvas id="bookingChart"></canvas>
     </div>
     <div class="chart-card">
@@ -60,10 +60,10 @@
 </div>
 
 <div class="top-dishes">
-    <h3>Top 10 mon doanh thu cao nhat ({{ days }} ngay)</h3>
+    <h3>Top 10 món doanh thu cao nhất ({{ days }} ngày)</h3>
     <table>
         <thead>
-            <tr><th>#</th><th>Mon</th><th>Suat ban</th><th>Doanh thu</th></tr>
+            <tr><th>#</th><th>Món</th><th>Suất bán</th><th>Doanh thu</th></tr>
         </thead>
         <tbody>
             {% for d in top_dishes %}
@@ -74,22 +74,22 @@
                 <td>{{ d.revenue }}</td>
             </tr>
             {% empty %}
-            <tr><td colspan="4">Chua co du lieu trong khoang thoi gian nay.</td></tr>
+            <tr><td colspan="4">Chưa có dữ liệu trong khoảng thời gian này.</td></tr>
             {% endfor %}
         </tbody>
     </table>
 </div>
 
 <div class="chart-card">
-    <h3>So mon theo danh muc</h3>
+    <h3>Số món theo danh mục</h3>
     <canvas id="categoryChart"></canvas>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-    const bookingSeries = {{ booking_series|safe }};
-    const revenueSeries = {{ revenue_series|safe }};
-    const categoryStats = {{ category_stats|safe }};
+    const bookingSeries = {{ booking_series_json|safe }};
+    const revenueSeries = {{ revenue_series_json|safe }};
+    const categoryStats = {{ category_stats_json|safe }};
 
     const renderLine = (canvasId, dataset, label, color) => {
         const ctx = document.getElementById(canvasId);
@@ -99,7 +99,7 @@
                 labels: dataset.map(item => item.label),
                 datasets: [{
                     label: label,
-                    data: dataset.map(item => item.value),
+                    data: dataset.map(item => Number(item.value) || 0),
                     borderColor: color,
                     backgroundColor: color + '33',
                     fill: true,
@@ -111,7 +111,7 @@
     };
 
     window.onload = function () {
-        renderLine('bookingChart', bookingSeries, 'Luot dat ban', '#1976d2');
+        renderLine('bookingChart', bookingSeries, 'Lượt đặt bàn', '#1976d2');
         renderLine('revenueChart', revenueSeries, 'Doanh thu', '#2e7d32');
 
         new Chart(document.getElementById('categoryChart'), {
@@ -119,7 +119,7 @@
             data: {
                 labels: categoryStats.map(c => c.name),
                 datasets: [{
-                    label: 'So mon',
+                    label: 'Số món',
                     data: categoryStats.map(c => c.count),
                     backgroundColor: '#ed6c02',
                 }],
