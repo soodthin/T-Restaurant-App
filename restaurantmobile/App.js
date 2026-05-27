@@ -4,8 +4,8 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { PaperProvider } from 'react-native-paper';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { useState, useEffect } from 'react';
+import { View, TouchableOpacity, Text, StyleSheet, Animated, PanResponder, Dimensions } from 'react-native';
+import { useState, useEffect, useRef } from 'react';
 
 import Login from '@pages/auth/Login';
 import Register from '@pages/auth/Register';
@@ -244,24 +244,81 @@ const ChefTab = () => (
     </Tab.Navigator>
 );
 
-const ChatFab = ({ onPress, unreadCount }) => (
-    <TouchableOpacity style={fabStyles.fab} activeOpacity={0.85} onPress={onPress}>
-        <MaterialCommunityIcons name="chat" size={24} color={Colors.onPrimary} />
-        {unreadCount > 0 && (
-            <View style={fabStyles.badge}>
-                <Text style={fabStyles.badgeText}>
-                    {unreadCount > 99 ? '99+' : unreadCount}
-                </Text>
-            </View>
-        )}
-    </TouchableOpacity>
-);
+const ChatFab = ({ onPress, unreadCount }) => {
+    const { width, height } = Dimensions.get('window');
+    const pan = useRef(new Animated.ValueXY({ x: 0, y: 0 })).current;
+
+    const panResponder = useRef(
+        PanResponder.create({
+            onMoveShouldSetPanResponder: (evt, gestureState) => {
+                return Math.abs(gestureState.dx) > 5 || Math.abs(gestureState.dy) > 5;
+            },
+            onPanResponderGrant: () => {
+                pan.setOffset({
+                    x: pan.x._value,
+                    y: pan.y._value
+                });
+                pan.setValue({ x: 0, y: 0 });
+            },
+            onPanResponderMove: Animated.event(
+                [null, { dx: pan.x, dy: pan.y }],
+                { useNativeDriver: false }
+            ),
+            onPanResponderRelease: () => {
+                pan.flattenOffset();
+
+                const currentX = pan.x._value;
+                const currentY = pan.y._value;
+
+                const isLeftHalf = currentX < -(width / 2 - 45);
+                const targetX = isLeftHalf ? -(width - 90) : 0;
+
+                const minY = -(height - 180);
+                const maxY = 20;
+
+                let targetY = currentY;
+                if (targetY < minY) targetY = minY;
+                if (targetY > maxY) targetY = maxY;
+
+                Animated.spring(pan, {
+                    toValue: { x: targetX, y: targetY },
+                    useNativeDriver: false,
+                    friction: 6,
+                }).start();
+            }
+        })
+    ).current;
+
+    return (
+        <Animated.View
+            {...panResponder.panHandlers}
+            style={[
+                fabStyles.fabContainer,
+                { transform: [{ translateX: pan.x }, { translateY: pan.y }] }
+            ]}
+        >
+            <TouchableOpacity style={fabStyles.fab} activeOpacity={0.85} onPress={onPress}>
+                <MaterialCommunityIcons name="chat" size={24} color={Colors.onPrimary} />
+                {unreadCount > 0 && (
+                    <View style={fabStyles.badge}>
+                        <Text style={fabStyles.badgeText}>
+                            {unreadCount > 99 ? '99+' : unreadCount}
+                        </Text>
+                    </View>
+                )}
+            </TouchableOpacity>
+        </Animated.View>
+    );
+};
 
 const fabStyles = StyleSheet.create({
-    fab: {
+    fabContainer: {
         position: 'absolute',
         right: 18,
         bottom: 88,
+        zIndex: 100,
+    },
+    fab: {
         width: 54,
         height: 54,
         borderRadius: 27,
@@ -273,7 +330,6 @@ const fabStyles = StyleSheet.create({
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.18,
         shadowRadius: 8,
-        zIndex: 100,
     },
     badge: {
         position: 'absolute',
@@ -328,9 +384,9 @@ const MainScreen = ({ route, navigation }) => {
         <View style={{ flex: 1 }}>
             {tabContent}
             {showFab && (
-                <ChatFab 
-                    onPress={() => navigation.navigate('ChatList')} 
-                    unreadCount={unreadCount} 
+                <ChatFab
+                    onPress={() => navigation.navigate('ChatList')}
+                    unreadCount={unreadCount}
                 />
             )}
         </View>
