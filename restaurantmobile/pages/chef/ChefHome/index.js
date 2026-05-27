@@ -22,6 +22,7 @@ import {
     getApiErrorMessage,
     storeUser,
 } from '@configs';
+import { ConfirmDialog } from '@components/CustomDialog';
 import { FadeInDown } from '@utils/animations';
 import Colors from '@styles/colors';
 import { formatCurrency, getDisplayName } from '@utils/format';
@@ -80,6 +81,7 @@ const ChefHome = ({ navigation }) => {
     const [error, setError] = useState('');
     const [period, setPeriod] = useState('day');
     const [drawerOpen, setDrawerOpen] = useState(false);
+    const [logoutConfirm, setLogoutConfirm] = useState(false);
 
     const drawerX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
     const backdropOpacity = useRef(new Animated.Value(0)).current;
@@ -161,10 +163,17 @@ const ChefHome = ({ navigation }) => {
 
     const navigateThen = (screen) => () => closeDrawer(() => navigation.navigate(screen));
 
-    const handleLogout = () => closeDrawer(async () => {
+    const handleLogout = () => {
+        closeDrawer(() => {
+            setLogoutConfirm(true);
+        });
+    };
+
+    const doLogout = async () => {
+        setLogoutConfirm(false);
         await clearSession();
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-    });
+    };
 
     if (loading) {
         return (
@@ -497,6 +506,17 @@ const ChefHome = ({ navigation }) => {
                     </ScrollView>
                 </Animated.View>
             </Modal>
+
+            <ConfirmDialog
+                visible={logoutConfirm}
+                type="warning"
+                title="Đăng xuất"
+                message="Bạn có chắc chắn muốn đăng xuất không?"
+                onCancel={() => setLogoutConfirm(false)}
+                onConfirm={doLogout}
+                confirmText="Đăng xuất"
+                cancelText="Hủy"
+            />
         </View>
     );
 };

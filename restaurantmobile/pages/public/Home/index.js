@@ -22,7 +22,7 @@ import { Apis, authFetch, clearSession, endpoints, getApiErrorMessage } from '@c
 import { getDisplayName } from '@utils/format';
 import Colors from '@styles/colors';
 import { useCart } from '@contexts/CartContext';
-import { Toast } from '@components/CustomDialog';
+import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import DishCard from '@components/DishCard';
 import FilterSheet from '@components/FilterSheet';
 import styles from './styles';
@@ -80,6 +80,7 @@ const Home = ({ navigation }) => {
     const [showFilters, setShowFilters] = useState(false);
     const [searchFocused, setSearchFocused] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const [logoutConfirm, setLogoutConfirm] = useState(false);
 
     const insets = useSafeAreaInsets();
     const [user, setUser] = useState(null);
@@ -107,10 +108,17 @@ const Home = ({ navigation }) => {
 
     const navigateThen = (screen) => () => closeDrawer(() => navigation.navigate(screen));
 
-    const handleLogout = () => closeDrawer(async () => {
+    const handleLogout = () => {
+        closeDrawer(() => {
+            setLogoutConfirm(true);
+        });
+    };
+
+    const doLogout = async () => {
+        setLogoutConfirm(false);
         await clearSession();
         navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-    });
+    };
 
     const loadUser = async () => {
         try {
@@ -548,6 +556,17 @@ const Home = ({ navigation }) => {
                 message={toast.message}
                 type={toast.type}
                 onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
+            />
+
+            <ConfirmDialog
+                visible={logoutConfirm}
+                type="warning"
+                title="Đăng xuất"
+                message="Bạn có chắc chắn muốn đăng xuất không?"
+                onCancel={() => setLogoutConfirm(false)}
+                onConfirm={doLogout}
+                confirmText="Đăng xuất"
+                cancelText="Hủy"
             />
 
             <Modal
