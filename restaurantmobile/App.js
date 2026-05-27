@@ -16,6 +16,7 @@ import RestaurantDetail from '@pages/public/RestaurantDetail';
 import Booking from '@pages/customer/Booking';
 import Cart from '@pages/customer/Cart';
 import Orders from '@pages/customer/Orders';
+import OrderDetail from '@pages/customer/OrderDetail';
 import MyReviews from '@pages/customer/MyReviews';
 import OrderPayment from '@pages/customer/OrderPayment';
 import PaymentCheckout from '@pages/customer/PaymentCheckout';
@@ -458,6 +459,11 @@ const App = () => (
                         name="OrderPayment"
                         component={OrderPayment}
                         options={{ headerShown: false }}
+                    />
+                    <Stack.Screen
+                        name="OrderDetail"
+                        component={OrderDetail}
+                        options={{ title: 'Chi tiết đơn hàng', ...stackScreenOptions }}
                     />
                     <Stack.Screen
                         name="ChefReviews"

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
     View,
     Text,
@@ -20,8 +20,9 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import styles from './styles';
 
 const DishDetail = ({ route, navigation }) => {
-    const { id } = route.params;
+    const { id, focusReview } = route.params;
     const { addItem } = useCart();
+    const listRef = useRef(null);
     const [dish, setDish] = useState(null);
     const [reviews, setReviews] = useState([]);
     const [currentUser, setCurrentUser] = useState(null);
@@ -85,6 +86,15 @@ const DishDetail = ({ route, navigation }) => {
     useEffect(() => {
         loadData();
     }, [id]);
+
+    useEffect(() => {
+        if (!loading && focusReview && listRef.current) {
+            const timer = setTimeout(() => {
+                listRef.current?.scrollToOffset({ offset: 620, animated: true });
+            }, 250);
+            return () => clearTimeout(timer);
+        }
+    }, [loading, focusReview]);
 
     const myReview = useMemo(() => {
         if (!currentUser) return null;
@@ -185,6 +195,7 @@ const DishDetail = ({ route, navigation }) => {
             style={{ flex: 1, backgroundColor: Colors.surface }}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
             <FlatList
+                ref={listRef}
                 style={{ backgroundColor: Colors.surface }}
                 data={reviews}
                 keyExtractor={(item) => item.id.toString()}
