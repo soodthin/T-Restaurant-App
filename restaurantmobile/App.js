@@ -200,7 +200,7 @@ const ChefTab = () => (
             name="ChefHome"
             component={ChefHome}
             options={{
-                title: 'Tổng quan',
+                title: 'Thống kê',
                 headerShown: false,
                 tabBarIcon: ({ color, size }) => (
                     <MaterialCommunityIcons name="view-dashboard-outline" size={size} color={color} />
@@ -218,12 +218,14 @@ const ChefTab = () => (
             }}
         />
         <Tab.Screen
-            name="ChefReviews"
-            component={ChefReviews}
+            name="ChefOrders"
+            component={ChefOrders}
+            initialParams={{ embeddedInTab: true }}
             options={{
-                title: 'Đánh giá',
+                title: 'Đơn hàng',
+                headerShown: false,
                 tabBarIcon: ({ color, size }) => (
-                    <MaterialCommunityIcons name="comment-text-multiple-outline" size={size} color={color} />
+                    <MaterialCommunityIcons name="receipt-text-outline" size={size} color={color} />
                 ),
             }}
         />
@@ -450,6 +452,11 @@ const App = () => (
                         name="MyReviews"
                         component={MyReviews}
                         options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="ChefReviews"
+                        component={ChefReviews}
+                        options={{ title: 'Đánh giá khách hàng', ...stackScreenOptions }}
                     />
                     <Stack.Screen
                         name="ChefOrders"

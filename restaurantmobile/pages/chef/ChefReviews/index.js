@@ -8,7 +8,6 @@ import {
     RefreshControl,
 } from 'react-native';
 import { ActivityIndicator, Button, Portal, Modal } from 'react-native-paper';
-import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
@@ -27,7 +26,6 @@ const RATING_OPTIONS = [
 ];
 
 const ChefReviews = ({ navigation }) => {
-    const tabBarHeight = useBottomTabBarHeight();
     const [reviews, setReviews] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
@@ -219,7 +217,7 @@ const ChefReviews = ({ navigation }) => {
                 data={reviews}
                 renderItem={renderReview}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={[styles.content, { paddingBottom: tabBarHeight + 32 }]}
+                contentContainerStyle={styles.content}
                 onEndReached={loadMore}
                 onEndReachedThreshold={0.4}
                 refreshControl={

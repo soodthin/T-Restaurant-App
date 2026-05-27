@@ -48,9 +48,12 @@ export default StyleSheet.create({
     },
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 20,
+        borderRadius: 24,
+        borderBottomLeftRadius: 4,
         padding: 16,
-        marginBottom: 12,
+        marginBottom: 16,
+        marginLeft: 8,
+        marginRight: 8,
         ...editorialShadow,
     },
     cardHeader: {

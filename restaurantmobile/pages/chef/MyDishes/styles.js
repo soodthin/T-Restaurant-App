@@ -53,9 +53,11 @@ export default StyleSheet.create({
     summaryCard: {
         flex: 1,
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 14,
-        paddingVertical: 12,
-        paddingHorizontal: 12,
+        borderRadius: 18,
+        paddingVertical: 14,
+        paddingHorizontal: 14,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
         ...editorialShadow,
     },
     summaryValue: {
@@ -118,14 +120,17 @@ export default StyleSheet.create({
     card: {
         flexDirection: 'row',
         backgroundColor: Colors.surfaceContainerLowest,
-        borderRadius: 16,
-        marginTop: 10,
-        overflow: 'hidden',
+        borderRadius: 24,
+        marginTop: 12,
+        padding: 10,
+        borderWidth: 1,
+        borderColor: Colors.outlineVariant + '40',
         ...editorialShadow,
     },
     dishImg: {
-        width: 96,
-        height: 96,
+        width: 100,
+        height: 100,
+        borderRadius: 18,
     },
     placeholder: {
         backgroundColor: Colors.surfaceContainerLow,
@@ -134,8 +139,8 @@ export default StyleSheet.create({
     },
     cardBody: {
         flex: 1,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
+        paddingLeft: 14,
+        paddingVertical: 4,
         justifyContent: 'space-between',
     },
     cardTop: {
@@ -215,12 +220,13 @@ export default StyleSheet.create({
     },
     actionRow: {
         flexDirection: 'row',
-        gap: 4,
+        gap: 6,
     },
     iconBtn: {
         margin: 0,
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
+        borderRadius: 12,
     },
 
 

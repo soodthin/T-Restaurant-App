@@ -202,7 +202,7 @@ const ChefHome = ({ navigation }) => {
                 >
                     <MaterialCommunityIcons name="menu" size={24} color={Colors.text} />
                 </TouchableOpacity>
-                <Text style={styles.appBarTitle}>Bảng điều khiển</Text>
+                <Text style={styles.appBarTitle}>Thống kê bếp</Text>
                 <View style={styles.appBarBtn} />
             </View>
 
@@ -265,21 +265,21 @@ const ChefHome = ({ navigation }) => {
 
                 <FadeInDown duration={500} style={styles.statsRow}>
                     <View style={styles.statCard}>
-                        <View style={[styles.statIcon, { backgroundColor: Colors.primary + '16' }]}>
+                        <View style={[styles.statIconWrap, { backgroundColor: Colors.primary + '16' }]}>
                             <MaterialCommunityIcons
                                 name="silverware-fork-knife"
-                                size={20}
+                                size={22}
                                 color={Colors.primary}
                             />
                         </View>
-                        <Text style={styles.statLabel}>Món quản lý</Text>
+                        <Text style={styles.statLabel}>Tổng món</Text>
                         <Text style={styles.statValue}>{Number(stats.total_dishes) || 0}</Text>
                     </View>
                     <View style={styles.statCard}>
-                        <View style={[styles.statIcon, { backgroundColor: Colors.success + '16' }]}>
+                        <View style={[styles.statIconWrap, { backgroundColor: Colors.success + '16' }]}>
                             <MaterialCommunityIcons
                                 name="trending-up"
-                                size={20}
+                                size={22}
                                 color={Colors.success}
                             />
                         </View>
@@ -291,7 +291,7 @@ const ChefHome = ({ navigation }) => {
 
                 <FadeInDown duration={500} style={styles.revenueCard}>
                     <View style={{ zIndex: 1 }}>
-                        <Text style={styles.revenueEyebrow}>Tổng doanh thu hiện có</Text>
+                        <Text style={styles.revenueEyebrow}>Tổng doanh thu</Text>
                         <Text style={styles.revenueValue}>{formatCurrency(stats.revenue)}</Text>
                         <Text style={styles.revenueCaption}>
                             Tổng hợp từ các món do bạn phụ trách trong đơn hàng.
@@ -299,8 +299,8 @@ const ChefHome = ({ navigation }) => {
                     </View>
                     <MaterialCommunityIcons
                         name="cash-multiple"
-                        size={96}
-                        color={Colors.primaryLight}
+                        size={110}
+                        color={styles.revenueBgIcon.color}
                         style={styles.revenueBgIcon}
                     />
                 </FadeInDown>
