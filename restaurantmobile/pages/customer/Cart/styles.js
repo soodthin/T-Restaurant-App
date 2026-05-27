@@ -196,39 +196,112 @@ export default StyleSheet.create({
     bookingSelectBlock: {
         marginBottom: 16,
     },
-    bookingScroll: {
-        gap: 12,
-        paddingRight: 4,
-    },
-    bookingChip: {
-        minWidth: 240,
-        maxWidth: 280,
-        minHeight: 46,
+    bookingSelectorBtn: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 16,
+        paddingVertical: 14,
+        backgroundColor: Colors.surfaceContainerLow,
         borderRadius: 16,
         borderWidth: 1,
         borderColor: Colors.outlineVariant + '40',
-        backgroundColor: Colors.surfaceContainerLowest,
-        paddingHorizontal: 14,
+    },
+    bookingSelectorContent: {
         flexDirection: 'row',
         alignItems: 'center',
         gap: 10,
+        flex: 1,
+    },
+    bookingSelectorText: {
+        fontSize: 14,
+        fontWeight: '700',
+        color: Colors.text,
+        flex: 1,
+    },
+    bookingSelectorPlaceholder: {
+        color: Colors.textSecondary,
+        fontWeight: '500',
+    },
+    modalBackdrop: {
+        backgroundColor: 'rgba(0,0,0,0.4)',
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: Colors.surfaceContainerLowest,
+        borderTopLeftRadius: 32,
+        borderTopRightRadius: 32,
+        paddingHorizontal: 24,
+        paddingTop: 24,
+        paddingBottom: Platform.OS === 'ios' ? 40 : 24,
+        maxHeight: '75%',
+        ...sheetShadow,
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        marginBottom: 20,
+    },
+    modalTitle: {
+        fontSize: 20,
+        fontWeight: '900',
+        color: Colors.text,
+    },
+    modalCloseBtn: {
+        padding: 6,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderRadius: 16,
+    },
+    modalList: {
+        paddingBottom: 24,
+        gap: 12,
+    },
+    bookingListItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 20,
+        backgroundColor: Colors.surfaceContainerLow,
+        borderWidth: 1,
+        borderColor: 'transparent',
+        gap: 14,
+    },
+    bookingListItemActive: {
+        backgroundColor: Colors.primaryLight,
+        borderColor: Colors.primary + '30',
+    },
+    bookingListIconWrap: {
+        width: 44,
+        height: 44,
+        borderRadius: 22,
+        backgroundColor: Colors.surfaceContainerLowest,
+        justifyContent: 'center',
+        alignItems: 'center',
         ...cardShadow,
     },
-    bookingChipActive: {
-        borderColor: Colors.primary,
-        backgroundColor: Colors.primaryLight,
-        shadowColor: Colors.primary,
-        shadowOpacity: 0.1,
+    bookingListIconWrapActive: {
+        backgroundColor: Colors.primary,
     },
-    bookingChipText: {
-        color: Colors.textSecondary,
-        fontSize: 13,
-        fontWeight: '700',
-        flexShrink: 1,
+    bookingListBody: {
+        flex: 1,
     },
-    bookingChipTextActive: {
-        color: Colors.primary,
+    bookingListTitle: {
+        fontSize: 15,
         fontWeight: '800',
+        color: Colors.text,
+        marginBottom: 4,
+    },
+    bookingListTitleActive: {
+        color: Colors.primary,
+    },
+    bookingListSub: {
+        fontSize: 13,
+        color: Colors.textSecondary,
+        fontWeight: '500',
     },
     bookingLoadingRow: {
         flexDirection: 'row',

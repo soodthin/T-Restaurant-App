@@ -424,6 +424,7 @@ const Booking = ({ navigation, route }) => {
                                     mode={mode}
                                     display={Platform.OS === 'ios' ? 'spinner' : 'default'}
                                     minimumDate={mode === 'date' ? new Date() : undefined}
+                                    minuteInterval={5}
                                     onChange={onChange}
                                 />
                             }

@@ -6,6 +6,9 @@ import {
     TouchableOpacity,
     Image,
     ScrollView,
+    Modal,
+    Pressable,
+    StyleSheet,
 } from 'react-native';
 import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
@@ -49,7 +52,9 @@ const Cart = ({ navigation, route }) => {
     const [loadingBookings, setLoadingBookings] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [confirmCheckout, setConfirmCheckout] = useState(false);
+    const [bookingModalVisible, setBookingModalVisible] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+    const selectedBooking = bookings.find((booking) => booking.id === selectedBookingId);
 
     const showToast = (message, type = 'error') => {
         setToast({ visible: true, message, type });
@@ -305,32 +310,29 @@ const Cart = ({ navigation, route }) => {
                                         <Text style={styles.bookingHint}>Đang tải lịch đặt bàn...</Text>
                                     </View>
                                 ) : bookings.length > 0 ? (
-                                    <ScrollView
-                                        horizontal
-                                        showsHorizontalScrollIndicator={false}
-                                        contentContainerStyle={styles.bookingScroll}>
-                                        {bookings.map((booking) => {
-                                            const active = selectedBookingId === booking.id;
-                                            return (
-                                                <TouchableOpacity
-                                                    key={booking.id}
-                                                    activeOpacity={0.75}
-                                                    onPress={() => setSelectedBookingId(booking.id)}
-                                                    style={[styles.bookingChip, active && styles.bookingChipActive]}>
-                                                    <MaterialCommunityIcons
-                                                        name={booking.status === 'confirmed' ? 'check-circle-outline' : 'clock-outline'}
-                                                        size={16}
-                                                        color={active ? Colors.primary : Colors.textSecondary}
-                                                    />
-                                                    <Text
-                                                        numberOfLines={1}
-                                                        style={[styles.bookingChipText, active && styles.bookingChipTextActive]}>
-                                                        {formatBookingLabel(booking)}
-                                                    </Text>
-                                                </TouchableOpacity>
-                                            );
-                                        })}
-                                    </ScrollView>
+                                    <TouchableOpacity
+                                        activeOpacity={0.75}
+                                        onPress={() => setBookingModalVisible(true)}
+                                        style={styles.bookingSelectorBtn}>
+                                        <View style={styles.bookingSelectorContent}>
+                                            <MaterialCommunityIcons
+                                                name="calendar-check-outline"
+                                                size={20}
+                                                color={selectedBookingId ? Colors.primary : Colors.textSecondary}
+                                            />
+                                            <Text
+                                                numberOfLines={1}
+                                                style={[
+                                                    styles.bookingSelectorText,
+                                                    !selectedBookingId && styles.bookingSelectorPlaceholder
+                                                ]}>
+                                                {selectedBooking
+                                                    ? formatBookingLabel(selectedBooking)
+                                                    : 'Chọn lịch đặt bàn'}
+                                            </Text>
+                                        </View>
+                                        <MaterialCommunityIcons name="chevron-down" size={20} color={Colors.textSecondary} />
+                                    </TouchableOpacity>
                                 ) : (
                                     <View style={styles.noBookingBox}>
                                         <Text style={styles.bookingHint}>
@@ -397,13 +399,82 @@ const Cart = ({ navigation, route }) => {
                 )}
             </View>
 
+            <Modal
+                visible={bookingModalVisible}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setBookingModalVisible(false)}
+            >
+                <View style={[StyleSheet.absoluteFill, styles.modalBackdrop]}>
+                    <Pressable style={StyleSheet.absoluteFill} onPress={() => setBookingModalVisible(false)} />
+                </View>
+
+                <View style={styles.modalContainer} pointerEvents="box-none">
+                    <View style={styles.modalContent}>
+                        <View style={styles.modalHeader}>
+                            <Text style={styles.modalTitle}>Chọn lịch đặt bàn</Text>
+                            <TouchableOpacity
+                                activeOpacity={0.7}
+                                onPress={() => setBookingModalVisible(false)}
+                                style={styles.modalCloseBtn}
+                            >
+                                <MaterialCommunityIcons name="close" size={20} color={Colors.textSecondary} />
+                            </TouchableOpacity>
+                        </View>
+
+                        <ScrollView
+                            contentContainerStyle={styles.modalList}
+                            showsVerticalScrollIndicator={false}
+                        >
+                            {bookings.map((booking) => {
+                                const active = selectedBookingId === booking.id;
+                                const date = new Date(booking.booking_date);
+                                const validDate = !Number.isNaN(date.getTime());
+                                const day = validDate ? date.toLocaleDateString('vi-VN') : '';
+                                const time = validDate ? date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+
+                                return (
+                                    <TouchableOpacity
+                                        key={booking.id}
+                                        activeOpacity={0.75}
+                                        onPress={() => {
+                                            setSelectedBookingId(booking.id);
+                                            setBookingModalVisible(false);
+                                        }}
+                                        style={[styles.bookingListItem, active && styles.bookingListItemActive]}>
+                                        <View style={[styles.bookingListIconWrap, active && styles.bookingListIconWrapActive]}>
+                                            <MaterialCommunityIcons
+                                                name={booking.status === 'confirmed' ? 'check-circle-outline' : 'clock-outline'}
+                                                size={20}
+                                                color={active ? Colors.onPrimary : Colors.primary}
+                                            />
+                                        </View>
+                                        <View style={styles.bookingListBody}>
+                                            <Text style={[styles.bookingListTitle, active && styles.bookingListTitleActive]}>
+                                                Bàn đặt #{booking.id}
+                                            </Text>
+                                            <Text style={styles.bookingListSub}>
+                                                {validDate ? `${time} ngày ${day}` : 'Chưa có thời gian'} • {booking.guests} khách
+                                            </Text>
+                                        </View>
+                                        {active && (
+                                            <MaterialCommunityIcons name="check" size={22} color={Colors.primary} />
+                                        )}
+                                    </TouchableOpacity>
+                                );
+                            })}
+                        </ScrollView>
+                    </View>
+                </View>
+            </Modal>
+
             <ConfirmDialog
                 visible={confirmCheckout}
                 type="confirm"
                 title={'Xác nhận tạo đơn'}
                 message={`${totalItems} món với tổng giá trị ${totalAmount.toLocaleString()}đ. ${serviceMode === 'table'
-                    ? `Phục vụ theo ${bookings.find((booking) => booking.id === selectedBookingId)
-                        ? formatBookingLabel(bookings.find((booking) => booking.id === selectedBookingId))
+                    ? `Phục vụ theo ${selectedBooking
+                        ? formatBookingLabel(selectedBooking)
                         : 'lịch đặt bàn đã chọn'}.`
                     : 'Nhận món tại quầy.'}`}
                 onCancel={() => setConfirmCheckout(false)}
