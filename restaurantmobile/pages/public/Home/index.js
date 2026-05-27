@@ -7,12 +7,19 @@ import {
     Image,
     RefreshControl,
     ScrollView,
+    ImageBackground,
+    Modal,
+    Animated,
+    Pressable,
+    StyleSheet,
 } from 'react-native';
 import { Searchbar, Button, ActivityIndicator, IconButton } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { FadeInDown, FadeInUp, FadeIn } from '@utils/animations';
-import { Apis, endpoints, getApiErrorMessage } from '@configs';
+import { Apis, authFetch, clearSession, endpoints, getApiErrorMessage } from '@configs';
+import { getDisplayName } from '@utils/format';
 import Colors from '@styles/colors';
 import { useCart } from '@contexts/CartContext';
 import { Toast } from '@components/CustomDialog';
@@ -21,12 +28,31 @@ import FilterSheet from '@components/FilterSheet';
 import styles from './styles';
 
 const sortOptions = [
-    { key: '', label: 'Ph\u1ed5 bi\u1ebfn' },
-    { key: '-avg_rating', label: '\u0110\u00e1nh gi\u00e1 cao' },
-    { key: 'price', label: 'Gi\u00e1 t\u0103ng' },
-    { key: '-price', label: 'Gi\u00e1 gi\u1ea3m' },
-    { key: 'name', label: 'T\u00ean A-Z' },
+    { key: '', label: 'Phổ biến' },
+    { key: '-avg_rating', label: 'Đánh giá cao' },
+    { key: 'price', label: 'Giá tăng' },
+    { key: '-price', label: 'Giá giảm' },
+    { key: 'name', label: 'Tên A-Z' },
 ];
+
+const DRAWER_WIDTH = 288;
+
+const SidebarItem = ({ icon, title, color, badge, onPress }) => (
+    <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={onPress}
+        style={styles.sidebarItem}
+    >
+        <MaterialCommunityIcons name={icon} size={22} color={color} />
+        <Text style={styles.sidebarItemText}>{title}</Text>
+        {badge ? (
+            <View style={styles.sidebarBadge}>
+                <Text style={styles.sidebarBadgeText}>{badge}</Text>
+            </View>
+        ) : null}
+        <MaterialCommunityIcons name="chevron-right" size={18} color={Colors.outlineVariant} />
+    </TouchableOpacity>
+);
 
 const Home = ({ navigation }) => {
     const { addItem } = useCart();
@@ -54,6 +80,48 @@ const Home = ({ navigation }) => {
     const [showFilters, setShowFilters] = useState(false);
     const [searchFocused, setSearchFocused] = useState(false);
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
+
+    const insets = useSafeAreaInsets();
+    const [user, setUser] = useState(null);
+    const [drawerOpen, setDrawerOpen] = useState(false);
+    const drawerX = useRef(new Animated.Value(-DRAWER_WIDTH)).current;
+    const backdropOpacity = useRef(new Animated.Value(0)).current;
+
+    const openDrawer = () => {
+        setDrawerOpen(true);
+        Animated.parallel([
+            Animated.timing(drawerX, { toValue: 0, duration: 260, useNativeDriver: true }),
+            Animated.timing(backdropOpacity, { toValue: 1, duration: 260, useNativeDriver: true }),
+        ]).start();
+    };
+
+    const closeDrawer = (after) => {
+        Animated.parallel([
+            Animated.timing(drawerX, { toValue: -DRAWER_WIDTH, duration: 220, useNativeDriver: true }),
+            Animated.timing(backdropOpacity, { toValue: 0, duration: 220, useNativeDriver: true }),
+        ]).start(() => {
+            setDrawerOpen(false);
+            if (typeof after === 'function') after();
+        });
+    };
+
+    const navigateThen = (screen) => () => closeDrawer(() => navigation.navigate(screen));
+
+    const handleLogout = () => closeDrawer(async () => {
+        await clearSession();
+        navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+    });
+
+    const loadUser = async () => {
+        try {
+            const res = await authFetch(endpoints['current-user']);
+            if (res.ok) {
+                setUser(res.data);
+            }
+        } catch (err) {
+            // guest user
+        }
+    };
 
     const showToast = (message, type = 'success') => {
         setToast({ visible: true, message, type });
@@ -128,6 +196,7 @@ const Home = ({ navigation }) => {
     };
 
     useEffect(() => {
+        loadUser();
         loadFilters();
         loadDishes(1, '', null, null, '');
     }, []);
@@ -258,50 +327,36 @@ const Home = ({ navigation }) => {
         navigation.navigate('CompareDishes', { ids: selectedCompareIds });
     };
 
+    const featuredDishes = dishes.slice(0, 5);
+    const standardDishes = dishes.length > 5 ? dishes.slice(5) : [];
+
     const ListHeader = (
         <View>
             <FadeInDown duration={500}>
-                <TouchableOpacity
-                    activeOpacity={0.92}
-                    onPress={() => navigation.navigate('RestaurantDetail')}
-                >
-                    <View style={styles.banner}>
-                        <View style={styles.bannerBlob1} />
-                        <View style={styles.bannerBlob2} />
-                        <MaterialCommunityIcons name="noodles" size={50} color="#ffffff0D" style={{ position: 'absolute', top: 10, right: 60 }} />
-                        <MaterialCommunityIcons name="cup" size={40} color="#ffffff0D" style={{ position: 'absolute', bottom: 12, right: 16 }} />
-                        <MaterialCommunityIcons name="food-drumstick" size={36} color="#ffffff0D" style={{ position: 'absolute', top: 8, right: 12 }} />
-                        <View style={styles.bannerContent}>
-                            <View style={styles.bannerLogo}>
-                                <Text style={styles.bannerLogoText}>T</Text>
-                            </View>
-                            <View style={{ marginLeft: 16, flex: 1 }}>
-                                <Text style={styles.bannerName}>SAIGON SAVORY</Text>
-                                <Text style={styles.bannerSub}>{'\u1ea8m th\u1ef1c S\u00e0i G\u00f2n \u0111\u00edch th\u1ef1c'}</Text>
+                <View style={styles.greetingCard}>
+                    <ImageBackground
+                        source={{ uri: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop' }}
+                        style={styles.greetingBg}
+                        resizeMode="cover"
+                    >
+                        <View style={styles.greetingOverlay}>
+                            <View style={styles.greetingHeader}>
+                                <TouchableOpacity onPress={openDrawer} style={styles.greetingIconWrap}>
+                                    <MaterialCommunityIcons name="menu" size={24} color="#fff" />
+                                </TouchableOpacity>
+                                <View style={styles.greetingTextWrap}>
+                                    <Text style={styles.greetingTitle}>Sài Gòn Savory</Text>
+                                    <Text style={styles.greetingSubtitle}>Hôm nay bạn muốn ăn gì?</Text>
+                                </View>
                             </View>
                         </View>
-                        <View style={styles.bannerTagRow}>
-                            <View style={styles.bannerTag}>
-                                <MaterialCommunityIcons name="silverware-fork-knife" size={12} color={Colors.onPrimary} />
-                                <Text style={styles.bannerTagText}>{`M\u00f3n Vi\u1ec7t`}</Text>
-                            </View>
-                            <View style={styles.bannerTag}>
-                                <MaterialCommunityIcons name="star" size={12} color={Colors.star} />
-                                <Text style={styles.bannerTagText}>4.8</Text>
-                            </View>
-                            <View style={styles.bannerExploreCta}>
-                                <MaterialCommunityIcons name="storefront-outline" size={12} color={Colors.onPrimary} />
-                                <Text style={styles.bannerExploreText}>{`Kh\u00e1m ph\u00e1`}</Text>
-                                <MaterialCommunityIcons name="arrow-right" size={12} color={Colors.onPrimary} />
-                            </View>
-                        </View>
-                    </View>
-                </TouchableOpacity>
+                    </ImageBackground>
+                </View>
             </FadeInDown>
 
             <FadeIn delay={200} duration={400} style={styles.searchRow}>
                 <Searchbar
-                    placeholder={"T\u00ecm m\u00f3n \u0103n, \u0111\u1ea7u b\u1ebfp ho\u1eb7c th\u1ef1c \u0111\u01a1n..."}
+                    placeholder={"Tìm món ăn, đầu bếp hoặc thực đơn..."}
                     value={search}
                     onChangeText={setSearch}
                     onFocus={() => setSearchFocused(true)}
@@ -358,7 +413,7 @@ const Home = ({ navigation }) => {
                 <View style={styles.errorCard}>
                     <MaterialCommunityIcons name="cloud-alert-outline" size={22} color={Colors.primary} />
                     <View style={{ flex: 1, marginLeft: 12 }}>
-                        <Text style={styles.errorTitle}>{`Kh\u00f4ng t\u1ea3i \u0111\u01b0\u1ee3c danh s\u00e1ch m\u00f3n`}</Text>
+                        <Text style={styles.errorTitle}>{`Không tải được danh sách món`}</Text>
                         <Text style={styles.errorText}>{error}</Text>
                     </View>
                     <Button
@@ -368,18 +423,53 @@ const Home = ({ navigation }) => {
                         buttonColor={Colors.surfaceContainerLow}
                         textColor={Colors.text}
                         labelStyle={{ fontWeight: '700', fontSize: 13 }}>
-                        {`Th\u1eed l\u1ea1i`}
+                        {`Thử lại`}
                     </Button>
                 </View> :
                 null
             }
+
+            {featuredDishes.length > 0 && !error && (
+                <View>
+                    <View style={styles.featuredHeader}>
+                        <Text style={styles.featuredTitle}>Món Nổi Bật</Text>
+                        <TouchableOpacity onPress={() => {}}>
+                            <Text style={{color: Colors.primary, fontWeight: '700'}}>Xem thêm</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <FlatList
+                        data={featuredDishes}
+                        horizontal
+                        showsHorizontalScrollIndicator={false}
+                        contentContainerStyle={styles.featuredList}
+                        keyExtractor={(item) => item.id.toString() + '_featured'}
+                        renderItem={({ item, index }) => (
+                            <DishCard
+                                dish={item}
+                                index={index}
+                                featured={true}
+                                onPress={() => navigation.navigate('DishDetail', { id: item.id })}
+                                onCompare={() => toggleCompare(item.id)}
+                                onAddCart={() => {
+                                    addItem(item);
+                                    showToast(`Đã thêm ${item.name} vào giỏ`);
+                                }}
+                                isCompareSelected={selectedCompareIds.includes(item.id)}
+                            />
+                        )}
+                    />
+                    {standardDishes.length > 0 && (
+                        <Text style={styles.sectionTitle}>Tất Cả Món</Text>
+                    )}
+                </View>
+            )}
         </View>
     );
 
     return (
         <View style={styles.container}>
             <FlatList
-                data={dishes}
+                data={standardDishes}
                 renderItem={({ item, index }) => (
                     <DishCard
                         dish={item}
@@ -388,7 +478,7 @@ const Home = ({ navigation }) => {
                         onCompare={() => toggleCompare(item.id)}
                         onAddCart={() => {
                             addItem(item);
-                            showToast(`\u0110\u00e3 th\u00eam ${item.name} v\u00e0o gi\u1ecf`);
+                            showToast(`Đã thêm ${item.name} vào giỏ`);
                         }}
                         isCompareSelected={selectedCompareIds.includes(item.id)}
                     />
@@ -459,6 +549,110 @@ const Home = ({ navigation }) => {
                 type={toast.type}
                 onHide={() => setToast((prev) => ({ ...prev, visible: false }))}
             />
+
+            <Modal
+                visible={drawerOpen}
+                transparent
+                animationType="none"
+                statusBarTranslucent
+                onRequestClose={() => closeDrawer()}
+            >
+                <Animated.View style={[StyleSheet.absoluteFill, styles.backdrop, { opacity: backdropOpacity }]}>
+                    <Pressable style={StyleSheet.absoluteFill} onPress={() => closeDrawer()} />
+                </Animated.View>
+
+                <Animated.View
+                    style={[
+                        styles.drawer,
+                        { transform: [{ translateX: drawerX }] },
+                    ]}
+                >
+                    <View style={[styles.drawerHeader, { paddingTop: insets.top + 24 }]}>
+                        <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => closeDrawer()}
+                            style={[styles.drawerCloseBtn, { top: insets.top + 12 }]}
+                        >
+                            <MaterialCommunityIcons name="close" size={20} color={Colors.onPrimary} />
+                        </TouchableOpacity>
+
+                        <View style={styles.drawerAvatar}>
+                            <MaterialCommunityIcons name="account" size={32} color={Colors.primary} />
+                        </View>
+                        <Text style={styles.drawerName}>{user ? getDisplayName(user) : 'Khách'}</Text>
+                        <Text style={styles.drawerRole}>{user ? 'Thành viên' : 'Khách tham quan'}</Text>
+                    </View>
+
+                    <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false}>
+                        <SidebarItem
+                            icon="storefront-outline"
+                            title="Khám phá"
+                            color={Colors.primary}
+                            onPress={navigateThen('RestaurantDetail')}
+                        />
+                        <SidebarItem
+                            icon="cart-outline"
+                            title="Giỏ hàng"
+                            color={Colors.tertiary}
+                            onPress={navigateThen('Cart')}
+                        />
+                        {user && (
+                            <>
+                                <SidebarItem
+                                    icon="receipt-outline"
+                                    title="Lịch sử Đơn hàng"
+                                    color={Colors.success}
+                                    onPress={navigateThen('Orders')}
+                                />
+                                <SidebarItem
+                                    icon="calendar-clock"
+                                    title="Lịch sử Đặt bàn"
+                                    color={Colors.star}
+                                    onPress={navigateThen('Booking')}
+                                />
+                                <SidebarItem
+                                    icon="chat-processing-outline"
+                                    title="Tin nhắn"
+                                    color={Colors.primary}
+                                    onPress={navigateThen('ChatList')}
+                                />
+                                <SidebarItem
+                                    icon="star-outline"
+                                    title="Đánh giá của tôi"
+                                    color={Colors.tertiary}
+                                    onPress={navigateThen('MyReviews')}
+                                />
+                            </>
+                        )}
+
+                        <View style={styles.sidebarDivider} />
+
+                        {user ? (
+                            <>
+                                <SidebarItem
+                                    icon="account-cog-outline"
+                                    title="Cập nhật hồ sơ"
+                                    color={Colors.tertiary}
+                                    onPress={navigateThen('Profile')}
+                                />
+                                <SidebarItem
+                                    icon="logout"
+                                    title="Đăng xuất"
+                                    color={Colors.textSecondary}
+                                    onPress={handleLogout}
+                                />
+                            </>
+                        ) : (
+                            <SidebarItem
+                                icon="login"
+                                title="Đăng nhập"
+                                color={Colors.primary}
+                                onPress={() => closeDrawer(() => navigation.navigate('Login'))}
+                            />
+                        )}
+                    </ScrollView>
+                </Animated.View>
+            </Modal>
         </View>
     );
 };

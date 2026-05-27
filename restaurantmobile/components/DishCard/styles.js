@@ -82,6 +82,57 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         marginHorizontal: 0,
     },
+    // Featured Card Styles
+    featuredCard: {
+        width: 260,
+        backgroundColor: Colors.surfaceContainerLowest,
+        marginLeft: 16,
+        marginVertical: 8,
+        borderRadius: 24,
+        overflow: 'hidden',
+        ...editorialShadow,
+    },
+    featuredImg: {
+        width: '100%',
+        height: 140,
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+    },
+    featuredPlaceholder: {
+        width: '100%',
+        height: 140,
+        backgroundColor: Colors.surfaceContainerLow,
+        justifyContent: 'center',
+        alignItems: 'center',
+        borderTopLeftRadius: 24,
+        borderTopRightRadius: 24,
+    },
+    featuredBody: {
+        padding: 14,
+    },
+    featuredTopRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        marginBottom: 8,
+    },
+    featuredDishName: {
+        fontSize: 16,
+        fontWeight: '800',
+        color: Colors.text,
+        lineHeight: 22,
+        flex: 1,
+        marginRight: 8,
+    },
+    featuredDishPrice: {
+        fontSize: 16,
+        color: Colors.primary,
+        fontWeight: '800',
+    },
+    featuredMetaRow: {
+        flexDirection: 'row',
+        marginBottom: 12,
+    },
 });
 
 export default styles;
