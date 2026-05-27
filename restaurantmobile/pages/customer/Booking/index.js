@@ -34,6 +34,32 @@ const statusConfig = {
 };
 
 const suggestedTimes = ['11:30', '12:00', '12:30', '18:00', '18:30', '19:00', '19:30', '20:00'];
+const ACTIVE_BOOKING_STATUSES = ['pending', 'confirmed'];
+const MAX_ACTIVE_BOOKINGS = 3;
+const MAX_GUESTS_PER_BOOKING = 50;
+const DUPLICATE_BOOKING_WINDOW_MS = 2 * 60 * 60 * 1000;
+
+const parseBookingDate = (booking) => {
+    const value = new Date(booking?.booking_date);
+    return Number.isNaN(value.getTime()) ? null : value;
+};
+
+const isFutureActiveBooking = (booking) => {
+    const bookedAt = parseBookingDate(booking);
+    return Boolean(
+        bookedAt
+        && bookedAt > new Date()
+        && ACTIVE_BOOKING_STATUSES.includes(booking.status),
+    );
+};
+
+const formatBookingSlot = (booking) => {
+    const bookedAt = parseBookingDate(booking);
+    if (!bookedAt) return 'lịch hiện có';
+    const time = bookedAt.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' });
+    const day = bookedAt.toLocaleDateString('vi-VN');
+    return `${time} ngày ${day}`;
+};
 
 const Booking = ({ navigation, route }) => {
     const tabBarHeight = useBottomTabBarHeight();
@@ -68,7 +94,7 @@ const Booking = ({ navigation, route }) => {
                 throw new Error(getApiErrorMessage(res, 'Không thể tải lịch đặt bàn'));
             }
             const data = res.data;
-            setBookings(data.results || []);
+            setBookings(Array.isArray(data) ? data : data.results || []);
         } catch (err) {
             setBookings([]);
             showToast(err.message || 'Không thể tải lịch đặt bàn');
@@ -115,13 +141,50 @@ const Booking = ({ navigation, route }) => {
         setDate(updated);
     };
 
+    const activeBookings = bookings.filter(isFutureActiveBooking);
+    const activeBookingCount = activeBookings.length;
+    const nearbyBooking = activeBookings.find((booking) => {
+        const bookedAt = parseBookingDate(booking);
+        return bookedAt && Math.abs(bookedAt.getTime() - date.getTime()) <= DUPLICATE_BOOKING_WINDOW_MS;
+    });
+    const activeLimitReached = activeBookingCount >= MAX_ACTIVE_BOOKINGS;
+    const bookingGuard = activeLimitReached
+        ? {
+            icon: 'calendar-alert',
+            title: 'Đã đủ lịch đặt bàn',
+            message: `Bạn đang có ${MAX_ACTIVE_BOOKINGS} lịch đang hoạt động. Vui lòng hủy hoặc chờ hoàn tất một lịch trước khi tạo thêm.`,
+        }
+        : nearbyBooking
+            ? {
+                icon: 'clock-alert-outline',
+                title: 'Khung giờ quá gần lịch cũ',
+                message: `Bạn đã có lịch vào ${formatBookingSlot(nearbyBooking)}. Vui lòng chọn giờ khác.`,
+            }
+            : null;
+
     const book = () => {
+        if (loading || loadingList) {
+            showToast('Đang kiểm tra lịch đặt bàn, vui lòng thử lại sau giây lát.');
+            return;
+        }
         if (guests < 1) {
             showToast('Số khách phải lớn hơn 0');
             return;
         }
+        if (guests > MAX_GUESTS_PER_BOOKING) {
+            showToast(`Mỗi lịch đặt bàn tối đa ${MAX_GUESTS_PER_BOOKING} khách`);
+            return;
+        }
         if (date <= new Date()) {
             showToast('Vui lòng chọn thời gian trong tương lai');
+            return;
+        }
+        if (activeLimitReached) {
+            showToast('Bạn đã đạt giới hạn lịch đặt bàn đang hoạt động.');
+            return;
+        }
+        if (nearbyBooking) {
+            showToast('Bạn đã có lịch đặt bàn gần thời điểm này.');
             return;
         }
         setConfirm(true);
@@ -147,7 +210,10 @@ const Booking = ({ navigation, route }) => {
             }
 
             if (!res.ok) {
-                showToast(getApiErrorMessage(res, 'Không thể đặt bàn'));
+                const message = res.status === 429
+                    ? 'Bạn thao tác đặt bàn quá nhanh. Vui lòng thử lại sau.'
+                    : getApiErrorMessage(res, 'Không thể đặt bàn');
+                showToast(message);
                 return;
             }
 
@@ -281,6 +347,31 @@ const Booking = ({ navigation, route }) => {
                         showsVerticalScrollIndicator={false}>
 
                         <FadeIn duration={300}>
+                            <View style={[
+                                styles.bookingRuleBox,
+                                bookingGuard && styles.bookingRuleBoxBlocked,
+                            ]}>
+                                <View style={[
+                                    styles.bookingRuleIcon,
+                                    bookingGuard && styles.bookingRuleIconBlocked,
+                                ]}>
+                                    <MaterialCommunityIcons
+                                        name={bookingGuard?.icon || 'calendar-check-outline'}
+                                        size={20}
+                                        color={bookingGuard ? Colors.primary : Colors.success}
+                                    />
+                                </View>
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.bookingRuleTitle}>
+                                        {bookingGuard?.title || `${activeBookingCount}/${MAX_ACTIVE_BOOKINGS} lịch đang hoạt động`}
+                                    </Text>
+                                    <Text style={styles.bookingRuleText}>
+                                        {loadingList
+                                            ? 'Đang kiểm tra lịch đặt bàn của bạn.'
+                                            : bookingGuard?.message || 'Bạn có thể tạo thêm lịch cho khung giờ phù hợp.'}
+                                    </Text>
+                                </View>
+                            </View>
 
                             <View style={styles.dateTimeRow}>
                                 <View style={{ flex: 1 }}>
@@ -350,7 +441,7 @@ const Booking = ({ navigation, route }) => {
                                 <TouchableOpacity
                                     style={styles.stepBtnPlus}
                                     activeOpacity={0.7}
-                                    onPress={() => setGuests((prev) => prev + 1)}>
+                                    onPress={() => setGuests((prev) => Math.min(MAX_GUESTS_PER_BOOKING, prev + 1))}>
                                     <MaterialCommunityIcons name="plus" size={20} color={Colors.primary} />
                                 </TouchableOpacity>
                             </View>
@@ -371,6 +462,16 @@ const Booking = ({ navigation, route }) => {
                                 activeOutlineColor={Colors.primary}
                                 textColor={Colors.text}
                             />
+
+                            <View style={styles.warningBox}>
+                                <MaterialCommunityIcons name="bell-ring-outline" size={24} color="#D97706" />
+                                <View style={{ flex: 1 }}>
+                                    <Text style={styles.warningTitle}>Lưu ý quan trọng</Text>
+                                    <Text style={styles.warningText}>
+                                        Nhà hàng chỉ hỗ trợ giữ bàn tối đa 10 phút so với giờ hẹn. Quý khách vui lòng đến đúng giờ nhé!
+                                    </Text>
+                                </View>
+                            </View>
                         </FadeIn>
                     </ScrollView>
 
@@ -380,7 +481,7 @@ const Booking = ({ navigation, route }) => {
                             mode="contained"
                             icon="chevron-right"
                             onPress={book}
-                            disabled={loading}
+                            disabled={loading || loadingList || Boolean(bookingGuard)}
                             loading={loading}
                             buttonColor={Colors.primary}
                             textColor={Colors.onPrimary}
@@ -442,7 +543,7 @@ const Booking = ({ navigation, route }) => {
                 visible={successDialog}
                 type="success"
                 title={'Đặt bàn thành công'}
-                message={'Nhà hàng đã nhận được yêu cầu và sẽ xác nhận trong thời gian sớm nhất.'}
+                message={'Nhà hàng đã nhận được yêu cầu. Quý khách vui lòng đến đúng giờ hoặc trễ nhất 10 phút để nhà hàng giữ bàn.'}
                 confirmText={'Xem lịch sử'}
                 onConfirm={() => {
                     setSuccessDialog(false);
