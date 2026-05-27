@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import {
     View,
     Text,
@@ -10,6 +10,7 @@ import {
 import { Button, ActivityIndicator } from 'react-native-paper';
 import { useBottomTabBarHeight } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
 import { FadeInUp, FadeIn } from '@utils/animations';
 import { useCart } from '@contexts/CartContext';
 import Colors from '@styles/colors';
@@ -17,11 +18,18 @@ import { ConfirmDialog, Toast } from '@components/CustomDialog';
 import { authFetch, endpoints, clearSession, getApiErrorMessage } from '@configs';
 import styles from './styles';
 
-const paymentOptions = [
-    { key: 'cash', label: 'Tiền mặt khi nhận', icon: 'cash' },
-    { key: 'momo', label: 'MoMo', icon: 'wallet-outline' },
-    { key: 'stripe', label: 'Stripe', icon: 'credit-card-outline' },
+const serviceOptions = [
+    { key: 'counter', label: 'Lấy tại quầy', icon: 'storefront-outline' },
+    { key: 'table', label: 'Theo bàn đã đặt', icon: 'table-chair' },
 ];
+
+const formatBookingLabel = (booking) => {
+    const date = new Date(booking.booking_date);
+    const validDate = !Number.isNaN(date.getTime());
+    const day = validDate ? date.toLocaleDateString('vi-VN') : '';
+    const time = validDate ? date.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) : '';
+    return `Bàn đặt #${booking.id} · ${time} ${day} · ${booking.guests} khách`;
+};
 
 const Cart = ({ navigation, route }) => {
     const isGuest = route.params?.isGuest || false;
@@ -35,16 +43,53 @@ const Cart = ({ navigation, route }) => {
         removeItem,
         clearCart,
     } = useCart();
-    const [paymentMethod, setPaymentMethod] = useState('cash');
+    const [serviceMode, setServiceMode] = useState('counter');
+    const [bookings, setBookings] = useState([]);
+    const [selectedBookingId, setSelectedBookingId] = useState(null);
+    const [loadingBookings, setLoadingBookings] = useState(false);
     const [submitting, setSubmitting] = useState(false);
     const [confirmCheckout, setConfirmCheckout] = useState(false);
-    const [successDialog, setSuccessDialog] = useState(false);
-    const [successMessage, setSuccessMessage] = useState('');
     const [toast, setToast] = useState({ visible: false, message: '', type: '' });
 
     const showToast = (message, type = 'error') => {
         setToast({ visible: true, message, type });
     };
+
+    const loadBookings = useCallback(async () => {
+        if (isGuest) return;
+        setLoadingBookings(true);
+        try {
+            const res = await authFetch(endpoints['bookings']);
+            if (res.status === 401) {
+                await clearSession();
+                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
+                return;
+            }
+            if (!res.ok) {
+                setBookings([]);
+                return;
+            }
+
+            const data = res.data;
+            const items = (data.results || [])
+                .filter((booking) => ['pending', 'confirmed'].includes(booking.status))
+                .sort((a, b) => new Date(a.booking_date).getTime() - new Date(b.booking_date).getTime());
+            setBookings(items);
+            setSelectedBookingId((prev) => (
+                prev && items.some((booking) => booking.id === prev)
+                    ? prev
+                    : (items[0]?.id || null)
+            ));
+        } catch (err) {
+            setBookings([]);
+        } finally {
+            setLoadingBookings(false);
+        }
+    }, [isGuest, navigation]);
+
+    useFocusEffect(useCallback(() => {
+        loadBookings();
+    }, [loadBookings]));
 
     const checkout = async () => {
         if (!items.length) {
@@ -53,6 +98,10 @@ const Cart = ({ navigation, route }) => {
         }
         if (isGuest) {
             showToast('Vui lòng đăng nhập để tạo đơn hàng');
+            return;
+        }
+        if (serviceMode === 'table' && !selectedBookingId) {
+            showToast('Vui lòng chọn lịch đặt bàn hoặc đổi sang lấy tại quầy');
             return;
         }
         setConfirmCheckout(true);
@@ -64,7 +113,9 @@ const Cart = ({ navigation, route }) => {
         try {
             const orderRes = await authFetch(endpoints['orders'], {
                 method: 'POST',
-                body: JSON.stringify({}),
+                body: JSON.stringify(serviceMode === 'table'
+                    ? { booking: selectedBookingId }
+                    : {}),
             });
 
             if (orderRes.status === 401) {
@@ -103,57 +154,8 @@ const Cart = ({ navigation, route }) => {
                 order = detailRes.data;
             }
 
-            const paymentRes = await authFetch(endpoints['payments'], {
-                method: 'POST',
-                body: JSON.stringify({
-                    order: order.id,
-                    method: paymentMethod,
-                }),
-            });
-
-            if (paymentRes.status === 401) {
-                await clearSession();
-                navigation.reset({ index: 0, routes: [{ name: 'Login' }] });
-                return;
-            }
-
-
-            const isOnlineGateway = ['momo', 'stripe'].includes(paymentMethod);
-
-            if (!paymentRes.ok) {
-                const message = getApiErrorMessage(paymentRes, 'Không thể ghi nhận thanh toán');
-                if (isOnlineGateway && paymentRes.status >= 500) {
-                    clearCart();
-                    setSuccessMessage(
-                        `Đơn hàng đã được tạo nhưng chưa mở được cổng thanh toán. ${message}. Bạn có thể thanh toán lại trong mục Đơn hàng.`
-                    );
-                    setSuccessDialog(true);
-                    return;
-                }
-                showToast(message);
-                return;
-            }
-
-            if (isOnlineGateway) {
-                if (!paymentRes.data?.pay_url) {
-                    showToast('Cổng thanh toán chưa trả về URL. Vui lòng thử lại trong mục Đơn hàng.');
-                    return;
-                }
-                clearCart();
-                navigation.navigate('PaymentCheckout', {
-                    payUrl: paymentRes.data.pay_url,
-                    paymentId: paymentRes.data.id,
-                    method: paymentMethod,
-                    expiresAt: paymentRes.data.expires_at,
-                    deeplinkUrl: paymentRes.data.deeplink_url,
-                    qrCodeUrl: paymentRes.data.qr_code_url,
-                });
-                return;
-            }
-
             clearCart();
-            setSuccessMessage('Đơn hàng đã được tạo và phương thức thanh toán đã được ghi nhận.');
-            setSuccessDialog(true);
+            navigation.navigate('OrderPayment', { order });
         } catch (err) {
             showToast('Không thể hoàn tất đặt món. Vui lòng thử lại.');
         } finally {
@@ -255,7 +257,7 @@ const Cart = ({ navigation, route }) => {
                 data={items}
                 renderItem={renderItem}
                 keyExtractor={(item) => item.id.toString()}
-                contentContainerStyle={{ paddingBottom: tabBarHeight + 320 }}
+                contentContainerStyle={{ paddingBottom: tabBarHeight + 340 }}
                 showsVerticalScrollIndicator={false}
                 ListHeaderComponent={
                     <FadeIn duration={400} style={styles.headerCard}>
@@ -271,39 +273,80 @@ const Cart = ({ navigation, route }) => {
             <View style={[styles.bottomSheet, { bottom: tabBarHeight }]}>
                 {!isGuest ? (
                     <>
-                        <Text style={styles.sheetTitle}>PHƯƠNG THỨC THANH TOÁN</Text>
+                        <Text style={styles.sheetTitle}>CÁCH NHẬN MÓN</Text>
 
-                        <ScrollView
-                            horizontal
-                            showsHorizontalScrollIndicator={false}
-                            contentContainerStyle={styles.paymentScroll}>
-                            {paymentOptions.map((option) => {
-                                const active = paymentMethod === option.key;
+                        <View style={styles.serviceModeRow}>
+                            {serviceOptions.map((option) => {
+                                const active = serviceMode === option.key;
                                 return (
                                     <TouchableOpacity
                                         key={option.key}
-                                        activeOpacity={0.7}
-                                        onPress={() => setPaymentMethod(option.key)}
-                                        style={[styles.paymentChip, active && styles.paymentChipActive]}>
+                                        activeOpacity={0.75}
+                                        onPress={() => setServiceMode(option.key)}
+                                        style={[styles.serviceModeChip, active && styles.serviceModeChipActive]}>
                                         <MaterialCommunityIcons
                                             name={option.icon}
                                             size={18}
                                             color={active ? Colors.primary : Colors.textSecondary}
                                         />
-                                        <Text style={[styles.paymentChipText, active && styles.paymentChipTextActive]}>
+                                        <Text style={[styles.serviceModeText, active && styles.serviceModeTextActive]}>
                                             {option.label}
                                         </Text>
                                     </TouchableOpacity>
                                 );
                             })}
-                        </ScrollView>
-
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginVertical: 8, paddingHorizontal: 4 }}>
-                            <MaterialCommunityIcons name="information-outline" size={14} color={Colors.textSecondary} />
-                            <Text style={{ fontSize: 11, color: Colors.textSecondary, flex: 1, lineHeight: 16 }}>
-                                Mô hình tự phục vụ: Vui lòng nhận món tại quầy hoặc thông báo nhân viên số bàn của bạn.
-                            </Text>
                         </View>
+
+                        {serviceMode === 'table' ? (
+                            <View style={styles.bookingSelectBlock}>
+                                {loadingBookings ? (
+                                    <View style={styles.bookingLoadingRow}>
+                                        <ActivityIndicator size="small" color={Colors.primary} />
+                                        <Text style={styles.bookingHint}>Đang tải lịch đặt bàn...</Text>
+                                    </View>
+                                ) : bookings.length > 0 ? (
+                                    <ScrollView
+                                        horizontal
+                                        showsHorizontalScrollIndicator={false}
+                                        contentContainerStyle={styles.bookingScroll}>
+                                        {bookings.map((booking) => {
+                                            const active = selectedBookingId === booking.id;
+                                            return (
+                                                <TouchableOpacity
+                                                    key={booking.id}
+                                                    activeOpacity={0.75}
+                                                    onPress={() => setSelectedBookingId(booking.id)}
+                                                    style={[styles.bookingChip, active && styles.bookingChipActive]}>
+                                                    <MaterialCommunityIcons
+                                                        name={booking.status === 'confirmed' ? 'check-circle-outline' : 'clock-outline'}
+                                                        size={16}
+                                                        color={active ? Colors.primary : Colors.textSecondary}
+                                                    />
+                                                    <Text
+                                                        numberOfLines={1}
+                                                        style={[styles.bookingChipText, active && styles.bookingChipTextActive]}>
+                                                        {formatBookingLabel(booking)}
+                                                    </Text>
+                                                </TouchableOpacity>
+                                            );
+                                        })}
+                                    </ScrollView>
+                                ) : (
+                                    <View style={styles.noBookingBox}>
+                                        <Text style={styles.bookingHint}>
+                                            Bạn chưa có lịch đặt bàn đang chờ hoặc đã xác nhận.
+                                        </Text>
+                                        <TouchableOpacity
+                                            activeOpacity={0.75}
+                                            onPress={() => navigation.navigate('Booking')}
+                                            style={styles.bookingAction}>
+                                            <Text style={styles.bookingActionText}>Đặt bàn</Text>
+                                            <MaterialCommunityIcons name="arrow-right" size={14} color={Colors.primary} />
+                                        </TouchableOpacity>
+                                    </View>
+                                )}
+                            </View>
+                        ) : null}
 
                         <View style={styles.summaryBlock}>
                             <Text style={styles.summaryLabel}>Tổng thanh toán</Text>
@@ -321,7 +364,7 @@ const Cart = ({ navigation, route }) => {
                             contentStyle={{ paddingVertical: 8, flexDirection: 'row-reverse' }}
                             style={styles.checkoutBtn}
                             labelStyle={{ fontWeight: '800', fontSize: 16 }}>
-                            Tạo đơn hàng
+                            Tạo đơn và thanh toán
                         </Button>
                     </>
                 ) : (
@@ -358,22 +401,14 @@ const Cart = ({ navigation, route }) => {
                 visible={confirmCheckout}
                 type="confirm"
                 title={'Xác nhận tạo đơn'}
-                message={`${totalItems} món với tổng giá trị ${totalAmount.toLocaleString()}đ sẽ được tạo thành đơn hàng mới.`}
+                message={`${totalItems} món với tổng giá trị ${totalAmount.toLocaleString()}đ. ${serviceMode === 'table'
+                    ? `Phục vụ theo ${bookings.find((booking) => booking.id === selectedBookingId)
+                        ? formatBookingLabel(bookings.find((booking) => booking.id === selectedBookingId))
+                        : 'lịch đặt bàn đã chọn'}.`
+                    : 'Nhận món tại quầy.'}`}
                 onCancel={() => setConfirmCheckout(false)}
                 onConfirm={doCheckout}
                 confirmText={'Tạo đơn'}
-            />
-
-            <ConfirmDialog
-                visible={successDialog}
-                type="success"
-                title={'Đặt món thành công'}
-                message={successMessage}
-                confirmText={'Xem đơn hàng'}
-                onConfirm={() => {
-                    setSuccessDialog(false);
-                    navigation.navigate('Orders');
-                }}
             />
 
             <Toast

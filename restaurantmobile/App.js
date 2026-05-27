@@ -17,6 +17,7 @@ import Booking from '@pages/customer/Booking';
 import Cart from '@pages/customer/Cart';
 import Orders from '@pages/customer/Orders';
 import MyReviews from '@pages/customer/MyReviews';
+import OrderPayment from '@pages/customer/OrderPayment';
 import PaymentCheckout from '@pages/customer/PaymentCheckout';
 import Profile from '@pages/shared/Profile';
 import ChatList from '@pages/shared/ChatList';
@@ -452,6 +453,11 @@ const App = () => (
                         name="MyReviews"
                         component={MyReviews}
                         options={{ title: 'Đánh giá đã viết', ...stackScreenOptions }}
+                    />
+                    <Stack.Screen
+                        name="OrderPayment"
+                        component={OrderPayment}
+                        options={{ headerShown: false }}
                     />
                     <Stack.Screen
                         name="ChefReviews"
