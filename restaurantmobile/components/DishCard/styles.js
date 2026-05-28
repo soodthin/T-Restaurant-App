@@ -82,7 +82,6 @@ const styles = StyleSheet.create({
         marginVertical: 4,
         marginHorizontal: 0,
     },
-    // Featured Card Styles
     featuredCard: {
         width: 260,
         backgroundColor: Colors.surfaceContainerLowest,

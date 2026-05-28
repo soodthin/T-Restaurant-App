@@ -1,0 +1,3 @@
+$kind: collection
+description: Payment callback, redirect, and webhook endpoint coverage.
+order: 10000

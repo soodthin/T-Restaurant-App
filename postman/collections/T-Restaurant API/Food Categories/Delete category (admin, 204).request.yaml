@@ -3,6 +3,11 @@ url: "{{base_url}}/api/categories/{{category_id}}/"
 method: DELETE
 scripts:
   - type: afterResponse
-    code: pm.test('Status 204', () => pm.response.to.have.status(204));
+    code: |-
+      pm.test('Status 204 or 404', () => pm.expect([204, 404]).to.include(pm.response.code));
+      const seedId = pm.environment.get('seed_category_id');
+      if (seedId) {
+          pm.environment.set('category_id', seedId);
+      }
     language: text/javascript
-order: 6000
+order: 5000

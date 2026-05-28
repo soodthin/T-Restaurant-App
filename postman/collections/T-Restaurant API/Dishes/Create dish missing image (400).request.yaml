@@ -33,4 +33,4 @@ scripts:
           pm.expect(JSON.stringify(pm.response.json())).to.include('image');
       });
     language: text/javascript
-order: 7100
+order: 10000

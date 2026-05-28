@@ -15,6 +15,6 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('Status 201', () => pm.response.to.have.status(201));
-      pm.collectionVariables.set('review_id', pm.response.json().id);
+      pm.environment.set('review_id', pm.response.json().id);
     language: text/javascript
 order: 2000

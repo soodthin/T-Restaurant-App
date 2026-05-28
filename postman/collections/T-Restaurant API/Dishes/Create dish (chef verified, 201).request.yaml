@@ -39,6 +39,7 @@ scripts:
           pm.expect(body.description).to.not.be.empty;
           pm.expect(body.ingredients).to.not.be.empty;
       });
-      pm.collectionVariables.set('dish_id', body.id);
+      pm.environment.set('dish_id', body.id);
+      pm.environment.set('created_dish_id', body.id);
     language: text/javascript
-order: 7000
+order: 9000

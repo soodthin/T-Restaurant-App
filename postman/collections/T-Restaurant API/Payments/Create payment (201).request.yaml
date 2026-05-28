@@ -8,7 +8,7 @@ body:
   content: |-
     {
         "order": {{order_id}},
-        "method": "momo",
+        "method": "cash",
         "amount": 130000
     }
 scripts:
@@ -17,6 +17,6 @@ scripts:
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Status mặc định = pending', () => pm.expect(body.status).to.eql('pending'));
-      pm.collectionVariables.set('payment_id', body.id);
+      pm.environment.set('payment_id', body.id);
     language: text/javascript
 order: 2000

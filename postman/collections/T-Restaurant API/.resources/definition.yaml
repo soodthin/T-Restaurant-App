@@ -1,33 +1,31 @@
 $kind: collection
 description: |-
-  Bộ test case Postman đầy đủ cho backend Django của T-Restaurant App.
+  Postman test cases for T-Restaurant App backend.
 
-  **Chuẩn bị trước khi chạy:**
-  1. Import environment `local` kèm theo (file `postman/environments/local.postman_environment.json`).
-  2. Mặc định backend chạy tại `{{base_url}}` — đổi nếu cần.
-  3. Trong Django admin, tạo OAuth2 Application:
-     - Client id: `restaurant_client_id`
-     - Client secret: `restaurant_client_secret`
-     - Grant type: `password`
-     - Client type: `confidential`
-  4. Tạo sẵn 3 user để test: 1 customer, 1 chef (set `is_verified=True` qua admin), 1 admin (`is_staff=True`).
-
-  **Luồng đề nghị:**
-  1. Chạy folder `Auth` → `Login (password grant)` trước để lấy `access_token`.
-  2. Các request khác sẽ tự bearer auth qua collection variable.
-  3. Test scripts sẽ tự lưu `user_id`, `dish_id`, `order_id`... để chain giữa các request.
+  Before running:
+  1. Select environment `T-Restaurant - Production`.
+  2. Backend base URL is `{{base_url}}`.
+  3. Demo accounts:
+     - Customer: `customer_demo` / `demo123456`
+     - Chef: `chef_demo` / `demo123456`
+     - Admin: `admin` / `Admin@123`
+  4. Run login requests first to save token variables.
 variables:
-  base_url: http://127.0.0.1:8000
+  base_url: https://t-restaurant.onrender.com
   client_id: restaurant_client_id
   client_secret: restaurant_client_secret
-  customer_username: customer
-  customer_password: customer@123
-  chef_username: chef
-  chef_password: chef@123
+  customer_username: customer_demo
+  customer_password: demo123456
+  chef_username: chef_demo
+  chef_password: demo123456
   admin_username: admin
-  admin_password: admin@123
+  admin_password: Admin@123
   access_token: ""
   refresh_token: ""
+  customer_access_token: ""
+  customer_refresh_token: ""
+  chef_access_token: ""
+  admin_access_token: ""
   user_id: ""
   category_id: ""
   menu_id: ""
@@ -37,24 +35,57 @@ variables:
   review_id: ""
   payment_id: ""
   compare_ids: ""
-  sample_image_path: 'D:\Project\T-Restaurant-App\docs\stitch\kh_m_ph_m_th_c\screen.png'
+  seed_category_id: ""
+  seed_menu_id: ""
+  seed_dish_id: ""
+  created_dish_id: ""
+  chef_user_id: ""
+  chef_order_id: ""
+  chef_order_next_status: ""
+  dish_price_min: "1"
+  dish_price_max: "100000000"
+  dish_prep_min: "1"
+  dish_prep_max: "1440"
+  momo_request_id: postman-momo-request
+  momo_order_id: postman-momo-order
+  stripe_session_id: cs_test_postman
+  sample_image_path: D:\Project\T-Restaurant-App\docs\stitch\kh_m_ph_m_th_c\screen.png
 scripts:
   - type: http:beforeRequest
     code: |-
-      // Đảm bảo base_url luôn có giá trị
-      if (!pm.variables.get('base_url')) {
-          pm.variables.set('base_url', 'http://127.0.0.1:8000');
+      const url = pm.request.url.toString();
+      const method = pm.request.method;
+      let tokenKey = '';
+
+      if (url.includes('/api/categories/') && ['POST', 'PATCH', 'DELETE'].includes(method)) {
+          tokenKey = 'admin_access_token';
+      } else if (url.includes('/api/menus/') && ['POST', 'PATCH', 'DELETE'].includes(method)) {
+          tokenKey = 'admin_access_token';
+      } else if (url.includes('/api/users/') && (url.includes('/verify-chef/') || (method === 'GET' && url.endsWith('/api/users/')))) {
+          tokenKey = 'admin_access_token';
+      } else if (url.includes('/api/dishes/') && (url.includes('my=true') || url.includes('my-reviews') || ['POST', 'PATCH', 'DELETE'].includes(method))) {
+          tokenKey = 'chef_access_token';
+      } else if (url.includes('/api/orders/chef-orders') || url.includes('/chef-update-status/')) {
+          tokenKey = 'chef_access_token';
+      } else if (url.includes('/api/stats/')) {
+          tokenKey = 'admin_access_token';
+      } else if (url.includes('/api/payments/') && ['PATCH', 'DELETE'].includes(method)) {
+          tokenKey = 'admin_access_token';
+      } else if (url.includes('/api/payments/')) {
+          tokenKey = 'customer_access_token';
+      } else if (url.includes('/api/bookings/') || url.includes('/api/orders/') || url.includes('/api/reviews/') || url.includes('/api/users/current-user/')) {
+          tokenKey = 'customer_access_token';
+      }
+
+      if (tokenKey) {
+          const token = pm.environment.get(tokenKey);
+          if (token) {
+              pm.environment.set('access_token', token);
+          }
       }
     language: text/javascript
-  - type: http:afterResponse
-    code: |-
-      // Test chung: response phải dưới 5s
-      pm.test('Response time < 5000ms', function () {
-          pm.expect(pm.response.responseTime).to.be.below(5000);
-      });
-    language: text/javascript
 auth:
-  - id: 825a3eba-e966-496d-a2a5-ddbcceaadac7
+  - id: 293a1122-efb3-4c17-876f-c17568b96267
     type: bearer
     name: bearer auth
     credentials:

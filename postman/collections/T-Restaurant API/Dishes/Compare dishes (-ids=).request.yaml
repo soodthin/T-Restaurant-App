@@ -10,10 +10,10 @@ scripts:
   - type: afterResponse
     code: |-
       pm.test('Co it nhat 2 mon cung loai de so sanh', () => {
-          const ids = (pm.collectionVariables.get('compare_ids') || '').split(',').filter(Boolean);
+          const ids = (pm.variables.get('compare_ids') || '').split(',').filter(Boolean);
           pm.expect(ids.length).to.be.at.least(2);
       });
       pm.test('Status 200', () => pm.response.to.have.status(200));
       pm.test('Là mảng', () => pm.expect(pm.response.json()).to.be.an('array'));
     language: text/javascript
-order: 11000
+order: 13000

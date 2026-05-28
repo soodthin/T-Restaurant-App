@@ -15,6 +15,6 @@ scripts:
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Có id', () => pm.expect(body).to.have.property('id'));
-      pm.collectionVariables.set('category_id', body.id);
+      pm.environment.set('category_id', body.id);
     language: text/javascript
 order: 2000

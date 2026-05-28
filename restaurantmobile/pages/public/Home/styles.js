@@ -16,7 +16,7 @@ export default StyleSheet.create({
         width: '100%',
     },
     greetingOverlay: {
-        backgroundColor: 'rgba(0, 0, 0, 0.45)', // Glass/Overlay effect
+        backgroundColor: 'rgba(0, 0, 0, 0.45)',
         padding: 24,
         borderWidth: 1,
         borderColor: 'rgba(255, 255, 255, 0.15)',
@@ -175,7 +175,6 @@ export default StyleSheet.create({
     empty: { alignItems: 'center', marginTop: 36, paddingHorizontal: 32, paddingBottom: 10 },
     emptyTitle: { fontSize: 18, fontWeight: '800', color: Colors.text, marginTop: 14 },
     emptyText: { fontSize: 14, color: Colors.textSecondary, marginTop: 8, textAlign: 'center', lineHeight: 21 },
-    // DRAWER STYLES
     backdrop: {
         backgroundColor: '#00000066',
     },

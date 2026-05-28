@@ -26,7 +26,6 @@ const OrderCard = ({ item, index, onViewDetail }) => {
         <FadeInUp delay={index * 50} duration={350}>
             <View style={[styles.card, isCancelled && styles.cardCancelled]}>
 
-                {/* Header: ID, Date, Badge */}
                 <View style={styles.cardHeaderRow}>
                     <View style={{ flex: 1 }}>
                         <Text style={styles.orderId}>{`Đơn #${item.id}`}</Text>
@@ -40,7 +39,6 @@ const OrderCard = ({ item, index, onViewDetail }) => {
                     </View>
                 </View>
 
-                {/* Body: Service Info & Total Amount */}
                 <View style={styles.serviceRow}>
                     <View style={styles.serviceIcon}>
                         <MaterialCommunityIcons
@@ -61,7 +59,6 @@ const OrderCard = ({ item, index, onViewDetail }) => {
                     </View>
                 </View>
 
-                {/* Payment Block */}
                 <View style={styles.paymentBlock}>
                     <View style={styles.paymentInfoCol}>
                         <Text style={styles.summaryLabel}>Thanh toán</Text>
@@ -85,7 +82,6 @@ const OrderCard = ({ item, index, onViewDetail }) => {
 
                 <View style={styles.divider} />
 
-                {/* Actions Block */}
                 <View style={styles.actionsRow}>
                     <View style={styles.detailsToggleLeft}>
                         <MaterialCommunityIcons name="receipt" size={16} color={Colors.textSecondary} />

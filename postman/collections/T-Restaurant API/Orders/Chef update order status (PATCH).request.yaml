@@ -1,0 +1,24 @@
+$kind: http-request
+url: "{{base_url}}/api/orders/{{chef_order_id}}/chef-update-status/"
+method: PATCH
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: |-
+    {
+        "status": "{{chef_order_next_status}}"
+    }
+scripts:
+  - type: afterResponse
+    code: |-
+      const nextStatus = pm.variables.get('chef_order_next_status');
+      if (nextStatus) {
+          pm.test('Status 200', () => pm.response.to.have.status(200));
+          const body = pm.response.json();
+          pm.test('Updated to requested status', () => pm.expect(body.status).to.eql(nextStatus));
+      } else {
+          pm.test('No eligible chef order to update', () => pm.expect([400, 404]).to.include(pm.response.code));
+      }
+    language: text/javascript
+order: 6000

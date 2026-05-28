@@ -1,0 +1,22 @@
+$kind: http-request
+url: "{{base_url}}/api/dishes/?chef_id={{chef_user_id}}"
+method: GET
+queryParams:
+  chef_id: "{{chef_user_id}}"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const items = body.results || body;
+      pm.test('Returns list', () => pm.expect(items).to.be.an('array'));
+      const chefId = pm.variables.get('chef_user_id');
+      if (chefId) {
+          pm.test('Every dish matches chef_id', () => {
+              items.forEach((dish) => pm.expect(String(dish.chef)).to.eql(String(chefId)));
+          });
+      }
+    language: text/javascript
+order: 5000

@@ -1,0 +1,21 @@
+$kind: http-request
+url: "{{base_url}}/api/users/chefs/"
+method: GET
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      pm.test('Returns array', () => pm.expect(body).to.be.an('array'));
+      if (body.length > 0) {
+          const chef = body[0];
+          pm.test('Chef has id and username', () => {
+              pm.expect(chef).to.have.property('id');
+              pm.expect(chef).to.have.property('username');
+          });
+          pm.environment.set('chef_user_id', chef.id);
+      }
+    language: text/javascript
+order: 4000

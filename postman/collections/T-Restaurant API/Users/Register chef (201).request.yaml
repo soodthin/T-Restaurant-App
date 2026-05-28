@@ -45,5 +45,6 @@ scripts:
           pm.expect(body.avatar).to.not.be.empty;
       });
       pm.test('Chef mặc định chưa verify', () => pm.expect(body.is_verified).to.eql(false));
+      pm.environment.set('chef_user_id', body.id);
     language: text/javascript
 order: 2000

@@ -46,6 +46,6 @@ scripts:
           pm.expect(body.avatar).to.not.be.empty;
       });
       pm.test('Không lộ password', () => pm.expect(body).to.not.have.property('password'));
-      pm.collectionVariables.set('user_id', body.id);
+      pm.environment.set('user_id', body.id);
     language: text/javascript
 order: 1000

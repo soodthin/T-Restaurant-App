@@ -16,6 +16,6 @@ scripts:
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Có details rỗng ban đầu', () => pm.expect(body.details).to.be.an('array'));
-      pm.collectionVariables.set('order_id', body.id);
+      pm.environment.set('order_id', body.id);
     language: text/javascript
 order: 2000

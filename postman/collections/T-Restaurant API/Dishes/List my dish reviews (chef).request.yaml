@@ -1,0 +1,20 @@
+$kind: http-request
+url: "{{base_url}}/api/dishes/my-reviews/?rating=5"
+method: GET
+queryParams:
+  rating: "5"
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const items = body.results || body;
+      pm.test('Returns list', () => pm.expect(items).to.be.an('array'));
+      if (items.length > 0) {
+          pm.test('Review includes dish_name', () => pm.expect(items[0]).to.have.property('dish_name'));
+          pm.test('Rating filter applied', () => {
+              items.forEach((review) => pm.expect(Number(review.rating)).to.eql(5));
+          });
+      }
+    language: text/javascript
+order: 14000

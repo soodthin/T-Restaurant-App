@@ -7,7 +7,7 @@ body:
   type: urlencoded
   content:
     grant_type: refresh_token
-    refresh_token: "{{refresh_token}}"
+    refresh_token: "{{customer_refresh_token}}"
     client_id: "{{client_id}}"
     client_secret: "{{client_secret}}"
 auth:
@@ -17,7 +17,7 @@ scripts:
     code: |-
       pm.test('Status 200', () => pm.response.to.have.status(200));
       const body = pm.response.json();
-      if (body.access_token) pm.collectionVariables.set('access_token', body.access_token);
-      if (body.refresh_token) pm.collectionVariables.set('refresh_token', body.refresh_token);
+      if (body.access_token) pm.environment.set('customer_access_token', body.access_token);
+      if (body.refresh_token) pm.environment.set('customer_refresh_token', body.refresh_token);
     language: text/javascript
-order: 5000
+order: 4000

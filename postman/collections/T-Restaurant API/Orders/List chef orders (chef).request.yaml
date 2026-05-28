@@ -1,0 +1,25 @@
+$kind: http-request
+url: "{{base_url}}/api/orders/chef-orders/"
+method: GET
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const items = body.results || body;
+      pm.test('Returns list', () => pm.expect(items).to.be.an('array'));
+      const currentOrderId = pm.variables.get('order_id');
+      const candidate = items.find((order) => {
+          const eligible = ['pending', 'paid', 'preparing'].includes(order.status);
+          return eligible && (!currentOrderId || String(order.id) !== String(currentOrderId));
+      });
+      if (candidate) {
+          pm.environment.set('chef_order_id', candidate.id);
+          const nextStatus = candidate.status === 'preparing' ? 'served' : 'preparing';
+          pm.environment.set('chef_order_next_status', nextStatus);
+      } else {
+          pm.environment.set('chef_order_id', '');
+          pm.environment.set('chef_order_next_status', '');
+      }
+    language: text/javascript
+order: 5000

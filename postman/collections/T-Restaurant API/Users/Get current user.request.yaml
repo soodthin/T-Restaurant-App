@@ -8,6 +8,6 @@ scripts:
       const body = pm.response.json();
       pm.test('Có id', () => pm.expect(body).to.have.property('id'));
       pm.test('Có role', () => pm.expect(['customer','chef','admin']).to.include(body.role));
-      pm.collectionVariables.set('user_id', body.id);
+      pm.environment.set('user_id', body.id);
     language: text/javascript
-order: 6000
+order: 5000

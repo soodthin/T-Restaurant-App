@@ -1,0 +1,18 @@
+$kind: http-request
+url: "{{base_url}}/api/momo/ipn/"
+method: POST
+headers:
+  Content-Type: application/json
+body:
+  type: text
+  content: not-json
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 400', () => pm.response.to.have.status(400));
+      const body = pm.response.json();
+      pm.test('Error has detail', () => pm.expect(body).to.have.property('detail'));
+    language: text/javascript
+order: 2000

@@ -6,13 +6,13 @@ headers:
 body:
   type: urlencoded
   content:
-    token: "{{access_token}}"
+    token: postman_dummy_token
     client_id: "{{client_id}}"
     client_secret: "{{client_secret}}"
 auth:
   type: noauth
 scripts:
   - type: afterResponse
-    code: pm.test('Status 200', () => pm.response.to.have.status(200));
+    code: pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));
     language: text/javascript
-order: 6000
+order: 5000

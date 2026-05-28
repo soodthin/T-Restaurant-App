@@ -73,7 +73,6 @@ const OrderDetail = ({ route, navigation }) => {
 
             if (!isOnlineMethod) {
                 showToast('Đã đổi sang thanh toán tiền mặt.', 'success');
-                // Could refresh order here
                 navigation.goBack();
                 return;
             }
@@ -124,13 +123,11 @@ const OrderDetail = ({ route, navigation }) => {
         <View style={styles.container}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
 
-                {/* Status Notice */}
                 <View style={styles.statusNotice}>
                     <MaterialCommunityIcons name={status.icon} size={20} color={status.color} />
                     <Text style={styles.statusNoticeText}>{statusNotice}</Text>
                 </View>
 
-                {/* General Info */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Thông tin chung</Text>
                     <View style={styles.row}>
@@ -147,7 +144,6 @@ const OrderDetail = ({ route, navigation }) => {
                     </View>
                 </View>
 
-                {/* Payment Info */}
                 <View style={styles.section}>
                     <Text style={styles.sectionTitle}>Thanh toán</Text>
                     <View style={styles.row}>
@@ -213,7 +209,6 @@ const OrderDetail = ({ route, navigation }) => {
                     )}
                 </View>
 
-                {/* Dish Details */}
                 {order.details && order.details.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Danh sách món</Text>

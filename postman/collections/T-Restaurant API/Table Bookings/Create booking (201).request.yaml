@@ -1,4 +1,5 @@
 $kind: http-request
+name: Create booking (201)
 url: "{{base_url}}/api/bookings/"
 method: POST
 headers:
@@ -7,7 +8,7 @@ body:
   type: text
   content: |-
     {
-        "booking_date": "2026-12-24T19:00:00Z",
+        "booking_date": "2026-6-23T19:00:00Z",
         "guests": 4,
         "note": "Bàn gần cửa sổ"
     }
@@ -17,6 +18,6 @@ scripts:
       pm.test('Status 201', () => pm.response.to.have.status(201));
       const body = pm.response.json();
       pm.test('Status mặc định pending', () => pm.expect(body.status).to.eql('pending'));
-      pm.collectionVariables.set('booking_id', body.id);
+      pm.environment.set('booking_id', body.id);
     language: text/javascript
 order: 2000

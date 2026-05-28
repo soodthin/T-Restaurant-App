@@ -1,0 +1,31 @@
+$kind: http-request
+url: "{{base_url}}/api/dishes/?price_min={{dish_price_min}}&price_max={{dish_price_max}}&prep_min={{dish_prep_min}}&prep_max={{dish_prep_max}}"
+method: GET
+queryParams:
+  price_min: "{{dish_price_min}}"
+  price_max: "{{dish_price_max}}"
+  prep_min: "{{dish_prep_min}}"
+  prep_max: "{{dish_prep_max}}"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200', () => pm.response.to.have.status(200));
+      const body = pm.response.json();
+      const items = body.results || body;
+      pm.test('Returns list', () => pm.expect(items).to.be.an('array'));
+      const priceMin = Number(pm.variables.get('dish_price_min') || 0);
+      const priceMax = Number(pm.variables.get('dish_price_max') || Number.MAX_SAFE_INTEGER);
+      const prepMin = Number(pm.variables.get('dish_prep_min') || 0);
+      const prepMax = Number(pm.variables.get('dish_prep_max') || Number.MAX_SAFE_INTEGER);
+      pm.test('Every dish stays in price/prep range', () => {
+          items.forEach((dish) => {
+              pm.expect(Number(dish.price)).to.be.at.least(priceMin);
+              pm.expect(Number(dish.price)).to.be.at.most(priceMax);
+              pm.expect(Number(dish.preparation_time)).to.be.at.least(prepMin);
+              pm.expect(Number(dish.preparation_time)).to.be.at.most(prepMax);
+          });
+      });
+    language: text/javascript
+order: 6000

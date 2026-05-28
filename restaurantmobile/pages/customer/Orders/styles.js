@@ -54,7 +54,6 @@ export default StyleSheet.create({
     },
     errorText: { flex: 1, marginLeft: 10, color: Colors.text, fontSize: 14, lineHeight: 20 },
 
-    // Card Styles
     card: {
         backgroundColor: Colors.surfaceContainerLowest,
         marginHorizontal: 16,

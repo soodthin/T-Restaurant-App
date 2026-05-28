@@ -1,0 +1,80 @@
+name: T-Restaurant - Production
+values:
+  - key: base_url
+    value: 'https://t-restaurant.onrender.com'
+  - key: client_id
+    value: restaurant_client_id
+  - key: client_secret
+    value: restaurant_client_secret
+  - key: customer_username
+    value: customer_demo
+  - key: customer_password
+    value: demo123456
+  - key: chef_username
+    value: chef_demo
+  - key: chef_password
+    value: demo123456
+  - key: admin_username
+    value: admin
+  - key: admin_password
+    value: Admin@123
+  - key: access_token
+    value: ''
+  - key: refresh_token
+    value: ''
+  - key: customer_access_token
+    value: ''
+  - key: customer_refresh_token
+    value: ''
+  - key: chef_access_token
+    value: ''
+  - key: admin_access_token
+    value: ''
+  - key: user_id
+    value: ''
+  - key: category_id
+    value: ''
+  - key: menu_id
+    value: ''
+  - key: dish_id
+    value: ''
+  - key: booking_id
+    value: ''
+  - key: order_id
+    value: ''
+  - key: review_id
+    value: ''
+  - key: payment_id
+    value: ''
+  - key: compare_ids
+    value: ''
+  - key: seed_category_id
+    value: ''
+  - key: seed_menu_id
+    value: ''
+  - key: seed_dish_id
+    value: ''
+  - key: created_dish_id
+    value: ''
+  - key: chef_user_id
+    value: ''
+  - key: chef_order_id
+    value: ''
+  - key: chef_order_next_status
+    value: ''
+  - key: dish_price_min
+    value: '1'
+  - key: dish_price_max
+    value: '100000000'
+  - key: dish_prep_min
+    value: '1'
+  - key: dish_prep_max
+    value: '1440'
+  - key: momo_request_id
+    value: postman-momo-request
+  - key: momo_order_id
+    value: postman-momo-order
+  - key: stripe_session_id
+    value: cs_test_postman
+  - key: sample_image_path
+    value: 'D:\Project\T-Restaurant-App\docs\stitch\kh_m_ph_m_th_c\screen.png'

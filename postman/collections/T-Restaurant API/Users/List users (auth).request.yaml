@@ -8,4 +8,4 @@ scripts:
       const body = pm.response.json();
       pm.test('Có phân trang', () => pm.expect(body).to.have.property('results'));
     language: text/javascript
-order: 4000
+order: 3000

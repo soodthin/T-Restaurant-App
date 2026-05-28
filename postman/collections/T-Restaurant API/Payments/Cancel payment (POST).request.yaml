@@ -1,0 +1,16 @@
+$kind: http-request
+url: "{{base_url}}/api/payments/{{payment_id}}/cancel/"
+method: POST
+scripts:
+  - type: afterResponse
+    code: |-
+      pm.test('Status 200 or 400', () => pm.expect([200, 400]).to.include(pm.response.code));
+      const body = pm.response.json();
+      if (pm.response.code === 200) {
+          pm.test('Payment marked failed', () => pm.expect(body.status).to.eql('failed'));
+          pm.test('Has failure_reason', () => pm.expect(body.failure_reason || '').to.not.eql(''));
+      } else {
+          pm.test('Error has detail', () => pm.expect(body).to.have.property('detail'));
+      }
+    language: text/javascript
+order: 5000

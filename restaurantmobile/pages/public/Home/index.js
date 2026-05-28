@@ -127,7 +127,6 @@ const Home = ({ navigation }) => {
                 setUser(res.data);
             }
         } catch (err) {
-            // guest user
         }
     };
 

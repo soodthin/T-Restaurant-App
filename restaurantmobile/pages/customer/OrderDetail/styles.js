@@ -10,7 +10,6 @@ export default StyleSheet.create({
         paddingBottom: 40,
     },
 
-    // Info section
     section: {
         backgroundColor: Colors.surfaceContainerLowest,
         borderRadius: 24,
@@ -43,7 +42,6 @@ export default StyleSheet.create({
         color: Colors.text,
     },
 
-    // Status Notice
     statusNotice: {
         borderRadius: 14,
         backgroundColor: Colors.surfaceContainerLow,
@@ -61,7 +59,6 @@ export default StyleSheet.create({
         lineHeight: 20,
     },
 
-    // Payment specific
     paymentTimerRow: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -114,7 +111,6 @@ export default StyleSheet.create({
         color: Colors.primary,
     },
 
-    // Dish details
     detailRow: {
         flexDirection: 'row',
         alignItems: 'center',

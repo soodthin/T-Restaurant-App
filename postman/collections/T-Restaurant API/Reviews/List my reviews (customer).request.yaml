@@ -1,8 +1,6 @@
 $kind: http-request
-url: "{{base_url}}/api/dishes/{{dish_id}}/reviews/"
+url: "{{base_url}}/api/reviews/mine/"
 method: GET
-auth:
-  type: noauth
 scripts:
   - type: afterResponse
     code: |-
@@ -10,5 +8,11 @@ scripts:
       const body = pm.response.json();
       const items = body.results || body;
       pm.test('Returns list', () => pm.expect(items).to.be.an('array'));
+      if (items.length > 0) {
+          pm.test('Review includes dish summary fields', () => {
+              pm.expect(items[0]).to.have.property('dish_name');
+              pm.expect(items[0]).to.have.property('dish_image');
+          });
+      }
     language: text/javascript
-order: 12000
+order: 3000
