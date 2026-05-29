@@ -59,7 +59,7 @@ class Dish(ModelBase):
     image = models.ImageField(upload_to='dishes/%Y/%m/', null=True, blank=True)
     price = models.DecimalField(max_digits=12, decimal_places=0)
     ingredients = models.TextField(null=True, blank=True)
-    preparation_time = models.PositiveIntegerField(help_text='Thoi gian chuan bi (phut)')
+    preparation_time = models.PositiveIntegerField()
     menu = models.ForeignKey(Menu, on_delete=models.CASCADE, related_name='dishes')
     category = models.ForeignKey(FoodCategory, on_delete=models.PROTECT, related_name='dishes')
     chef = models.ForeignKey(User, on_delete=models.CASCADE, related_name='dishes',
@@ -94,10 +94,7 @@ class TableBooking(ModelBase):
 class Order(ModelBase):
     ORDER_STATUSES = [
         ('pending', 'Pending'),
-
-
         ('paid', 'Paid'),
-
         ('payment_failed', 'Payment Failed'),
         ('preparing', 'Preparing'),
         ('served', 'Served'),
